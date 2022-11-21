@@ -8,11 +8,12 @@ import shutil
 
 import requests
 
+from common.schemas import TestRun
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 
 
-class RunnerException(Exception):
+class BuildCancelled(Exception):
     pass
 
 
@@ -24,7 +25,7 @@ def init_build_dirs():
     os.makedirs('build/cypress/screenshots')
 
 
-def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str):
+def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) -> TestRun:
     """
     Fetch the distribution from the cache server
     :param sha: commit SHA
@@ -40,9 +41,10 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str):
         r = requests.get(f'{hub_url}/{id}')
         if r.status_code != 200:
             logging.error(f"Failed to contact hub: {r.status_code}")
-            raise RunnerException()
+            raise BuildCancelled()
 
-        status = r.json()['status']
+        testrun = TestRun(**r.json())
+        status = testrun.status
         if status == 'running':
             init_build_dirs()
             # fetch the dist
@@ -54,19 +56,24 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str):
             os.chdir('build')
             subprocess.run(['tar', 'xf', '../dist.tgz'])
 
-            return
+            return testrun
         elif status != 'building':
             logging.info("Build failed or cancelled: quit")
-            return
+            raise BuildCancelled()
+
         # otherwise sleep
         sleep(HUB_POLL_PERIOD)
+
+    logging.info("Reached timeout - quitting")
+    raise BuildCancelled()
 
 
 def start_server():
     """
-    For now assume Angular
+    Start the server
     :return:
     """
+
 
 
 def main():
@@ -91,7 +98,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except RunnerException as ex:
+    except Exception as ex:
         # bail out with an error
         sys.exit(1)
 
