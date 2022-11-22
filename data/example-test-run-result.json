@@ -1,0 +1,112 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 2,
+    "passes": 1,
+    "pending": 0,
+    "failures": 1,
+    "start": "2022-11-22T13:47:59.113Z",
+    "end": "2022-11-22T13:48:04.075Z",
+    "duration": 4962
+  },
+  "tests": [
+    {
+      "title": "should have the correct title",
+      "fullTitle": "test1 should have the correct title",
+      "file": null,
+      "duration": 526,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "this will fail",
+      "fullTitle": "test1 this will fail",
+      "file": null,
+      "duration": 4382,
+      "currentRetry": 0,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (http://localhost:4200/__cypress/tests?p=cypress/integration/test1.spec.ts:106:22)",
+        "sourceMappedStack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/integration/test1.spec.ts:12:18)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/integration/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/integration/test1.spec.ts",
+            "relativeFile": "cypress/integration/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummy-testui/cypress/integration/test1.spec.ts",
+            "line": 12,
+            "column": 18,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 12,
+          "column": 18,
+          "originalFile": "cypress/integration/test1.spec.ts",
+          "relativeFile": "cypress/integration/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummy-testui/cypress/integration/test1.spec.ts",
+          "frame": "  10 | \n  11 |   it('this will fail', () => {\n> 12 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  13 |   });\n  14 | });\n  15 | ",
+          "language": "ts"
+        }
+      }
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "this will fail",
+      "fullTitle": "test1 this will fail",
+      "file": null,
+      "currentRetry": 0,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (http://localhost:4200/__cypress/tests?p=cypress/integration/test1.spec.ts:106:22)",
+        "sourceMappedStack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/integration/test1.spec.ts:12:18)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/integration/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/integration/test1.spec.ts",
+            "relativeFile": "cypress/integration/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummy-testui/cypress/integration/test1.spec.ts",
+            "line": 12,
+            "column": 18,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 12,
+          "column": 18,
+          "originalFile": "cypress/integration/test1.spec.ts",
+          "relativeFile": "cypress/integration/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummy-testui/cypress/integration/test1.spec.ts",
+          "frame": "  10 | \n  11 |   it('this will fail', () => {\n> 12 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  13 |   });\n  14 | });\n  15 | ",
+          "language": "ts"
+        }
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "should have the correct title",
+      "fullTitle": "test1 should have the correct title",
+      "file": null,
+      "duration": 526,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ]
+}

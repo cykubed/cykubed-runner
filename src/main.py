@@ -14,7 +14,7 @@ HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 
 
 class BuildFailed(Exception):
-    def __init__(self, reason=False):
+    def __init__(self, reason: str):
         self.reason = reason
 
 
@@ -41,8 +41,7 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
     while time() < endtime:
         r = requests.get(f'{hub_url}/{id}')
         if r.status_code != 200:
-            logging.error(f"Failed to contact hub: {r.status_code}")
-            raise BuildFailed()
+            raise BuildFailed(f"Failed to contact hub: {r.status_code}")
 
         testrun = TestRun(**r.json())
         status = testrun.status
@@ -59,8 +58,7 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
 
             return testrun
         elif status != 'building':
-            logging.info("Build failed or cancelled: quit")
-            raise BuildFailed()
+            raise BuildFailed("Build failed or cancelled: quit")
 
         # otherwise sleep
         sleep(HUB_POLL_PERIOD)
@@ -82,8 +80,7 @@ def start_server(testrun: TestRun) -> subprocess.Popen:
         r = requests.get(f'http://localhost:{testrun.server_port}')
         if r.status_code != 200:
             if time() > endtime:
-                logging.error('Failed to start server')
-                raise BuildFailed()
+                raise BuildFailed('Failed to start server')
             sleep(5)
         else:
             return proc
@@ -135,7 +132,7 @@ def main():
         # now fetch specs until we're done or the build is cancelled
         run_tests(testrun, args.hub, args.timeout)
     except BuildFailed as ex:
-        # TODO inform the hub
+        # TODO inform the server
         logging.error(ex.reason)
     finally:
         # kill the server
