@@ -17,8 +17,6 @@ from common.schemas import TestRun, TestResult, TestResultError, CodeFrame, Spec
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', 'cykube/results')
-# SCREENSHOTS_FOLDER = os.path.join(RESULTS_FOLDER, 'screenshots')
-# VIDEOS_FOLDER = os.path.join(RESULTS_FOLDER, 'videos')
 
 TOKEN = os.environ.get('CYKUBE_HUB_TOKEN')
 CYKUBE_MAIN_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net')
@@ -39,11 +37,11 @@ def get_videos_folder():
 
 def init_build_dirs():
     shutil.rmtree('build', ignore_errors=True)
+    os.makedirs('build')
     if os.path.exists('dist.tgz'):
         os.remove('dist.tgz')
-    os.chdir('build')
-    os.makedirs(get_videos_folder())
-    os.makedirs(get_screenshots_folder())
+    os.makedirs(get_videos_folder(), exist_ok=True)
+    os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
 def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) -> TestRun:
@@ -56,10 +54,11 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
     :param id: test run ID
     :return:
     """
+    init_build_dirs()
     endtime = time() + timeout
     logging.info("Waiting for build")
     while time() < endtime:
-        r = requests.get(f'{hub_url}/{id}')
+        r = requests.get(f'{hub_url}/testrun/{id}')
         if r.status_code != 200:
             raise BuildFailed(f"Failed to contact hub: {r.status_code}")
 
@@ -67,13 +66,13 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
         status = testrun.status
         if status == 'running':
             # fetch the dist
+            os.chdir('build')
             r = requests.get(f'{cache_url}/{sha}.tgz', stream=True)
-            with open('dist.tgz', 'wb') as outfile:
+            with open('../dist.tgz', 'wb') as outfile:
                 shutil.copyfileobj(r.raw, outfile)
 
             # untar
-            init_build_dirs()
-            subprocess.run(['tar', 'xf', '../dist.tgz'])
+            subprocess.run(['/usr/bin/tar', 'xf', '../dist.tgz', '-I', 'lz4'])
 
             return testrun
         elif status != 'building':
@@ -108,13 +107,11 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     tests = []
     with open(os.path.join(RESULTS_FOLDER, 'out.json')) as f:
         rawjson = json.loads(f.read())
-        # add skipped
-        for skipped in rawjson.get('pending', []):
-            tests.append(TestResult(file=spec,
-                                      title=skipped['title']))
-
         for test in rawjson['tests']:
             err = test.get('err')
+
+            if 'duration' not in test:
+                continue
 
             result = TestResult(file=spec,
                                 title=test['title'],
@@ -142,20 +139,26 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                 # check for screenshots
                 frame = err['codeFrame']
                 result.error = TestResultError(title=err['name'],
-                                          type=err['type'],
-                                          message=err['message'],
-                                          stack=err['stack'],
-                                          screenshot=failure_sshot,
-                                          code_frame=CodeFrame(line=frame['line'],
-                                                               column=frame['column'],
-                                                               language=frame['language'],
-                                                               frame=frame['frame']))
+                                               type=err['type'],
+                                               message=err['message'],
+                                               stack=err['stack'],
+                                               screenshot=failure_sshot,
+                                               code_frame=CodeFrame(line=frame['line'],
+                                                                    column=frame['column'],
+                                                                    language=frame['language'],
+                                                                    frame=frame['frame']))
 
                 video_files = list(os.listdir(get_videos_folder()))
                 if video_files:
                     # just pick the first one (should be only 1 surely?)
                     result.error.video = video_files[0]
             tests.append(result)
+
+    # add skipped
+    for skipped in rawjson.get('pending', []):
+        tests.append(TestResult(file=spec,
+                                status=TestResultStatus.skipped,
+                                title=skipped['title']))
 
     return SpecResult(file=spec, tests=tests)
 
@@ -182,23 +185,27 @@ def run_cypress(file: str, timeout: int):
                    timeout=timeout, check=True)
 
 
-def upload_results(session: requests.Session, testrun_id, spec_id, result: SpecResult):
-    files = []
-    for test in result.results:
+def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Session = None):
+    files = dict()
+    if not session:
+        session = get_cykube_session()
+
+    for test in result.tests:
         if test.error:
             sshot = test.error.screenshot
             if sshot:
-                fullpath = os.path.join(get_screenshots_folder(), sshot)
-                files.append(('screenshot', (sshot, open(fullpath, 'rb'), 'image/png')))
+                fullpath = os.path.join(get_screenshots_folder(), result.file,
+                                        sshot)
+                files[sshot] = open(fullpath, 'rb')
             video = test.error.video
             if video:
                 fullpath = os.path.join(get_videos_folder(), video)
-                files.append(('video', (video, open(fullpath, 'rb'), 'video/mp4')))
+                files[video] = open(fullpath, 'rb')
 
     try:
-        r = session.post(f'testrun/{testrun_id}/spec-completed/{spec_id}',
-                          json=result.json(),
-                          files=files)
+        r = session.post(f'{CYKUBE_MAIN_URL}/testrun/{testrun_id}/spec-completed/{spec_id}',
+                         data=result.json(),
+                         files=files)
         if not r.status_code == 200:
             raise BuildFailed(f'Test result post failed: {r.status_code}')
     except requests.RequestException:
@@ -206,7 +213,6 @@ def upload_results(session: requests.Session, testrun_id, spec_id, result: SpecR
 
 
 def run_tests(testrun: TestRun, hub_url: str, timeout: int):
-
     mainhttp = get_cykube_session()
     while True:
         r = requests.get(f'{hub_url}/testrun/{testrun.id}/next')
@@ -220,7 +226,7 @@ def run_tests(testrun: TestRun, hub_url: str, timeout: int):
                 started_at = datetime.datetime.now()
                 run_cypress(spec['file'], timeout)
                 result = parse_results(started_at, spec['file'])
-                upload_results(mainhttp, testrun.id, spec['id'], result)
+                upload_results(testrun.id, spec['id'], result, mainhttp)
                 # cleanup
                 shutil.rmtree(RESULTS_FOLDER, ignore_errors=True)
 
@@ -238,7 +244,7 @@ def main():
     parser.add_argument('id', help='Test run ID')
     parser.add_argument('sha', help='Commit SHA')
     parser.add_argument('--timeout', required=False, type=int,
-                        default=int(os.environ.get('BUILD_TIMEOUT', 30*60)),
+                        default=int(os.environ.get('BUILD_TIMEOUT', 30 * 60)),
                         help='Build timeout, in seconds')
     parser.add_argument('--hub-url', dest='hub', type=str,
                         default=os.environ.get('HUB_URL', 'http://127.0.0.1:5000'))
@@ -270,4 +276,3 @@ if __name__ == '__main__':
     except Exception as ex:
         # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
         sys.exit(1)
-

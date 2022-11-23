@@ -1,4 +1,6 @@
-build
+tests/build/
+tests/dist.tgz
+
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template

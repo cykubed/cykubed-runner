@@ -1,20 +1,20 @@
 {
   "stats": {
     "suites": 1,
-    "tests": 2,
+    "tests": 3,
     "passes": 1,
-    "pending": 0,
+    "pending": 1,
     "failures": 1,
-    "start": "2022-11-23T14:05:39.208Z",
-    "end": "2022-11-23T14:05:44.128Z",
-    "duration": 4920
+    "start": "2022-11-23T18:11:43.382Z",
+    "end": "2022-11-23T18:11:48.295Z",
+    "duration": 4913
   },
   "tests": [
     {
       "title": "should have the correct title",
       "fullTitle": "test1 should have the correct title",
       "file": null,
-      "duration": 708,
+      "duration": 640,
       "currentRetry": 0,
       "err": {}
     },
@@ -22,7 +22,7 @@
       "title": "this will fail",
       "fullTitle": "test1 this will fail",
       "file": null,
-      "duration": 4173,
+      "duration": 4229,
       "currentRetry": 0,
       "err": {
         "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
@@ -52,13 +52,28 @@
           "originalFile": "cypress/integration/test1.spec.ts",
           "relativeFile": "cypress/integration/test1.spec.ts",
           "absoluteFile": "/home/nick/myprojects/dummyui/cypress/integration/test1.spec.ts",
-          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | });\n  16 | ",
+          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | \n  16 |   it.skip('this will be skipped', () => {",
           "language": "ts"
         }
       }
+    },
+    {
+      "title": "this will be skipped",
+      "fullTitle": "test1 this will be skipped",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
     }
   ],
-  "pending": [],
+  "pending": [
+    {
+      "title": "this will be skipped",
+      "fullTitle": "test1 this will be skipped",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
   "failures": [
     {
       "title": "this will fail",
@@ -93,7 +108,7 @@
           "originalFile": "cypress/integration/test1.spec.ts",
           "relativeFile": "cypress/integration/test1.spec.ts",
           "absoluteFile": "/home/nick/myprojects/dummyui/cypress/integration/test1.spec.ts",
-          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | });\n  16 | ",
+          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | \n  16 |   it.skip('this will be skipped', () => {",
           "language": "ts"
         }
       }
@@ -104,7 +119,7 @@
       "title": "should have the correct title",
       "fullTitle": "test1 should have the correct title",
       "file": null,
-      "duration": 708,
+      "duration": 640,
       "currentRetry": 0,
       "err": {}
     }
