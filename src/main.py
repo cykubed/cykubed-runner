@@ -16,9 +16,9 @@ from common.enums import TestResultStatus
 from common.schemas import TestRun, TestResult, TestResultError, CodeFrame, SpecResult
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
-RESULTS_FOLDER = 'cykube/results'
-SCREENSHOTS_FOLDER = os.path.join(RESULTS_FOLDER, 'screenshots')
-VIDEOS_FOLDER = os.path.join(RESULTS_FOLDER, 'videos')
+RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', 'cykube/results')
+# SCREENSHOTS_FOLDER = os.path.join(RESULTS_FOLDER, 'screenshots')
+# VIDEOS_FOLDER = os.path.join(RESULTS_FOLDER, 'videos')
 
 TOKEN = os.environ.get('CYKUBE_HUB_TOKEN')
 CYKUBE_MAIN_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net')
@@ -29,12 +29,21 @@ class BuildFailed(Exception):
         self.reason = reason
 
 
+def get_screenshots_folder():
+    return os.path.join(RESULTS_FOLDER, 'screenshots')
+
+
+def get_videos_folder():
+    return os.path.join(RESULTS_FOLDER, 'videos')
+
+
 def init_build_dirs():
     shutil.rmtree('build', ignore_errors=True)
     if os.path.exists('dist.tgz'):
         os.remove('dist.tgz')
-    os.makedirs(f'build/{VIDEOS_FOLDER}')
-    os.makedirs(f'build/{SCREENSHOTS_FOLDER}')
+    os.chdir('build')
+    os.makedirs(get_videos_folder())
+    os.makedirs(get_screenshots_folder())
 
 
 def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) -> TestRun:
@@ -57,14 +66,13 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
         testrun = TestRun(**r.json())
         status = testrun.status
         if status == 'running':
-            init_build_dirs()
             # fetch the dist
             r = requests.get(f'{cache_url}/{sha}.tgz', stream=True)
             with open('dist.tgz', 'wb') as outfile:
                 shutil.copyfileobj(r.raw, outfile)
 
             # untar
-            os.chdir('build')
+            init_build_dirs()
             subprocess.run(['tar', 'xf', '../dist.tgz'])
 
             return testrun
@@ -97,25 +105,27 @@ def start_server(testrun: TestRun) -> subprocess.Popen:
 
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
-    results = []
-    with open('cykube/results/out.json') as f:
-        rawjson = json.load(f.read())
+    tests = []
+    with open(os.path.join(RESULTS_FOLDER, 'out.json')) as f:
+        rawjson = json.loads(f.read())
         # add skipped
         for skipped in rawjson.get('pending', []):
-            results.append(TestResult(file=spec,
+            tests.append(TestResult(file=spec,
                                       title=skipped['title']))
 
         for test in rawjson['tests']:
+            err = test.get('err')
+
             result = TestResult(file=spec,
                                 title=test['title'],
-                                status=TestResultStatus.failed if 'err' in test else TestResultStatus.passed,
+                                status=TestResultStatus.failed if err else TestResultStatus.passed,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
                                 started_at=started_at.isoformat(),
                                 finished_at=datetime.datetime.now().isoformat())
 
             filename = os.path.split(spec)[-1]
-            prefix = os.path.join(SCREENSHOTS_FOLDER, filename)
+            prefix = os.path.join(get_screenshots_folder(), filename)
             screenshot_files = list(os.listdir(prefix))
             failure_sshot = None
             manual_sshots = []
@@ -128,11 +138,10 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
             if manual_sshots:
                 result.manual_screenshots = manual_sshots
 
-            err = test.get('err')
             if err:
                 # check for screenshots
                 frame = err['codeFrame']
-                testerr = TestResultError(title=err['name'],
+                result.error = TestResultError(title=err['name'],
                                           type=err['type'],
                                           message=err['message'],
                                           stack=err['stack'],
@@ -142,14 +151,13 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                                                language=frame['language'],
                                                                frame=frame['frame']))
 
-                prefix = os.path.join(VIDEOS_FOLDER, filename)
-                video_files = list(os.listdir(prefix))
+                video_files = list(os.listdir(get_videos_folder()))
                 if video_files:
                     # just pick the first one (should be only 1 surely?)
-                    testerr.video = video_files[0]
-            results.append(result)
+                    result.error.video = video_files[0]
+            tests.append(result)
 
-    return SpecResult(file=spec, results=results)
+    return SpecResult(file=spec, tests=tests)
 
 
 def get_cykube_session() -> requests.Session:
@@ -165,6 +173,38 @@ def get_cykube_session() -> requests.Session:
     return mainhttp
 
 
+def run_cypress(file: str, timeout: int):
+    subprocess.run(['../node_modules/.bin/cypress', 'run', '-s', file,
+                    '--reporter=../json-reporter.js',
+                    '-o', 'output=cykube/results/out.json',
+                    '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
+                          f'video=true,videosFolder={get_videos_folder()}'],
+                   timeout=timeout, check=True)
+
+
+def upload_results(session: requests.Session, testrun_id, spec_id, result: SpecResult):
+    files = []
+    for test in result.results:
+        if test.error:
+            sshot = test.error.screenshot
+            if sshot:
+                fullpath = os.path.join(get_screenshots_folder(), sshot)
+                files.append(('screenshot', (sshot, open(fullpath, 'rb'), 'image/png')))
+            video = test.error.video
+            if video:
+                fullpath = os.path.join(get_videos_folder(), video)
+                files.append(('video', (video, open(fullpath, 'rb'), 'video/mp4')))
+
+    try:
+        r = session.post(f'testrun/{testrun_id}/spec-completed/{spec_id}',
+                          json=result.json(),
+                          files=files)
+        if not r.status_code == 200:
+            raise BuildFailed(f'Test result post failed: {r.status_code}')
+    except requests.RequestException:
+        raise BuildFailed(f'Failed to contact Cykube server')
+
+
 def run_tests(testrun: TestRun, hub_url: str, timeout: int):
 
     mainhttp = get_cykube_session()
@@ -178,34 +218,9 @@ def run_tests(testrun: TestRun, hub_url: str, timeout: int):
             spec = r.json()
             try:
                 started_at = datetime.datetime.now()
-                subprocess.run(['../node_modules/.bin/cypress', 'run', '-s', spec['file'],
-                                '--reporter=../json-reporter.js',
-                                '-o', 'output=cykube/results/out.json',
-                                '-c', f'screenshotsFolder={SCREENSHOTS_FOLDER},screenshotOnRunFailure=true,'
-                                      f'video=true,videosFolder={VIDEOS_FOLDER}'],
-                               timeout=timeout, check=True)
-                results = parse_results(started_at, spec['file'])
-                files = []
-                for test in results.results:
-                    if test.error:
-                        sshot = test.error.screenshot
-                        if sshot:
-                            fullpath = os.path.join(SCREENSHOTS_FOLDER, sshot)
-                            files.append(('screenshot', (sshot, open(fullpath, 'rb'), 'image/png')))
-                        video = test.error.video
-                        if video:
-                            fullpath = os.path.join(VIDEOS_FOLDER, video)
-                            files.append(('video', (video, open(fullpath, 'rb'), 'video/mp4')))
-
-                    try:
-                        specid = spec['id']
-                        r = mainhttp.post(f'testrun/{testrun.id}/spec-completed/{specid}',
-                                          json=results.json(),
-                                          files=files)
-                        if not r.status_code == 200:
-                            raise BuildFailed(f'Test result post failed: {r.status_code}')
-                    except requests.RequestException:
-                        raise BuildFailed(f'Failed to contact Cykube server')
+                run_cypress(spec['file'], timeout)
+                result = parse_results(started_at, spec['file'])
+                upload_results(mainhttp, testrun.id, spec['id'], result)
                 # cleanup
                 shutil.rmtree(RESULTS_FOLDER, ignore_errors=True)
 
