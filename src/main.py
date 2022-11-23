@@ -1,14 +1,19 @@
 import argparse
+import datetime
+import json
 import subprocess
 import logging
 import os
 import sys
 from time import time, sleep
 import shutil
+from typing import List
 
 import requests
 
-from common.schemas import TestRun
+from common import schemas
+from common.enums import TestResultStatus
+from common.schemas import TestRun, TestResult, TestResultError, CodeFrame, SpecResult
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 
@@ -86,6 +91,62 @@ def start_server(testrun: TestRun) -> subprocess.Popen:
             return proc
 
 
+def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
+    results = []
+    with open('cykube/results/out.json') as f:
+        rawjson = json.load(f.read())
+        # add skipped
+        for skipped in rawjson.get('pending', []):
+            results.append(TestResult(file=spec,
+                                      title=skipped['title']))
+
+        for test in rawjson['tests']:
+            result = TestResult(file=spec,
+                                title=test['title'],
+                                status=TestResultStatus.failed if 'err' in test else TestResultStatus.passed,
+                                retry=test['currentRetry'],
+                                duration=test['duration'],
+                                started_at=started_at.isoformat(),
+                                finished_at=datetime.datetime.now().isoformat())
+
+            filename = os.path.split(spec)[-1]
+            prefix = os.path.join('cykube/results/screenshots', filename)
+            screenshot_files = list(os.listdir(prefix))
+            failure_sshot = None
+            manual_sshots = []
+            for sshot in screenshot_files:
+                if '(failed)' in sshot:
+                    failure_sshot = sshot
+                else:
+                    manual_sshots.append(sshot)
+
+            if manual_sshots:
+                result.manual_screenshots = manual_sshots
+
+            err = test.get('err')
+            if err:
+                # check for screenshots
+                frame = err['codeFrame']
+                testerr = TestResultError(title=err['name'],
+                                          type=err['type'],
+                                          message=err['message'],
+                                          stack=err['stack'],
+                                          screenshot=failure_sshot,
+                                          code_frame=CodeFrame(line=frame['line'],
+                                                               column=frame['column'],
+                                                               language=frame['language'],
+                                                               frame=frame['frame']))
+
+                prefix = os.path.join('cykube/results/videos', filename)
+                video_files = list(os.listdir(prefix))
+                if video_files:
+                    # just pick the first one (should be only 1 surely?)
+                    testerr.video = video_files[0]
+            results.append(result)
+
+    return SpecResult(file=spec, results=results)
+
+
 def run_tests(testrun: TestRun, hub_url: str, timeout: int):
     while True:
         r = requests.get(f'{hub_url}/testrun/{testrun.id}/next')
@@ -96,11 +157,14 @@ def run_tests(testrun: TestRun, hub_url: str, timeout: int):
             # run the test
             spec = r.json()
             try:
+                started_at = datetime.datetime.now()
                 subprocess.run(['../node_modules/.bin/cypress', 'run', '-s', spec['file'],
                                 '--reporter=../json-reporter.js',
-                                '-o', 'output=cykube/results/json',
-                                '-c', 'screenshotsFolder=cykube/results/screenshots,screenshotOnRunFailure=true'],
+                                '-o', 'output=cykube/results/out.json',
+                                '-c', 'screenshotsFolder=cykube/results/screenshots,screenshotOnRunFailure=true,'
+                                      'video=true,videosFolder=cykube/results/videos'],
                                timeout=timeout, check=True)
+                parse_results(started_at, spec['file'])
                 # TODO report report to hub and cleanup
 
             except subprocess.CalledProcessError as ex:
