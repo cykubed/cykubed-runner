@@ -1,5 +1,6 @@
 tests/build/
 tests/dist.tgz
+requirements.txt
 
 
 # Created by .ignore support plugin (hsz.mobi)

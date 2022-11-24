@@ -1,9 +1,12 @@
+import json
 import os
 import tempfile
 from datetime import datetime
+from unittest import skip
 from unittest.mock import patch
 
 import responses
+from responses.matchers import multipart_matcher
 
 import main
 from common.enums import TestResultStatus
@@ -68,4 +71,23 @@ def test_fetch_dist():
     assert tr.status == 'running'
 
 
+@responses.activate
+@patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/one-fail')
+@skip("Can't get responses to work for multipart")
+def test_upload():
+    result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
+    req_data = json.loads(result.json())
+    with open(os.path.join(FIXTURE_DIR,
+                           'one-fail/screenshots/test1.spec.ts/test1 -- this will fail (failed).png'), 'rb') as f:
+        img = f.read()
+    with open(os.path.join(FIXTURE_DIR,
+                           'one-fail/videos/test1.spec.ts.mp4'), 'rb') as f:
+        video = f.read()
+
+    req_files = {'test1 -- this will fail (failed).png': img,
+                 'test1.spec.ts.mp4': video}
+    responses.post(url='https://app.cykube.net/testrun/100/spec-completed/200',
+                   match=[multipart_matcher(req_files, data=req_data)])
+
+    main.upload_results(100, 200, result)
 

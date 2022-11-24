@@ -2,3 +2,5 @@ node_modules
 .pytest_cache
 build
 .idea
+tests/
+data/
