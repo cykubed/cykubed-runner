@@ -47,7 +47,7 @@ def test_one_failed():
 @patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/one-fail')
 @responses.activate
 def test_fetch_dist():
-    responses.add(responses.GET, 'http://cykubehub:5002/testrun/100', json={
+    responses.add(responses.GET, 'https://app.cykube.net/testrun/100', json={
         "id": 100,
         "status": "running",
         "server_port": 4200,
@@ -65,7 +65,7 @@ def test_fetch_dist():
     responses.add(responses.GET, 'http://cykubehub:5003/sha.tgz', body=data)
     tempdir = tempfile.mkdtemp()
     os.chdir(tempdir)
-    tr = main.fetch_dist(100, 'sha', 100, 'http://cykubehub:5002', 'http://cykubehub:5003')
+    tr = main.fetch_dist(100, 'sha', 100, 'http://cykubehub:5003')
     files = list(os.listdir(tempdir+'/build/dist'))
     assert set(files) == {'one.txt', 'two.txt'}
     assert tr.status == 'running'

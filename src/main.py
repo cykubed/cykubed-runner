@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from time import time, sleep
 
 import requests
@@ -13,18 +14,22 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from common.enums import TestResultStatus
-from common.schemas import TestRun, TestResult, TestResultError, CodeFrame, SpecResult
+from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
-RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', 'cykube/results')
+RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', '/tmp/cykube/results')
+ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
+REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
 
-TOKEN = os.environ.get('CYKUBE_HUB_TOKEN')
-CYKUBE_MAIN_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net')
+BUILD_DIR='/tmp/cykube/build'
+
+TOKEN = os.environ.get('API_TOKEN')
+CYKUBE_API_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net/api')
+cykube_headers = {'Authorization': f'Bearer {TOKEN}'}
 
 
 class BuildFailed(Exception):
-    def __init__(self, reason: str):
-        self.reason = reason
+    pass
 
 
 def get_screenshots_folder():
@@ -36,15 +41,13 @@ def get_videos_folder():
 
 
 def init_build_dirs():
-    shutil.rmtree('build', ignore_errors=True)
-    os.makedirs('build')
-    if os.path.exists('dist.tgz'):
-        os.remove('dist.tgz')
+    shutil.rmtree(BUILD_DIR, ignore_errors=True)
+    os.makedirs(BUILD_DIR)
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) -> TestRun:
+def fetch_dist(id: int, sha: str, timeout: int, cache_url: str) -> TestRunDetail:
     """
     Fetch the distribution from the cache server
     :param sha: commit SHA
@@ -58,21 +61,22 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
     endtime = time() + timeout
     logging.info("Waiting for build")
     while time() < endtime:
-        r = requests.get(f'{hub_url}/testrun/{id}')
+        r = requests.get(f'{CYKUBE_API_URL}/testrun/{id}', headers=cykube_headers)
         if r.status_code != 200:
-            raise BuildFailed(f"Failed to contact hub: {r.status_code}")
+            raise BuildFailed(f"Failed to contact cykube: {r.status_code}")
 
-        testrun = TestRun(**r.json())
+        testrun = TestRunDetail(**r.json())
         status = testrun.status
         if status == 'running':
             # fetch the dist
-            os.chdir('build')
-            r = requests.get(f'{cache_url}/{sha}.tgz', stream=True)
-            with open('../dist.tgz', 'wb') as outfile:
+            r = requests.get(f'{cache_url}/{sha}.tar.lz4', stream=True)
+            if r.status_code != 200:
+                raise BuildFailed("Distribution missing")
+            with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
                 shutil.copyfileobj(r.raw, outfile)
-
-            # untar
-            subprocess.run(['/usr/bin/tar', 'xf', '../dist.tgz', '-I', 'lz4'])
+                outfile.flush()
+                # untar
+                subprocess.check_call(['/usr/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
 
             return testrun
         elif status != 'building':
@@ -84,17 +88,29 @@ def fetch_dist(id: int, sha: str, timeout: int, hub_url: str, cache_url: str) ->
     raise BuildFailed("Reached timeout - quitting")
 
 
-def start_server(testrun: TestRun) -> subprocess.Popen:
+def get_env():
+    env = os.environ.copy()
+    env['PATH'] = f'{BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
+    return env
+
+
+def start_server(testrun: TestRunDetail) -> subprocess.Popen:
     """
     Start the server
     :return:
     """
-    proc = subprocess.Popen([testrun.server_cmd.split(' ')], shell=True)
+
+    proc = subprocess.Popen(testrun.project.server_cmd, shell=True, cwd=BUILD_DIR, env=get_env())
+    if not proc.pid:
+        raise BuildFailed("Cannot start server")
+
     # wait until it's ready
-    endtime = time() + 30
+    endtime = time() + 60
     logging.info("Waiting for server to be ready...")
+    # wait 10 secs - trying to fetch from ng serve too soon can crash it
+    sleep(10)
     while True:
-        r = requests.get(f'http://localhost:{testrun.server_port}')
+        r = requests.get(f'http://localhost:{testrun.project.server_port}')
         if r.status_code != 200:
             if time() > endtime:
                 raise BuildFailed('Failed to start server')
@@ -113,8 +129,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
             if 'duration' not in test:
                 continue
 
-            result = TestResult(file=spec,
-                                title=test['title'],
+            result = TestResult(title=test['title'],
                                 status=TestResultStatus.failed if err else TestResultStatus.passed,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
@@ -123,17 +138,20 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
 
             filename = os.path.split(spec)[-1]
             prefix = os.path.join(get_screenshots_folder(), filename)
-            screenshot_files = list(os.listdir(prefix))
+            screenshot_files = []
+            if os.path.exists(prefix):
+                screenshot_files = list(os.listdir(prefix))
+
             failure_sshot = None
             manual_sshots = []
             for sshot in screenshot_files:
                 if '(failed)' in sshot:
                     failure_sshot = sshot
-                else:
-                    manual_sshots.append(sshot)
+                # else:
+                #     manual_sshots.append(sshot)
 
-            if manual_sshots:
-                result.manual_screenshots = manual_sshots
+            # if manual_sshots:
+            #     result.manual_screenshots = manual_sshots
 
             if err:
                 # check for screenshots
@@ -148,16 +166,16 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                                                     language=frame['language'],
                                                                     frame=frame['frame']))
 
-                video_files = list(os.listdir(get_videos_folder()))
-                if video_files:
-                    # just pick the first one (should be only 1 surely?)
-                    result.error.video = video_files[0]
+                if os.path.exists(get_videos_folder()):
+                    video_files = list(os.listdir(get_videos_folder()))
+                    if video_files:
+                        # just pick the first one (should be only 1 surely?)
+                        result.error.video = video_files[0]
             tests.append(result)
 
     # add skipped
     for skipped in rawjson.get('pending', []):
-        tests.append(TestResult(file=spec,
-                                status=TestResultStatus.skipped,
+        tests.append(TestResult(status=TestResultStatus.skipped,
                                 title=skipped['title']))
 
     return SpecResult(file=spec, tests=tests)
@@ -165,24 +183,27 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
 
 def get_cykube_session() -> requests.Session:
     mainhttp = requests.Session()
-    retry_strategy = Retry(
-        total=3,
-        status_forcelist=[429, 500, 502, 503, 504],
-        method_whitelist=["HEAD", "GET", "OPTIONS"]
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    mainhttp.mount(CYKUBE_MAIN_URL, adapter)
+    # retry_strategy = Retry(
+    #     total=3,
+    #     status_forcelist=[429, 500, 502, 503, 504],
+    #     allowed_methods=["HEAD", "GET", "OPTIONS"]
+    # )
+    # adapter = HTTPAdapter(max_retries=retry_strategy)
+    # mainhttp.mount(CYKUBE_API_URL, adapter)
     mainhttp.headers = {'Authorization': f'Bearer {TOKEN}'}
     return mainhttp
 
 
 def run_cypress(file: str, timeout: int):
-    subprocess.run(['../node_modules/.bin/cypress', 'run', '-s', file,
-                    '--reporter=../json-reporter.js',
-                    '-o', 'output=cykube/results/out.json',
+    results_file = f'{RESULTS_FOLDER}/out.json'
+    result = subprocess.run(['cypress', 'run', '-s', file, '-q',
+                    f'--reporter={REPORTER_FILE}',
+                    '-o', f'output={results_file}',
                     '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
                           f'video=true,videosFolder={get_videos_folder()}'],
-                   timeout=timeout, check=True)
+                   timeout=timeout, capture_output=True, env=get_env(), cwd=BUILD_DIR)
+    if result.returncode and result.stderr and not os.path.exists(results_file):
+        logging.info('Cypress run failed: '+result.stderr.decode())
 
 
 def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Session = None):
@@ -194,7 +215,8 @@ def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Se
         if test.error:
             sshot = test.error.screenshot
             if sshot:
-                fullpath = os.path.join(get_screenshots_folder(), result.file,
+                fullpath = os.path.join(get_screenshots_folder(),
+                                        os.path.split(result.file)[-1],
                                         sshot)
                 files[sshot] = open(fullpath, 'rb')
             video = test.error.video
@@ -203,7 +225,7 @@ def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Se
                 files[video] = open(fullpath, 'rb')
 
     try:
-        r = session.post(f'{CYKUBE_MAIN_URL}/testrun/{testrun_id}/spec-completed/{spec_id}',
+        r = session.post(f'{CYKUBE_API_URL}/hub/testrun/{testrun_id}/spec-completed/{spec_id}',
                          data=result.json(),
                          files=files)
         if not r.status_code == 200:
@@ -212,10 +234,10 @@ def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Se
         raise BuildFailed(f'Failed to contact Cykube server')
 
 
-def run_tests(testrun: TestRun, hub_url: str, timeout: int):
+def run_tests(testrun: TestRunDetail, timeout: int):
     mainhttp = get_cykube_session()
     while True:
-        r = requests.get(f'{hub_url}/testrun/{testrun.id}/next')
+        r = mainhttp.get(f'{CYKUBE_API_URL}/hub/testrun/{testrun.id}/next')
         if r.status_code == 204:
             # we're done
             break
@@ -246,33 +268,35 @@ def main():
     parser.add_argument('--timeout', required=False, type=int,
                         default=int(os.environ.get('BUILD_TIMEOUT', 30 * 60)),
                         help='Build timeout, in seconds')
-    parser.add_argument('--hub-url', dest='hub', type=str,
-                        default=os.environ.get('HUB_URL', 'http://127.0.0.1:5000'))
     parser.add_argument('--cache-url', dest='cache', type=str,
                         default=os.environ.get('HUB_URL', 'http://127.0.0.1:5001'))
 
     args = parser.parse_args()
     # fetch dist first
-    testrun = fetch_dist(args.id, args.sha, args.timeout, args.hub, args.cache)
+    testrun = fetch_dist(args.id, args.sha, args.timeout, args.cache)
     # start the server
     proc = start_server(testrun)
 
     try:
         # now fetch specs until we're done or the build is cancelled
-        run_tests(testrun, args.hub, args.timeout)
-    except BuildFailed as ex:
+        run_tests(testrun, args.timeout)
+    except Exception as ex:
         # TODO inform the server
-        logging.error(ex.reason)
+        logging.error(ex)
+        if proc:
+            proc.kill()
+            proc = None
     finally:
         # kill the server
-        proc.kill()
-
-    sys.exit(0)
+        if proc:
+            proc.kill()
 
 
 if __name__ == '__main__':
     try:
         main()
+        sys.exit(0)
     except Exception as ex:
         # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
+        print(ex)
         sys.exit(1)
