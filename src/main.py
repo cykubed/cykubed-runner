@@ -261,6 +261,14 @@ def run_tests(testrun: TestRunDetail, timeout: int):
     mainhttp.close()
 
 
+def test_upload():
+    spec = 'cypress/e2e/stuff/test1.spec.ts'
+    r = requests.get(f'{CYKUBE_API_URL}/testrun/88', headers=cykube_headers)
+    testrun = TestRunDetail(**r.json())
+    result = parse_results(datetime.datetime.now(), spec)
+    upload_results(testrun.id, 22, result)
+
+
 def main():
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('id', help='Test run ID')
@@ -295,6 +303,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+        # test_upload()
         sys.exit(0)
     except Exception as ex:
         # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
