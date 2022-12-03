@@ -87,7 +87,7 @@ function clean(test) {
 
   return {
     title: test.title,
-    fullTitle: test.fullTitle(),
+    context: test.parent?.title,
     file: test.file,
     duration: test.duration,
     currentRetry: test.currentRetry(),

@@ -1,0 +1,195 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 3,
+    "passes": 1,
+    "pending": 1,
+    "failures": 2,
+    "start": "2022-12-03T12:23:17.525Z",
+    "end": "2022-12-03T12:23:34.924Z",
+    "duration": 17399
+  },
+  "tests": [
+    {
+      "title": "should have the correct title",
+      "context": "test context",
+      "file": null,
+      "duration": 570,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "this will fail",
+      "context": "test context",
+      "file": null,
+      "duration": 4194,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:13:17)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 13,
+            "column": 17,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 13,
+          "column": 18,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | \n  16 |   it.skip('this will be skipped', () => {",
+          "language": "ts"
+        }
+      }
+    },
+    {
+      "title": "this will also fail",
+      "context": "test context",
+      "file": null,
+      "duration": 4207,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:21:17)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 21,
+            "column": 17,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 21,
+          "column": 18,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "  19 | \n  20 |   it('this will also fail', () => {\n> 21 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  22 |   });\n  23 | });\n  24 | ",
+          "language": "ts"
+        }
+      }
+    }
+  ],
+  "pending": [
+    {
+      "title": "this will be skipped",
+      "context": "test context",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
+  "failures": [
+    {
+      "title": "this will fail",
+      "context": "test context",
+      "file": null,
+      "duration": 4181,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:13:17)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 13,
+            "column": 17,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 13,
+          "column": 18,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | \n  16 |   it.skip('this will be skipped', () => {",
+          "language": "ts"
+        }
+      }
+    },
+    {
+      "title": "this will also fail",
+      "context": "test context",
+      "file": null,
+      "duration": 4180,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+        "type": "existence",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:21:17)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 21,
+            "column": 17,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 21,
+          "column": 18,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "  19 | \n  20 |   it('this will also fail', () => {\n> 21 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  22 |   });\n  23 | });\n  24 | ",
+          "language": "ts"
+        }
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "should have the correct title",
+      "context": "test context",
+      "file": null,
+      "duration": 570,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ]
+}

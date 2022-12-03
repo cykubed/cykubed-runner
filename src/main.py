@@ -130,6 +130,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                 continue
 
             result = TestResult(title=test['title'],
+                                context=test['context'],
                                 status=TestResultStatus.failed if err else TestResultStatus.passed,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
@@ -137,24 +138,17 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 finished_at=datetime.datetime.now().isoformat())
 
             filename = os.path.split(spec)[-1]
-            prefix = os.path.join(get_screenshots_folder(), filename)
-            screenshot_files = []
-            if os.path.exists(prefix):
-                screenshot_files = list(os.listdir(prefix))
-
-            failure_sshot = None
-            manual_sshots = []
-            for sshot in screenshot_files:
-                if '(failed)' in sshot:
-                    failure_sshot = sshot
-                # else:
-                #     manual_sshots.append(sshot)
-
-            # if manual_sshots:
-            #     result.manual_screenshots = manual_sshots
+            sshots_folder = os.path.join(get_screenshots_folder(), filename)
 
             if err:
                 # check for screenshots
+                suffix = '' if not result.retry else f' (attempt {result.retry + 1})'
+                failure_sshot = os.path.join(sshots_folder, f'{result.context} -- {result.title} (failed){suffix}.png')
+                if not os.path.exists(failure_sshot):
+                    failure_sshot = None
+                else:
+                    failure_sshot = failure_sshot[len(get_screenshots_folder())+1:]
+
                 frame = err['codeFrame']
                 result.error = TestResultError(title=err['name'],
                                                type=err['type'],
@@ -176,6 +170,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     # add skipped
     for skipped in rawjson.get('pending', []):
         tests.append(TestResult(status=TestResultStatus.skipped,
+                                context=skipped['context'],
                                 title=skipped['title']))
 
     return SpecResult(file=spec, tests=tests)
