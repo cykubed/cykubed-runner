@@ -59,24 +59,28 @@ def test_fetch_dist():
         "branch": "master",
         "sha": "sha",
         "project": {
-
+            "id": 40,
+            "name": "dummy",
+            "platform": "github",
+            "url": "git@github.com:nickbrook72/dummyui.git",
+            "parallelism": 4,
+            "build_cmd": "ng build",
+            "server_cmd": "ng serve",
+            "server_port": 4200,
         },
+        "total_files": 2,
+        "completed_files": 0,
+        "progress_percentage": 0,
         "status": "running",
-        "server_port": 4200,
-        "url": "https://my.git.repos/blah.git",
-        "parallelism": 10,
         "started": "2022-05-01T15:00:12",
-        "active": True,
-        "project_id": 40,
+        "active": True
     })
     with open(FIXTURE_DIR+'/dummy-dist.tgz', 'rb') as f:
         data = f.read()
 
-    responses.add(responses.GET, 'http://cykubehub:5003/sha.tgz', body=data)
-    tempdir = tempfile.mkdtemp()
-    os.chdir(tempdir)
+    responses.add(responses.GET, 'http://cykubehub:5003/sha.tar.lz4', body=data)
     tr = main.fetch_dist(100, 'sha', 100, 'http://cykubehub:5003')
-    files = list(os.listdir(tempdir+'/build/dist'))
+    files = list(os.listdir(main.BUILD_DIR+'/dist'))
     assert set(files) == {'one.txt', 'two.txt'}
     assert tr.status == 'running'
 
