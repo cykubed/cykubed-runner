@@ -15,7 +15,6 @@ from httpx import HTTPError
 
 from common.enums import TestResultStatus
 from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
-from common.utils import DateTimeEncoder
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', '/tmp/cykube/results')
@@ -254,14 +253,6 @@ async def run_tests(testrun: TestRunDetail):
                     raise BuildFailed("Exceeded run timeout")
             else:
                 raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
-
-#
-# def test_upload():
-#     spec = 'cypress/e2e/stuff/test1.spec.ts'
-#     r = requests.get(f'{CYKUBE_API_URL}/testrun/88', headers=cykube_headers)
-#     testrun = TestRunDetail(**r.json())
-#     result = parse_results(datetime.datetime.now(), spec)
-#     upload_results(testrun.id, 22, result)
 
 
 async def run(testrun_id: int, sha: str):
