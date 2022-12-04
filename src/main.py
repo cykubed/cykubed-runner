@@ -78,8 +78,7 @@ def fetch_dist(id: int, sha: str, timeout: int, cache_url: str) -> TestRunDetail
                 shutil.copyfileobj(r.raw, outfile)
                 outfile.flush()
                 # untar
-                subprocess.check_call(['/usr/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
-
+                subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
             return testrun
         elif status != 'building':
             raise BuildFailed("Build failed or cancelled: quit")
