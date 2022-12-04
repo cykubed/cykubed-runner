@@ -12,9 +12,11 @@ from time import time, sleep
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from requests_toolbelt import MultipartEncoder
 
 from common.enums import TestResultStatus
 from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
+from common.utils import DateTimeEncoder
 
 HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
 RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', '/tmp/cykube/results')
@@ -202,9 +204,10 @@ def run_cypress(file: str, timeout: int):
 
 
 def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Session = None):
-    files = dict()
     if not session:
         session = get_cykube_session()
+
+    fields = [('result', json.dumps(result, cls=DateTimeEncoder), 'application/json')]
 
     for test in result.tests:
         if test.error:
@@ -213,16 +216,16 @@ def upload_results(testrun_id, spec_id, result: SpecResult, session: requests.Se
                 fullpath = os.path.join(get_screenshots_folder(),
                                         os.path.split(result.file)[-1],
                                         sshot)
-                files[sshot] = open(fullpath, 'rb')
+                fields.append((sshot, open(fullpath, 'rb'), 'image/png'))
             video = test.error.video
             if video:
                 fullpath = os.path.join(get_videos_folder(), video)
-                files[video] = open(fullpath, 'rb')
+                fields.append((video, open(fullpath, 'rb'), 'video/mp4'))
 
     try:
         r = session.post(f'{CYKUBE_API_URL}/hub/testrun/{testrun_id}/spec-completed/{spec_id}',
-                         data=result.json(),
-                         files=files)
+                         data=MultipartEncoder(fields),
+                         headers=cykube_headers)
         if not r.status_code == 200:
             raise BuildFailed(f'Test result post failed: {r.status_code}')
     except requests.RequestException:
