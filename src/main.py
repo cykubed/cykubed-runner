@@ -81,8 +81,9 @@ async def fetch_dist(id: int, sha: str) -> TestRunDetail:
                     if r.status_code != 200:
                         raise BuildFailed("Distribution missing")
                     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-                        shutil.copyfileobj(r.raw, outfile)
-                        outfile.flush()
+                        async for chunk in r.aiter_bytes():
+                            outfile.write(chunk)
+
                         # untar
                         subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
                 return testrun
