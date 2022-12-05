@@ -18,7 +18,7 @@ async def test_fetch_dist(testrun):
         data = f.read()
     cache_route = respx.get('http://127.0.0.1:5001/sha.tar.lz4')\
         .mock(return_value=Response(200, content=data))
-    await main.fetch_dist(100, 'sha')
+    await main.fetch_dist(100)
     assert tr_route.called
     assert cache_route.called
     files = list(os.listdir(main.BUILD_DIR+'/dist'))

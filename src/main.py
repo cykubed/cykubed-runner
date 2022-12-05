@@ -55,7 +55,7 @@ def get_cykube_client():
     return httpx.AsyncClient(headers=cykube_headers)
 
 
-async def fetch_dist(id: int, sha: str) -> TestRunDetail:
+async def fetch_dist(id: int) -> TestRunDetail:
     """
     Fetch the distribution from the cache server
     :param sha: commit SHA
@@ -75,7 +75,7 @@ async def fetch_dist(id: int, sha: str) -> TestRunDetail:
             status = testrun.status
             if status == 'running':
                 # fetch the dist
-                async with client.stream('GET', f'{CACHE_URL}/{sha}.tar.lz4') as r:
+                async with client.stream('GET', f'{CACHE_URL}/{testrun.sha}.tar.lz4') as r:
                     if r.status_code != 200:
                         raise BuildFailed("Distribution missing")
                     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
@@ -253,9 +253,9 @@ async def run_tests(testrun: TestRunDetail):
                 raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
 
 
-async def run(testrun_id: int, sha: str):
+async def run(testrun_id: int):
     # fetch the distribution
-    testrun = await fetch_dist(testrun_id, sha)
+    testrun = await fetch_dist(testrun_id)
     # start the server
     proc = await start_server(testrun)
 
@@ -277,17 +277,15 @@ async def run(testrun_id: int, sha: str):
 def main():
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('id', help='Test run ID')
-    parser.add_argument('sha', help='Commit SHA')
 
     args = parser.parse_args()
     # run in asyncio
-    asyncio.run(run(args.id, args.sha))
+    asyncio.run(run(args.id))
 
 
 if __name__ == '__main__':
     try:
         main()
-        # test_upload()
         sys.exit(0)
     except Exception as ex:
         # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
