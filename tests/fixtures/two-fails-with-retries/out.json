@@ -5,16 +5,16 @@
     "passes": 1,
     "pending": 1,
     "failures": 2,
-    "start": "2022-12-03T12:23:17.525Z",
-    "end": "2022-12-03T12:23:34.924Z",
-    "duration": 17399
+    "start": "2022-12-05T12:19:04.387Z",
+    "end": "2022-12-05T12:19:21.774Z",
+    "duration": 17387
   },
   "tests": [
     {
       "title": "should have the correct title",
       "context": "test context",
       "file": null,
-      "duration": 570,
+      "duration": 693,
       "currentRetry": 0,
       "err": {}
     },
@@ -22,7 +22,7 @@
       "title": "this will fail",
       "context": "test context",
       "file": null,
-      "duration": 4194,
+      "duration": 4172,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
@@ -60,7 +60,7 @@
       "title": "this will also fail",
       "context": "test context",
       "file": null,
-      "duration": 4207,
+      "duration": 4160,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
@@ -109,7 +109,7 @@
       "title": "this will fail",
       "context": "test context",
       "file": null,
-      "duration": 4181,
+      "duration": 4153,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
@@ -147,7 +147,7 @@
       "title": "this will also fail",
       "context": "test context",
       "file": null,
-      "duration": 4180,
+      "duration": 4143,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.",
@@ -187,7 +187,7 @@
       "title": "should have the correct title",
       "context": "test context",
       "file": null,
-      "duration": 570,
+      "duration": 693,
       "currentRetry": 0,
       "err": {}
     }

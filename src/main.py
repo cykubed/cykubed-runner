@@ -21,7 +21,7 @@ RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', '/tmp/cykube/results')
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
 
-BUILD_DIR='/tmp/cykube/build'
+BUILD_DIR = '/tmp/cykube/build'
 
 TOKEN = os.environ.get('API_TOKEN')
 CYKUBE_API_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net/api')
@@ -52,9 +52,7 @@ def init_build_dirs():
 
 
 def get_cykube_client():
-    client = httpx.AsyncClient()
-    client.headers = cykube_headers
-    return client
+    return httpx.AsyncClient(headers=cykube_headers)
 
 
 async def fetch_dist(id: int, sha: str) -> TestRunDetail:
@@ -84,6 +82,9 @@ async def fetch_dist(id: int, sha: str) -> TestRunDetail:
                         async for chunk in r.aiter_bytes():
                             outfile.write(chunk)
 
+                        outfile.flush()
+                        if not os.path.getsize(outfile.name):
+                            raise BuildFailed("Zero-length dist file")
                         # untar
                         subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
                 return testrun
@@ -168,11 +169,6 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                                                     language=frame['language'],
                                                                     frame=frame['frame']))
 
-                if os.path.exists(get_videos_folder()):
-                    video_files = list(os.listdir(get_videos_folder()))
-                    if video_files:
-                        # just pick the first one (should be only 1 surely?)
-                        result.error.video = video_files[0]
             tests.append(result)
 
     # add skipped
@@ -181,7 +177,11 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 context=skipped['context'],
                                 title=skipped['title']))
 
-    return SpecResult(file=spec, tests=tests)
+    result = SpecResult(file=spec, tests=tests)
+    video_path = os.path.join(get_videos_folder(), filename + '.mp4')
+    if os.path.exists(video_path):
+        result.video = video_path[len(get_videos_folder()) + 1:]
+    return result
 
 
 def run_cypress(file: str):
@@ -196,43 +196,40 @@ def run_cypress(file: str):
         logging.info('Cypress run failed: ' + result.stderr.decode())
 
 
-async def upload_results(spec_id, result: SpecResult, client: httpx.AsyncClient):
+async def upload_results(spec_id, result: SpecResult):
 
     upload_url = f'{CYKUBE_API_URL}/hub/testrun/spec/{spec_id}/upload'
 
-    for test in result.tests:
-        if test.error:
-            sshot = test.error.screenshot
-            if sshot:
-                fullpath = os.path.join(get_screenshots_folder(),
-                                        os.path.split(result.file)[-1],
-                                        sshot)
-                r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')})
-                if r.status_code != 200:
-                    raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
+    async with get_cykube_client() as client:
+        for test in result.tests:
+            if test.error:
+                sshot = test.error.screenshot
+                if sshot:
+                    fullpath = os.path.join(get_screenshots_folder(), sshot)
+                    r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')})
+                    if r.status_code != 200:
+                        raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
 
-            video = test.error.video
-            if video:
-                fullpath = os.path.join(get_videos_folder(), video)
-                r = await client.post(upload_url, files={'file': (video, open(fullpath, 'rb'), 'video/mp4')})
-                if r.status_code != 200:
-                    raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
+        if result.video:
+            fullpath = os.path.join(get_videos_folder(), result.video)
+            r = await client.post(upload_url, files={'file': (result.video, open(fullpath, 'rb'), 'video/mp4')})
+            if r.status_code != 200:
+                raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
 
-    # finally upload result
-    try:
-        r = await client.post(f'{CYKUBE_API_URL}/hub/testrun/spec/{spec_id}/completed',
-                              data=result.json().encode('utf8'))
-        if not r.status_code == 200:
-            raise BuildFailed(f'Test result post failed: {r.status_code}')
-    except HTTPError:
-        raise BuildFailed(f'Failed to contact Cykube server')
+        # finally upload result
+        try:
+            r = await client.post(f'{CYKUBE_API_URL}/hub/testrun/spec/{spec_id}/completed',
+                                  data=result.json().encode('utf8'))
+            if not r.status_code == 200:
+                raise BuildFailed(f'Test result post failed: {r.status_code}')
+        except HTTPError:
+            raise BuildFailed(f'Failed to contact Cykube server')
 
 
 async def run_tests(testrun: TestRunDetail):
 
     while True:
-        async with httpx.AsyncClient() as client:
-            client.headers = cykube_headers
+        async with get_cykube_client() as client:
             r = await client.get(f'{CYKUBE_API_URL}/hub/testrun/{testrun.id}/next')
             if r.status_code == 204:
                 # we're done
@@ -244,7 +241,7 @@ async def run_tests(testrun: TestRunDetail):
                     started_at = datetime.datetime.now()
                     run_cypress(spec['file'])
                     result = parse_results(started_at, spec['file'])
-                    await upload_results(spec['id'], result, client)
+                    await upload_results(spec['id'], result)
                     # cleanup
                     shutil.rmtree(RESULTS_FOLDER, ignore_errors=True)
 
