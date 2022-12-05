@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 from time import time, sleep
 
@@ -206,13 +205,16 @@ async def upload_results(spec_id, result: SpecResult):
                 sshot = test.error.screenshot
                 if sshot:
                     fullpath = os.path.join(get_screenshots_folder(), sshot)
-                    r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')})
+                    r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')},
+                                          headers={'filename': sshot})
+
                     if r.status_code != 200:
                         raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
 
         if result.video:
             fullpath = os.path.join(get_videos_folder(), result.video)
-            r = await client.post(upload_url, files={'file': (result.video, open(fullpath, 'rb'), 'video/mp4')})
+            r = await client.post(upload_url, files={'file': (result.video, open(fullpath, 'rb'), 'video/mp4')},
+                                  headers={'filename': result.video})
             if r.status_code != 200:
                 raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
 
@@ -284,10 +286,12 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-        sys.exit(0)
-    except Exception as ex:
-        # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
-        print(ex)
-        sys.exit(1)
+    asyncio.run(dummy_upload())
+    #
+    # try:
+    #     main()
+    #     sys.exit(0)
+    # except Exception as ex:
+    #     # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
+    #     print(ex)
+    #     sys.exit(1)

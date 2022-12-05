@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.10"
 pydantic = "^1.10.2"
 httpx = "^0.23.1"
+aiofile = "^3.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
