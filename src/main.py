@@ -2,15 +2,16 @@ import argparse
 import asyncio
 import datetime
 import json
-import logging
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from time import time, sleep
 
 import httpx
 from httpx import HTTPError
+from loguru import logger
 
 from common.enums import TestResultStatus
 from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
@@ -63,7 +64,7 @@ async def fetch_dist(id: int) -> TestRunDetail:
     """
     init_build_dirs()
     endtime = time() + DIST_BUILD_TIMEOUT
-    logging.info("Waiting for build")
+    logger.info("Waiting for build")
     while time() < endtime:
         async with get_cykube_client() as client:
             r = await client.get(f'{CYKUBE_API_URL}/testrun/{id}')
@@ -77,6 +78,7 @@ async def fetch_dist(id: int) -> TestRunDetail:
                 async with client.stream('GET', f'{CACHE_URL}/{testrun.sha}.tar.lz4') as r:
                     if r.status_code != 200:
                         raise BuildFailed("Distribution missing")
+                    logger.info('Fetch distribution')
                     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
                         async for chunk in r.aiter_bytes():
                             outfile.write(chunk)
@@ -86,6 +88,7 @@ async def fetch_dist(id: int) -> TestRunDetail:
                             raise BuildFailed("Zero-length dist file")
                         # untar
                         subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
+                        logger.info('Unpacked distribution')
                 return testrun
             elif status != 'building':
                 raise BuildFailed("Build failed or cancelled: quit")
@@ -113,17 +116,18 @@ async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
 
     # wait until it's ready
     endtime = time() + 60
-    logging.info("Waiting for server to be ready...")
+    logger.info("Waiting for server to be ready...")
     # wait 10 secs - trying to fetch from ng serve too soon can crash it
-    sleep(10)
+    await asyncio.sleep(5)
     while True:
-        with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient() as client:
             r = await client.get(f'http://localhost:{testrun.project.server_port}')
             if r.status_code != 200:
                 if time() > endtime:
                     raise BuildFailed('Failed to start server')
-                sleep(5)
+                await asyncio.sleep(5)
             else:
+                logger.info('Server is ready')
                 return proc
 
 
@@ -184,6 +188,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
 
 
 def run_cypress(file: str):
+    logger.info(f'Run Cypress for {file}')
     results_file = f'{RESULTS_FOLDER}/out.json'
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={REPORTER_FILE}',
@@ -192,12 +197,12 @@ def run_cypress(file: str):
                                    f'video=true,videosFolder={get_videos_folder()}'],
                             timeout=CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=BUILD_DIR)
     if result.returncode and result.stderr and not os.path.exists(results_file):
-        logging.info('Cypress run failed: ' + result.stderr.decode())
+        logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
 async def upload_results(spec_id, result: SpecResult):
 
-    upload_url = f'{CYKUBE_API_URL}/hub/testrun/spec/{spec_id}/upload'
+    upload_url = f'{CYKUBE_API_URL}/agent/testrun/spec/{spec_id}/upload'
 
     async with get_cykube_client() as client:
         for test in result.tests:
@@ -205,6 +210,7 @@ async def upload_results(spec_id, result: SpecResult):
                 sshot = test.error.screenshot
                 if sshot:
                     fullpath = os.path.join(get_screenshots_folder(), sshot)
+                    logger.info(f'Upload screenshot {sshot}')
                     r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')},
                                           headers={'filename': sshot})
 
@@ -213,6 +219,7 @@ async def upload_results(spec_id, result: SpecResult):
 
         if result.video:
             fullpath = os.path.join(get_videos_folder(), result.video)
+            logger.info(f'Upload video {result.video}')
             r = await client.post(upload_url, files={'file': (result.video, open(fullpath, 'rb'), 'video/mp4')},
                                   headers={'filename': result.video})
             if r.status_code != 200:
@@ -220,7 +227,8 @@ async def upload_results(spec_id, result: SpecResult):
 
         # finally upload result
         try:
-            r = await client.post(f'{CYKUBE_API_URL}/hub/testrun/spec/{spec_id}/completed',
+            logger.info(f'Upload JSON results')
+            r = await client.post(f'{CYKUBE_API_URL}/agent/testrun/spec/{spec_id}/completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
                 raise BuildFailed(f'Test result post failed: {r.status_code}')
@@ -232,7 +240,7 @@ async def run_tests(testrun: TestRunDetail):
 
     while True:
         async with get_cykube_client() as client:
-            r = await client.get(f'{CYKUBE_API_URL}/hub/testrun/{testrun.id}/next')
+            r = await client.get(f'{CYKUBE_API_URL}/agent/testrun/{testrun.id}/next')
             if r.status_code == 204:
                 # we're done
                 break
@@ -266,7 +274,7 @@ async def run(testrun_id: int):
         await run_tests(testrun)
     except Exception as ex:
         # TODO inform the server
-        logging.error(ex)
+        logger.error(ex)
         if proc:
             proc.kill()
             proc = None
@@ -279,19 +287,20 @@ async def run(testrun_id: int):
 def main():
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('id', help='Test run ID')
+    parser.add_argument('--loglevel', default='debug', help='Log level')
 
     args = parser.parse_args()
+
     # run in asyncio
     asyncio.run(run(args.id))
 
 
 if __name__ == '__main__':
-    asyncio.run(dummy_upload())
-    #
-    # try:
-    #     main()
-    #     sys.exit(0)
-    # except Exception as ex:
-    #     # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
-    #     print(ex)
-    #     sys.exit(1)
+    # asyncio.run(dummy_upload())
+    try:
+        main()
+        sys.exit(0)
+    except Exception as ex:
+        # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
+        print(ex)
+        sys.exit(1)
