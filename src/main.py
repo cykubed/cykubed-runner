@@ -272,9 +272,9 @@ async def run(testrun_id: int):
     try:
         # now fetch specs until we're done or the build is cancelled
         await run_tests(testrun)
-    except Exception as ex:
+    except BuildFailed as ex:
         # TODO inform the server
-        logger.error(ex)
+        logger.exception(ex)
         if proc:
             proc.kill()
             proc = None
