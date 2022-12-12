@@ -90,7 +90,7 @@ async def fetch_dist(id: int) -> TestRunDetail:
                         subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
                         logger.info('Unpacked distribution')
                 return testrun
-            elif status != 'building':
+            elif status in ['failed', 'cancelled']:
                 raise BuildFailed("Build failed or cancelled: quit")
 
         # otherwise sleep
