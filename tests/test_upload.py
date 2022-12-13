@@ -33,6 +33,8 @@ async def test_upload_results():
     completed_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/completed')\
         .mock(return_value=Response(200, json=result.json()))
     await main.upload_results(10, result)
+    assert result.video == 'test1.spec.ts.mp4'
+    assert result.tests[1].error.screenshot == 'test context -- this will fail (failed) (attempt 2).png'
     assert upload_route.call_count == 3
     assert completed_route.called
 

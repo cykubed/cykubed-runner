@@ -149,17 +149,20 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 started_at=started_at.isoformat(),
                                 finished_at=datetime.datetime.now().isoformat())
 
-            filename = os.path.split(spec)[-1]
-            sshots_folder = os.path.join(get_screenshots_folder(), filename)
-
             if err:
                 # check for screenshots
+                sshot_fnames = []
+                for root, dirs, files in os.walk(get_screenshots_folder()):
+                    sshot_fnames += [os.path.join(root, f) for f in files]
+
                 suffix = '' if not result.retry else f' (attempt {result.retry + 1})'
-                failure_sshot = os.path.join(sshots_folder, f'{result.context} -- {result.title} (failed){suffix}.png')
-                if not os.path.exists(failure_sshot):
-                    failure_sshot = None
-                else:
-                    failure_sshot = failure_sshot[len(get_screenshots_folder())+1:]
+                expected = f'{result.context} -- {result.title} (failed){suffix}.png'
+
+                failure_sshot = None
+                for fname in sshot_fnames:
+                    if os.path.split(fname)[-1] == expected:
+                        failure_sshot = fname
+                        break
 
                 frame = err['codeFrame']
                 result.error = TestResultError(title=err['name'],
@@ -181,9 +184,9 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 title=skipped['title']))
 
     result = SpecResult(file=spec, tests=tests)
-    video_path = os.path.join(get_videos_folder(), filename + '.mp4')
+    video_path = os.path.join(get_videos_folder(), spec + '.mp4')
     if os.path.exists(video_path):
-        result.video = video_path[len(get_videos_folder()) + 1:]
+        result.video = video_path
     return result
 
 
@@ -209,19 +212,22 @@ async def upload_results(spec_id, result: SpecResult):
             if test.error:
                 sshot = test.error.screenshot
                 if sshot:
-                    fullpath = os.path.join(get_screenshots_folder(), sshot)
-                    logger.info(f'Upload screenshot {sshot}')
-                    r = await client.post(upload_url, files={'file': (sshot, open(fullpath, 'rb'), 'image/png')},
-                                          headers={'filename': sshot})
+                    # this will be the full path - we'll upload the file but just use the filename
+                    filename = os.path.split(sshot)[-1]
+                    logger.info(f'Upload screenshot {filename}')
+                    r = await client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
+                                          headers={'filename': filename})
+                    test.error.screenshot = filename
 
                     if r.status_code != 200:
                         raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
 
         if result.video:
-            fullpath = os.path.join(get_videos_folder(), result.video)
-            logger.info(f'Upload video {result.video}')
-            r = await client.post(upload_url, files={'file': (result.video, open(fullpath, 'rb'), 'video/mp4')},
-                                  headers={'filename': result.video})
+            filename = os.path.split(result.video)[-1]
+            logger.info(f'Upload video {filename}')
+            r = await client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
+                                  headers={'filename': filename})
+            result.video = filename
             if r.status_code != 200:
                 raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
 

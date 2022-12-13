@@ -11,7 +11,10 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 @patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/two-fails-with-retries')
 def test_parse_fail():
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
-    assert result.video == 'test1.spec.ts.mp4'
+    # these will be the full paths
+    sshotdir = os.path.join(FIXTURE_DIR, 'two-fails-with-retries', 'screenshots')
+    viddir = os.path.join(FIXTURE_DIR, 'two-fails-with-retries', 'videos')
+    assert result.video == os.path.join(viddir, 'test1.spec.ts.mp4')
     assert result.file == 'test1.spec.ts'
     assert len(result.tests) == 4
     # first test passed
@@ -24,7 +27,7 @@ def test_parse_fail():
     assert test2.context == 'test context'
     assert test2.title == 'this will fail'
     assert test2.error.title == 'AssertionError'
-    assert test2.error.screenshot == 'test1.spec.ts/test context -- this will fail (failed) (attempt 2).png'
+    assert test2.error.screenshot == os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will fail (failed) (attempt 2).png')
     assert test2.error.message == 'Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.'
     assert test2.error.stack == '''AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.
     at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:13:17)'''
@@ -36,7 +39,7 @@ def test_parse_fail():
     test3 = result.tests[2]
     assert test3.status == TestResultStatus.failed
     assert test3.title == 'this will also fail'
-    assert test3.error.screenshot == 'test1.spec.ts/test context -- this will also fail (failed) (attempt 2).png'
+    assert test3.error.screenshot == os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed) (attempt 2).png')
 
     # 4th test skipped
     test4 = result.tests[3]
