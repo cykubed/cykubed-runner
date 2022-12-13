@@ -205,7 +205,7 @@ def run_cypress(file: str):
 
 async def upload_results(spec_id, result: SpecResult):
 
-    upload_url = f'{CYKUBE_API_URL}/agent/testrun/spec/{spec_id}/upload'
+    upload_url = f'{CYKUBE_API_URL}/agent/testrun/upload'
 
     async with get_cykube_client() as client:
         for test in result.tests:

@@ -30,7 +30,7 @@ async def test_fetch_dist(testrun):
 @patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/two-fails-with-retries')
 async def test_upload_results():
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
-    upload_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/upload').mock(
+    upload_route = respx.post('https://app.cykube.net/api/agent/testrun/upload').mock(
         return_value=httpx.Response(200, text='anewpath.png'))
     completed_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/completed')\
         .mock(return_value=Response(200, json=result.json()))
