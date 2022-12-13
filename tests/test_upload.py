@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from unittest.mock import patch
 
+import httpx
 import respx
 from httpx import Response
 
@@ -29,12 +30,14 @@ async def test_fetch_dist(testrun):
 @patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/two-fails-with-retries')
 async def test_upload_results():
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
-    upload_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/upload') % 200
+    upload_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/upload').mock(
+        return_value=httpx.Response(200, text='anewpath.png'))
     completed_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/completed')\
         .mock(return_value=Response(200, json=result.json()))
     await main.upload_results(10, result)
-    assert result.video == 'test1.spec.ts.mp4'
-    assert result.tests[1].error.screenshot == 'test context -- this will fail (failed) (attempt 2).png'
+    assert result.tests[1].error.screenshot == 'anewpath.png'
+    # in fact all paths will be set to this
+    assert result.video == 'anewpath.png'
     assert upload_route.call_count == 3
     assert completed_route.called
 

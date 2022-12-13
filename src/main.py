@@ -217,19 +217,20 @@ async def upload_results(spec_id, result: SpecResult):
                     logger.info(f'Upload screenshot {filename}')
                     r = await client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
                                           headers={'filename': filename})
-                    test.error.screenshot = filename
-
                     if r.status_code != 200:
+                        # TODO retry?
                         raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
+
+                    test.error.screenshot = r.text
 
         if result.video:
             filename = os.path.split(result.video)[-1]
             logger.info(f'Upload video {filename}')
             r = await client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
                                   headers={'filename': filename})
-            result.video = filename
             if r.status_code != 200:
                 raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
+            result.video = r.text
 
         # finally upload result
         try:
