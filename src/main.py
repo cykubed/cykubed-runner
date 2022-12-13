@@ -184,9 +184,13 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 title=skipped['title']))
 
     result = SpecResult(file=spec, tests=tests)
-    video_path = os.path.join(get_videos_folder(), spec + '.mp4')
-    if os.path.exists(video_path):
-        result.video = video_path
+    # we should have a single video
+    video_fnames = []
+    for root, dirs, files in os.walk(get_videos_folder()):
+        video_fnames += [os.path.join(root, f) for f in files]
+
+    if video_fnames:
+        result.video = video_fnames[0]
     return result
 
 
