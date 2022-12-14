@@ -133,6 +133,7 @@ async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     tests = []
+    failures = 0
     with open(os.path.join(RESULTS_FOLDER, 'out.json')) as f:
         rawjson = json.loads(f.read())
         for test in rawjson['tests']:
@@ -150,6 +151,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 finished_at=datetime.datetime.now().isoformat())
 
             if err:
+                failures += 1
                 # check for screenshots
                 sshot_fnames = []
                 for root, dirs, files in os.walk(get_screenshots_folder()):
@@ -183,14 +185,15 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 context=skipped['context'],
                                 title=skipped['title']))
 
-    result = SpecResult(file=spec, tests=tests)
-    # we should have a single video
-    video_fnames = []
-    for root, dirs, files in os.walk(get_videos_folder()):
-        video_fnames += [os.path.join(root, f) for f in files]
+    result = SpecResult(file=spec, tests=tests, failures=failures)
+    # we should have a single video - but only add it if we have failures
+    if failures:
+        video_fnames = []
+        for root, dirs, files in os.walk(get_videos_folder()):
+            video_fnames += [os.path.join(root, f) for f in files]
 
-    if video_fnames:
-        result.video = video_fnames[0]
+        if video_fnames:
+            result.video = video_fnames[0]
     return result
 
 
