@@ -7,7 +7,7 @@ import respx
 from httpx import Response
 
 import main
-from main import parse_results
+from run import parse_results
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 

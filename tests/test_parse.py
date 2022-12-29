@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from common.enums import TestResultStatus
-from main import parse_results
+from run import parse_results
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
