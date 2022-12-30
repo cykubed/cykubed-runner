@@ -14,16 +14,20 @@ class AppSettings(BaseSettings):
 
     TEST_RUN_TIMEOUT: int = 30 * 60
     SPEC_FILE_TIMEOUT: int = 5 * 60
+    DIST_BUILD_TIMEOUT: int = 10 * 60
     LOG_UPDATE_PERIOD = 2
+    HUB_POLL_PERIOD: int = 5
 
     BUILD_TIMEOUT: int = 900
 
     TEST_MODE: bool = True
 
-    HUB_URL: str = 'http://127.0.0.1:5000'
+    AGENT_URL: str = 'http://127.0.0.1:5000'
     CACHE_URL: str = 'http://127.0.0.1:5001'
 
     MAIN_API_URL: str = 'https://app.cykube.net/api'
+    BUILD_DIR = '/tmp/cykube/build'
+    RESULTS_FOLDER = '/tmp/cykube/results'
 
     DIST_CACHE_TTL_HOURS: int = 365*24
 

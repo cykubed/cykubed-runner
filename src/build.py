@@ -4,14 +4,18 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
+import time
 from shutil import copyfileobj
 
+import httpx
 from httpx import AsyncClient
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun
+from common.schemas import NewTestRun, TestRunDetail
+from jobs import create_runner_jobs
 from settings import settings
 from utils import runcmd, upload_to_cache
 
@@ -43,7 +47,7 @@ def get_lock_hash(build_dir):
     return m.hexdigest()
 
 
-async def create_node_environment(testrun: NewTestRun, builddir: str, http: AsyncClient):
+async def create_node_environment(testrun: NewTestRun, builddir: str):
     """
     Build the app. Uses a cache for node_modules
     """
@@ -54,7 +58,7 @@ async def create_node_environment(testrun: NewTestRun, builddir: str, http: Asyn
     lockhash = get_lock_hash(builddir)
 
     cache_filename = f'{lockhash}.tar.lz4'
-    async with http.stream(os.path.join(settings.CACHE_URL, cache_filename)) as resp:
+    async with AsyncClient().stream(os.path.join(settings.CACHE_URL, cache_filename)) as resp:
         if resp.status_code == 200:
             with tempfile.NamedTemporaryFile() as fdst:
                 copyfileobj(resp.raw, fdst)
@@ -74,7 +78,7 @@ async def create_node_environment(testrun: NewTestRun, builddir: str, http: Asyn
             tarfile = f'/tmp/{cache_filename}'
             runcmd(f'tar cf {tarfile} -I lz4 node_modules')
             # upload to cache
-            await upload_to_cache(http, tarfile)
+            await upload_to_cache(tarfile)
             os.remove(tarfile)
 
 
@@ -118,3 +122,76 @@ def get_specs(wdir):
     specs = [os.path.join(folder, s) for s in specs]
     return specs
 
+
+async def build_app(testrun: NewTestRun, wdir: str):
+    # build the app
+    runcmd(f'{testrun.project.build_cmd}', cwd=wdir)
+
+    # tar it up
+    logging.info("Create distribution and cleanup")
+    filename = f'/tmp/{testrun.sha}.tar.lz4'
+    # tarball everything
+    runcmd(f'tar cf {filename} . -I lz4', cwd=wdir)
+    # upload to cache
+    await upload_to_cache(filename)
+
+
+async def clone_and_build(testrun_id: int):
+    """
+    Clone and build
+    """
+
+    def post_status(status: str):
+        resp = httpx.put(f'{settings.AGENT_URL}/testrun/{testrun_id}/status/{status}')
+        if resp.status_code != 200:
+            raise BuildFailedException(f"Failed to update status for run {testrun_id}: bailing out")
+
+    r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}')
+    if r.status_code != 200:
+        raise BuildFailedException(f"Failed to fetch testrun {testrun_id}")
+
+    testrun = NewTestRun.parse_obj(r.json())
+    t = time.time()
+
+    try:
+        await post_status('building')
+
+        # clone
+        wdir = clone_repos(testrun.project.url, testrun.branch)
+        if not testrun.sha:
+            testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
+                                                  text=True).strip('\n')
+
+        # install node packages first (or fetch from cache)
+        await create_node_environment(testrun, wdir)
+
+        # now we can determine the specs
+        specs = get_specs(wdir)
+
+        # tell the agent
+        r = httpx.put(f'{settings.AGENT_URL}/testrun/{testrun.id}/specs',
+                                 json={'specs': specs, 'sha': testrun.sha})
+        if r.status_code != 200:
+            raise BuildFailedException("Failed to update agent with list of specs - bailing out")
+        testrun = TestRunDetail.parse_obj(r.json())
+
+        if not specs:
+            logging.info("No specs - nothing to test")
+            await post_status('passed')
+            return
+
+        # start the runner jobs - that way the cluster has a head start on spinning
+        # up new nodes
+        logging.info(f"Starting {testrun.project.parallelism} Jobs")
+        create_runner_jobs(testrun)
+
+        logging.info(f"Found {len(specs)} spec files: building the app")
+        await build_app(testrun, wdir)
+
+        # now we can run
+        await post_status('running')
+        t = time.time() - t
+        logging.info(f"Distribution created in {t:.1f}s")
+
+    except Exception as ex:
+        logging.exception("Failed to create build")

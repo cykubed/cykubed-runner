@@ -58,11 +58,12 @@ def runcmd(cmd: str, **kwargs):
     subprocess.check_call(cmd, shell=True, stderr=logfile, stdout=logfile, env=env, **kwargs)
 
 
-async def upload_to_cache(http: httpx.AsyncClient, file):
+async def upload_to_cache(file):
     # upload to cache
-    filename = os.path.split(file.name)[-1]
-    r = await http.post(os.path.join(settings.HUB_URL, '/upload'),
-                        files={'file': (filename, open(file, 'rb'), 'application/octet-stream')},
-                        headers={'filename': filename})
-    if r.status_code != 200:
-        raise BuildFailedException(f"Failed to upload {filename} to agent file cache")
+    async with httpx.AsyncClient() as http:
+        filename = os.path.split(file.name)[-1]
+        r = await http.post(os.path.join(settings.AGENT_URL, 'upload'),
+                            files={'file': (filename, open(file, 'rb'), 'application/octet-stream')},
+                            headers={'filename': filename})
+        if r.status_code != 200:
+            raise BuildFailedException(f"Failed to upload {filename} to agent file cache")

@@ -13,22 +13,21 @@ from loguru import logger
 
 from common.enums import TestResultStatus
 from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
+from settings import settings
 from utils import get_async_client
 
-HUB_POLL_PERIOD = int(os.environ.get('HUB_POLL_PERIOD', 10))
-RESULTS_FOLDER = os.environ.get('RESULTS_FOLDER', '/tmp/cykube/results')
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
 
-BUILD_DIR = '/tmp/cykube/build'
 
-TOKEN = os.environ.get('API_TOKEN')
-CYKUBE_API_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net/api')
-CACHE_URL = os.environ.get('CACHE_URL', 'http://127.0.0.1:5001')
-DIST_BUILD_TIMEOUT = os.environ.get('DIST_BUILD_TIMEOUT', 10*60)
-CYPRESS_RUN_TIMEOUT = os.environ.get('CYPRESS_RUN_TIMEOUT', 10*60)
+# TOKEN = os.environ.get('API_TOKEN')
+# AGENT_URL: str = os.environ.get('AGENT_URL', 'http://127.0.0.1:5000')
+# CYKUBE_API_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net/api')
+# CACHE_URL = os.environ.get('CACHE_URL', 'http://127.0.0.1:5001')
+# DIST_BUILD_TIMEOUT = os.environ.get('DIST_BUILD_TIMEOUT', 10*60)
+# CYPRESS_RUN_TIMEOUT = os.environ.get('CYPRESS_RUN_TIMEOUT', 10*60)
 
-cykube_headers = {'Authorization': f'Bearer {TOKEN}'}
+# cykube_headers = {'Authorization': f'Bearer {TOKEN}'}
 
 
 class BuildFailed(Exception):
@@ -36,16 +35,16 @@ class BuildFailed(Exception):
 
 
 def get_screenshots_folder():
-    return os.path.join(RESULTS_FOLDER, 'screenshots')
+    return os.path.join(settings.RESULTS_FOLDER, 'screenshots')
 
 
 def get_videos_folder():
-    return os.path.join(RESULTS_FOLDER, 'videos')
+    return os.path.join(settings.RESULTS_FOLDER, 'videos')
 
 
 def init_build_dirs():
-    shutil.rmtree(BUILD_DIR, ignore_errors=True)
-    os.makedirs(BUILD_DIR)
+    shutil.rmtree(settings.BUILD_DIR, ignore_errors=True)
+    os.makedirs(settings.BUILD_DIR)
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
@@ -57,12 +56,11 @@ async def fetch_dist(id: int) -> TestRunDetail:
     :return:
     """
     init_build_dirs()
-    endtime = time() + DIST_BUILD_TIMEOUT
+    endtime = time() + settings.DIST_BUILD_TIMEOUT
     logger.info("Waiting for build")
     while time() < endtime:
         async with get_async_client() as client:
-            # TODO it's a bit mad to spam the main server for this - I should proxy this in the agent
-            r = await client.get(f'{CYKUBE_API_URL}/testrun/{id}')
+            r = await client.get(f'{settings.AGENT_URL}/testrun/{id}')
             if r.status_code != 200:
                 raise BuildFailed(f"Failed to contact cykube: {r.status_code}")
 
@@ -70,7 +68,7 @@ async def fetch_dist(id: int) -> TestRunDetail:
             status = testrun.status
             if status == 'running':
                 # fetch the dist
-                async with client.stream('GET', f'{CACHE_URL}/{testrun.sha}.tar.lz4') as r:
+                async with client.stream('GET', f'{settings.CACHE_URL}/{testrun.sha}.tar.lz4') as r:
                     if r.status_code != 200:
                         raise BuildFailed("Distribution missing")
 
@@ -83,21 +81,21 @@ async def fetch_dist(id: int) -> TestRunDetail:
                         if not os.path.getsize(outfile.name):
                             raise BuildFailed("Zero-length dist file")
                         # untar
-                        subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=BUILD_DIR)
+                        subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=settings.BUILD_DIR)
                         logger.info('Unpacked distribution')
                 return testrun
             elif status in ['failed', 'cancelled']:
                 raise BuildFailed("Build failed or cancelled: quit")
 
         # otherwise sleep
-        sleep(HUB_POLL_PERIOD)
+        sleep(settings.HUB_POLL_PERIOD)
 
     raise BuildFailed("Reached timeout - quitting")
 
 
 def get_env():
     env = os.environ.copy()
-    env['PATH'] = f'{BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
+    env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
     return env
 
 
@@ -106,14 +104,15 @@ async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
     Start the server
     :return:
     """
-    proc = subprocess.Popen(testrun.project.server_cmd, shell=True, cwd=BUILD_DIR, env=get_env())
+    proc = subprocess.Popen(testrun.project.server_cmd, shell=True, cwd=settings.BUILD_DIR,
+                            env=get_env())
     if not proc.pid:
         raise BuildFailed("Cannot start server")
 
     # wait until it's ready
     endtime = time() + 60
     logger.info("Waiting for server to be ready...")
-    # wait 10 secs - trying to fetch from ng serve too soon can crash it
+    # wait 5 secs - trying to fetch from ng serve too soon can crash it (!)
     await asyncio.sleep(5)
     while True:
         async with httpx.AsyncClient() as client:
@@ -130,7 +129,7 @@ async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     tests = []
     failures = 0
-    with open(os.path.join(RESULTS_FOLDER, 'out.json')) as f:
+    with open(os.path.join(settings.RESULTS_FOLDER, 'out.json')) as f:
         rawjson = json.loads(f.read())
         for test in rawjson['tests']:
             err = test.get('err')
@@ -195,20 +194,20 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
 
 def run_cypress(file: str):
     logger.info(f'Run Cypress for {file}')
-    results_file = f'{RESULTS_FOLDER}/out.json'
+    results_file = f'{settings.RESULTS_FOLDER}/out.json'
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={REPORTER_FILE}',
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'video=true,videosFolder={get_videos_folder()}'],
-                            timeout=CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=BUILD_DIR)
+                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
 async def upload_results(spec_id, result: SpecResult):
 
-    upload_url = f'{CYKUBE_API_URL}/agent/testrun/upload'
+    upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload'
 
     async with get_async_client() as client:
         for test in result.tests:
@@ -238,7 +237,7 @@ async def upload_results(spec_id, result: SpecResult):
         # finally upload result
         try:
             logger.info(f'Upload JSON results')
-            r = await client.post(f'{CYKUBE_API_URL}/agent/testrun/spec/{spec_id}/completed',
+            r = await client.post(f'{settings.MAIN_API_URL}/agent/testrun/spec/{spec_id}/completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
                 raise BuildFailed(f'Test result post failed: {r.status_code}')
@@ -249,8 +248,8 @@ async def upload_results(spec_id, result: SpecResult):
 async def run_tests(testrun: TestRunDetail):
 
     while True:
-        async with get_async_client() as client:
-            r = await client.get(f'{CYKUBE_API_URL}/agent/testrun/{testrun.id}/next')
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f'{settings.AGENT_URL}/testrun/{testrun.id}/next-spec')
             if r.status_code == 204:
                 # we're done
                 break
@@ -263,7 +262,7 @@ async def run_tests(testrun: TestRunDetail):
                     result = parse_results(started_at, spec['file'])
                     await upload_results(spec['id'], result)
                     # cleanup
-                    shutil.rmtree(RESULTS_FOLDER, ignore_errors=True)
+                    shutil.rmtree(settings.RESULTS_FOLDER, ignore_errors=True)
 
                 except subprocess.CalledProcessError as ex:
                     raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')

@@ -3,8 +3,8 @@ import asyncio
 import logging
 import sys
 
-import clone
-import run
+import build
+import cypress
 from utils import start_log_thread
 
 
@@ -25,9 +25,9 @@ def main():
                         level=logging.getLevelName(args.loglevel.upper()))
 
     if cmd == 'build':
-        asyncio.run(clone.clone_and_build(args.id))
+        asyncio.run(build.clone_and_build(args.id))
     else:
-        asyncio.run(run.start(args.id))
+        asyncio.run(cypress.start(args.id))
 
 
 if __name__ == '__main__':

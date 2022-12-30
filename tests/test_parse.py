@@ -1,15 +1,16 @@
 import os
 from datetime import datetime
-from unittest.mock import patch
 
 from common.enums import TestResultStatus
-from run import parse_results
+from cypress import parse_results
+from settings import settings
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
-@patch('main.RESULTS_FOLDER', FIXTURE_DIR + '/two-fails-with-retries')
 def test_parse_fail():
+    settings.RESULTS_FOLDER = os.path.join(FIXTURE_DIR, 'two-fails-with-retries')
+
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
     # these will be the full paths
     sshotdir = os.path.join(FIXTURE_DIR, 'two-fails-with-retries', 'screenshots')
