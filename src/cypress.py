@@ -110,20 +110,28 @@ async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
         raise BuildFailed("Cannot start server")
 
     # wait until it's ready
-    endtime = time() + 60
+    endtime = time() + settings.SERVER_START_TIMEOUT
     logger.info("Waiting for server to be ready...")
     # wait 5 secs - trying to fetch from ng serve too soon can crash it (!)
     await asyncio.sleep(5)
     while True:
         async with httpx.AsyncClient() as client:
-            r = await client.get(f'http://localhost:{testrun.project.server_port}')
-            if r.status_code != 200:
-                if time() > endtime:
-                    raise BuildFailed('Failed to start server')
-                await asyncio.sleep(5)
-            else:
+            ready = False
+            try:
+                r = await client.get(f'http://localhost:{testrun.project.server_port}')
+                if r.status_code == 200:
+                    ready = True
+            except ConnectionRefusedError:
+                logger.info("...connection refused to server")
+                pass
+
+            if ready:
                 logger.info('Server is ready')
                 return proc
+
+            if time() > endtime:
+                raise BuildFailed('Failed to start server')
+            await asyncio.sleep(10)
 
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
