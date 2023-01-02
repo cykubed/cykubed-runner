@@ -5,7 +5,7 @@ import sys
 
 import build
 import cypress
-from utils import start_log_thread
+from common.logupload import start_log_thread
 
 
 def main():
