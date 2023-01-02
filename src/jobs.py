@@ -21,7 +21,7 @@ def create_runner_jobs(testrun: NewTestRun):
             limits={"cpu": testrun.project.runner_cpu,
                     "memory": testrun.project.runner_memory}
         ),
-        command=['run', str(testrun.id)],
+        command=['python', './main.py', 'run', str(testrun.id)],
     )
     pod_template = client.V1PodTemplateSpec(
         spec=client.V1PodSpec(restart_policy="Never",

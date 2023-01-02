@@ -1,11 +1,14 @@
 import argparse
 import asyncio
-import logging
 import sys
+
+import httpx
+from loguru import logger
 
 import build
 import cypress
-from common.logupload import start_log_thread
+from common.utils import get_headers
+from settings import settings
 
 
 def main():
@@ -18,16 +21,30 @@ def main():
 
     cmd = args.command
 
-    logfile = start_log_thread(args.id)
-    logging.basicConfig(filename=logfile.name,
-                        encoding='utf-8',
-                        format='%(levelname)s: %(message)s',
-                        level=logging.getLevelName(args.loglevel.upper()))
+    def publish(message):
+        r = httpx.post(f'{settings.MAIN_API_URL}/agent/testrun/{args.id}/logs',
+                       data=message, headers=get_headers())
+        if r.status_code != 200:
+            logger.error(f"Failed to push logs to server: {r.text}")
+
+    fmt = "{time} {level} {message}"
+    logger.add(publish, level="INFO", format=fmt)
+    logger.add(sys.stderr, level=args.loglevel.upper(), format=fmt)
 
     if cmd == 'build':
-        asyncio.run(build.clone_and_build(args.id))
+        try:
+            asyncio.run(build.clone_and_build(args.id))
+        except Exception:
+            logger.exception("Build failed")
+            build.post_status(args.id, 'failed')
+            sys.exit(1)
     else:
-        asyncio.run(cypress.start(args.id))
+        try:
+            asyncio.run(cypress.start(args.id))
+        except Exception:
+            logger.exception("Run failed")
+            build.post_status(args.id, 'failed')
+            sys.exit(1)
 
 
 if __name__ == '__main__':
