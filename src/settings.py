@@ -18,14 +18,14 @@ class AppSettings(BaseSettings):
     SERVER_START_TIMEOUT: int = 10 * 60
     LOG_UPDATE_PERIOD = 2
     HUB_POLL_PERIOD: int = 5
+    CYPRESS_RUN_TIMEOUT: int = 10*60
 
     BUILD_TIMEOUT: int = 900
 
-    TEST_MODE: bool = True
+    K8: bool = True
 
     AGENT_URL: str = 'http://127.0.0.1:5000'
     CACHE_URL: str = 'http://127.0.0.1:5001'
-
     MAIN_API_URL: str = 'https://app.cykube.net/api'
     BUILD_DIR = '/tmp/cykube/build'
     RESULTS_FOLDER = '/tmp/cykube/results'

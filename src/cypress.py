@@ -15,8 +15,9 @@ from loguru import logger
 
 from common.enums import TestResultStatus
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
+from common.utils import get_headers
 from settings import settings
-from utils import get_async_client, runcmd
+from utils import runcmd, get_sync_client
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
@@ -51,30 +52,29 @@ def init_build_dirs():
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-async def fetch_dist(id: int):
+def fetch_dist(id: int):
     """
     Fetch the distribution from the cache server
     :param id: test run ID
     :return:
     """
     init_build_dirs()
-    async with get_async_client() as client:
-        # fetch the dist
-        async with client.stream('GET', f'{settings.CACHE_URL}/{id}.tar.lz4') as r:
-            if r.status_code != 200:
-                raise BuildFailed("Distribution missing")
+    # fetch the dist
+    with httpx.stream('GET', f'{settings.CACHE_URL}/{id}.tar.lz4') as r:
+        if r.status_code != 200:
+            raise BuildFailed("Distribution missing")
 
-            logger.info('Fetch distribution')
-            with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-                async for chunk in r.aiter_bytes():
-                    outfile.write(chunk)
+        logger.info('Fetch distribution')
+        with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
+            for chunk in r.iter_bytes():
+                outfile.write(chunk)
 
-                outfile.flush()
-                if not os.path.getsize(outfile.name):
-                    raise BuildFailed("Zero-length dist file")
-                # untar
-                runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
-                logger.info('Unpacked distribution')
+            outfile.flush()
+            if not os.path.getsize(outfile.name):
+                raise BuildFailed("Zero-length dist file")
+            # untar
+            runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
+            logger.info('Unpacked distribution')
 
 
 def get_env():
@@ -85,13 +85,14 @@ def get_env():
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=settings.BUILD_DIR, **kwargs)
+        super().__init__(*args, directory=os.path.join(settings.BUILD_DIR, 'dist'), **kwargs)
 
 
 class ServerThread(threading.Thread):
     def run(self):
-        with socketserver.TCPServer(("", 4200), Handler) as httpd:
+        with socketserver.TCPServer(("", 0), Handler) as httpd:
             self.httpd = httpd
+            self.port = httpd.server_address[1]
             httpd.serve_forever()
 
     def stop(self):
@@ -116,7 +117,7 @@ def start_server() -> ServerThread:
     while True:
         ready = False
         try:
-            r = httpx.get(f'http://localhost:4200')
+            r = httpx.get(f'http://localhost:{server.port}')
             if r.status_code == 200:
                 ready = True
         except ConnectionRefusedError:
@@ -130,7 +131,7 @@ def start_server() -> ServerThread:
         if time() > endtime:
             server.stop()
             raise BuildFailed('Failed to start server')
-        sleep(10)
+        sleep(5)
 
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
@@ -199,24 +200,25 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     return result
 
 
-def run_cypress(file: str):
+def run_cypress(file: str, port: int):
     logger.info(f'Run Cypress for {file}')
     results_file = f'{settings.RESULTS_FOLDER}/out.json'
+    base_url = f'http://localhost:{port}'
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={REPORTER_FILE}',
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
-                                   f'video=true,videosFolder={get_videos_folder()}'],
+                                   f'baseUrl={base_url},video=true,videosFolder={get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
-async def upload_results(spec_id, result: SpecResult):
+def upload_results(spec_id, result: SpecResult):
 
     upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload'
 
-    async with get_async_client() as client:
+    with get_sync_client() as client:
         for test in result.tests:
             if test.error:
                 sshot = test.error.screenshot
@@ -224,8 +226,8 @@ async def upload_results(spec_id, result: SpecResult):
                     # this will be the full path - we'll upload the file but just use the filename
                     filename = os.path.split(sshot)[-1]
                     logger.info(f'Upload screenshot {filename}')
-                    r = await client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
-                                          headers={'filename': filename})
+                    r = client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
+                                  headers={'filename': filename})
                     if r.status_code != 200:
                         # TODO retry?
                         raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
@@ -235,8 +237,8 @@ async def upload_results(spec_id, result: SpecResult):
         if result.video:
             filename = os.path.split(result.video)[-1]
             logger.info(f'Upload video {filename}')
-            r = await client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
-                                  headers={'filename': filename})
+            r = client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
+                              headers={'filename': filename})
             if r.status_code != 200:
                 raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
             result.video = r.text
@@ -244,7 +246,7 @@ async def upload_results(spec_id, result: SpecResult):
         # finally upload result
         try:
             logger.info(f'Upload JSON results')
-            r = await client.post(f'{settings.MAIN_API_URL}/agent/testrun/spec/{spec_id}/completed',
+            r = client.post(f'{settings.MAIN_API_URL}/agent/testrun/spec/{spec_id}/completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
                 raise BuildFailed(f'Test result post failed: {r.status_code}')
@@ -252,42 +254,43 @@ async def upload_results(spec_id, result: SpecResult):
             raise BuildFailed(f'Failed to contact Cykube server')
 
 
-async def run_tests(id: int):
+def run_tests(id: int, port: int):
 
     while True:
-        async with httpx.AsyncClient() as client:
-            r = await client.get(f'{settings.MAIN_API_URL}/testrun/{id}/next')
-            if r.status_code == 204:
-                # we're done
-                break
-            elif r.status_code == 200:
-                # run the test
-                spec = r.json()
-                try:
-                    started_at = datetime.datetime.now()
-                    run_cypress(spec['file'])
-                    result = parse_results(started_at, spec['file'])
-                    await upload_results(spec['id'], result)
-                    # cleanup
-                    shutil.rmtree(settings.RESULTS_FOLDER, ignore_errors=True)
 
-                except subprocess.CalledProcessError as ex:
-                    raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')
-                except subprocess.TimeoutExpired:
-                    raise BuildFailed("Exceeded run timeout")
-            else:
-                raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
+        r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{id}/next', headers=get_headers())
+        if r.status_code == 204:
+            # we're done
+            break
+        elif r.status_code == 200:
+            # run the test
+            spec = r.json()
+            try:
+                started_at = datetime.datetime.now()
+                run_cypress(spec['file'], port)
+                result = parse_results(started_at, spec['file'])
+                upload_results(spec['id'], result)
+                # cleanup
+                shutil.rmtree(settings.RESULTS_FOLDER, ignore_errors=True)
+
+            except subprocess.CalledProcessError as ex:
+                raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')
+            except subprocess.TimeoutExpired:
+                raise BuildFailed("Exceeded run timeout")
+        else:
+            raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
 
 
-async def start(testrun_id: int):
+def start(testrun_id: int):
     # fetch the distribution
-    testrun = await fetch_dist(testrun_id)
+    fetch_dist(testrun_id)
     # start the server
     server = start_server()
 
     try:
         # now fetch specs until we're done or the build is cancelled
-        await run_tests(testrun_id)
+        logger.info(f"Server running on port {server.port}")
+        run_tests(testrun_id, server.port)
     except BuildFailed as ex:
         # TODO inform the server
         logger.exception(ex)

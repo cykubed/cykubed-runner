@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import sys
 
 import httpx
@@ -33,14 +32,14 @@ def main():
 
     if cmd == 'build':
         try:
-            asyncio.run(build.clone_and_build(args.id))
+            build.clone_and_build(args.id)
         except Exception:
             logger.exception("Build failed")
             build.post_status(args.id, 'failed')
             sys.exit(1)
     else:
         try:
-            asyncio.run(cypress.start(args.id))
+            cypress.start(args.id)
         except Exception:
             logger.exception("Run failed")
             build.post_status(args.id, 'failed')

@@ -8,12 +8,12 @@ import tempfile
 import time
 
 import httpx
-from httpx import AsyncClient
 from loguru import logger
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, TestRunDetail
+from common.utils import get_headers
 from jobs import create_runner_jobs
 from settings import settings
 from utils import runcmd, upload_to_cache
@@ -46,7 +46,7 @@ def get_lock_hash(build_dir):
     return m.hexdigest()
 
 
-async def create_node_environment(testrun: NewTestRun, builddir: str):
+def create_node_environment(testrun: NewTestRun, builddir: str):
     """
     Build the app. Uses a cache for node_modules
     """
@@ -59,12 +59,13 @@ async def create_node_environment(testrun: NewTestRun, builddir: str):
     cache_filename = f'{lockhash}.tar.lz4'
     url = os.path.join(settings.CACHE_URL, cache_filename)
     logger.info(f"Checking node_modules cache for {url}")
-    async with AsyncClient().stream('GET', url) as resp:
+
+    with httpx.stream('GET', url) as resp:
         if resp.status_code == 200:
             # unpack
             logger.info("Node cache hit: fetch and unpack")
             with tempfile.NamedTemporaryFile(suffix='.tar.lz4') as fdst:
-                async for chunk in resp.aiter_bytes():
+                for chunk in resp.iter_raw():
                     fdst.write(chunk)
                 runcmd(f'tar xf {fdst.name} -I lz4')
         else:
@@ -78,10 +79,10 @@ async def create_node_environment(testrun: NewTestRun, builddir: str):
 
             # tar up and store
             tarfile = f'/tmp/{cache_filename}'
-            runcmd(f'tar cf {tarfile} -I lz4 node_modules')
+            runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
             # upload to cache
             logger.info(f'Uploading node_modules cache')
-            await upload_to_cache(tarfile)
+            upload_to_cache(tarfile)
             logger.info(f'Cache uploaded')
             os.remove(tarfile)
 
@@ -127,35 +128,41 @@ def get_specs(wdir):
     return specs
 
 
-async def build_app(testrun: NewTestRun, wdir: str):
+def build_app(testrun: NewTestRun, wdir: str):
     # build the app
-    runcmd(f'{testrun.project.build_cmd}', cwd=wdir)
+    env = os.environ.copy()
+    env['PATH'] = './node_modules/.bin:' + env['PATH']
+    env['CYPRESS_CACHE_FOLDER'] = os.path.join(wdir, 'cypress_cache')
+    result = subprocess.run(testrun.project.build_cmd, shell=True, capture_output=True, env=env, encoding='utf8',
+                            cwd=wdir)
+    if result.returncode:
+        raise BuildFailedException("Failed:\n"+result.stderr)
 
     # tar it up
     logger.info("Create distribution and cleanup")
-    filename = f'/tmp/{testrun.sha}.tar.lz4'
+    filename = f'/tmp/{testrun.id}.tar.lz4'
     # tarball everything
     runcmd(f'tar cf {filename} . -I lz4', cwd=wdir)
     # upload to cache
-    await upload_to_cache(filename)
+    upload_to_cache(filename)
 
 
 def post_status(testrun_id: int, status: str):
-    resp = httpx.put(f'{settings.AGENT_URL}/testrun/{testrun_id}/status/{status}')
+    resp = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun_id}/status/{status}', headers=get_headers())
     if resp.status_code != 200:
         raise BuildFailedException(f"Failed to update status for run {testrun_id}: bailing out")
 
 
-async def clone_and_build(testrun_id: int):
+def clone_and_build(testrun_id: int):
     """
     Clone and build
     """
     logger.info(f'** Clone and build distribution for test run {testrun_id} **')
 
-    r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}')
+    r = httpx.get(f'{settings.MAIN_API_URL}/testrun/{testrun_id}', headers=get_headers())
     if r.status_code != 200:
-        logger.warning("Failed to fetch test run config from agent - quitting")
-        raise BuildFailedException(f"Failed to fetch testrun {testrun_id} status")
+        logger.warning("Failed to fetch test run config - quitting")
+        raise BuildFailedException(f"Failed to fetch testrun {testrun_id} status: {r.text}")
 
     testrun = NewTestRun.parse_obj(r.json())
     t = time.time()
@@ -169,16 +176,16 @@ async def clone_and_build(testrun_id: int):
                                               text=True).strip('\n')
 
     # install node packages first (or fetch from cache)
-    await create_node_environment(testrun, wdir)
+    create_node_environment(testrun, wdir)
 
     # now we can determine the specs
     specs = get_specs(wdir)
 
-    # tell the agent
-    r = httpx.put(f'{settings.AGENT_URL}/testrun/{testrun.id}/specs',
+    # tell cykube
+    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun.id}/specs', headers=get_headers(),
                              json={'specs': specs, 'sha': testrun.sha})
     if r.status_code != 200:
-        raise BuildFailedException(f"Failed to update agent with list of specs - bailing out: {r.text}")
+        raise BuildFailedException(f"Failed to update cykube with list of specs - bailing out: {r.text}")
     testrun = TestRunDetail.parse_obj(r.json())
 
     if not specs:
@@ -186,13 +193,14 @@ async def clone_and_build(testrun_id: int):
         post_status(testrun_id, 'passed')
         return
 
-    # start the runner jobs - that way the cluster has a head start on spinning
-    # up new nodes
-    logger.info(f"Starting {testrun.project.parallelism} Jobs")
-    create_runner_jobs(testrun)
-
     logger.info(f"Found {len(specs)} spec files: building the app")
-    await build_app(testrun, wdir)
+    build_app(testrun, wdir)
+
+    if settings.K8:
+        logger.info(f"Starting {testrun.project.parallelism} Jobs")
+        create_runner_jobs(testrun)
+    else:
+        logger.info(f'Start runner with "./main.py run {testrun_id}"')
 
     # now we can run
     post_status(testrun_id, 'running')
