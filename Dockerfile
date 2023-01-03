@@ -16,11 +16,18 @@ RUN apt-get install -y --no-install-recommends git-core bash curl lz4
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
-WORKDIR /usr/app
-ENV PATH="/usr/app/venv/bin:$PATH"
+RUN groupadd -g 999 python && \
+    useradd -r -u 999 -g python python
 
-COPY --from=build /usr/app/venv ./venv
+RUN mkdir /usr/app && chown python:python /usr/app
+WORKDIR /usr/app
+
+COPY --chown=python:python --from=build /usr/app/venv ./venv
+COPY --chown=python:python . .
+
+USER 999
+
+ENV PATH="/usr/app/venv/bin:$PATH"
 COPY src/ .
 
-
-CMD ["python", "./main.py"]
+ENTRYPOINT ["python", "./main.py"]
