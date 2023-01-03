@@ -19,19 +19,6 @@ from common.utils import get_headers
 from settings import settings
 from utils import runcmd, get_sync_client
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
-REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
-
-
-# TOKEN = os.environ.get('API_TOKEN')
-# AGENT_URL: str = os.environ.get('AGENT_URL', 'http://127.0.0.1:5000')
-# CYKUBE_API_URL = os.environ.get('CYKUBE_MAIN_URL', 'https://app.cykube.net/api')
-# CACHE_URL = os.environ.get('CACHE_URL', 'http://127.0.0.1:5001')
-# DIST_BUILD_TIMEOUT = os.environ.get('DIST_BUILD_TIMEOUT', 10*60)
-# CYPRESS_RUN_TIMEOUT = os.environ.get('CYPRESS_RUN_TIMEOUT', 10*60)
-
-# cykube_headers = {'Authorization': f'Bearer {TOKEN}'}
-
 
 class BuildFailed(Exception):
     pass
@@ -80,6 +67,7 @@ def fetch_dist(id: int):
 def get_env():
     env = os.environ.copy()
     env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
+    env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     return env
 
 
@@ -204,12 +192,15 @@ def run_cypress(file: str, port: int):
     logger.info(f'Run Cypress for {file}')
     results_file = f'{settings.RESULTS_FOLDER}/out.json'
     base_url = f'http://localhost:{port}'
+    json_reporter = os.path.abspath('json-reporter.js')
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
-                             f'--reporter={REPORTER_FILE}',
+                             f'--reporter={json_reporter}',
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=true,videosFolder={get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
+
+    logger.info(result.stdout)
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
