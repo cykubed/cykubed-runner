@@ -1,10 +1,12 @@
-import asyncio
 import datetime
 import json
 import os
 import shutil
+import socketserver
 import subprocess
 import tempfile
+import threading
+from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
 
 import httpx
@@ -12,9 +14,9 @@ from httpx import HTTPError
 from loguru import logger
 
 from common.enums import TestResultStatus
-from common.schemas import TestRunDetail, TestResult, TestResultError, CodeFrame, SpecResult
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
 from settings import settings
-from utils import get_async_client
+from utils import get_async_client, runcmd
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 REPORTER_FILE = os.path.abspath(os.path.join(ROOT_DIR, 'json-reporter.js'))
@@ -49,48 +51,30 @@ def init_build_dirs():
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-async def fetch_dist(id: int) -> TestRunDetail:
+async def fetch_dist(id: int):
     """
     Fetch the distribution from the cache server
     :param id: test run ID
     :return:
     """
     init_build_dirs()
-    endtime = time() + settings.DIST_BUILD_TIMEOUT
-    logger.info("Waiting for build")
-    while time() < endtime:
-        async with get_async_client() as client:
-            r = await client.get(f'{settings.AGENT_URL}/testrun/{id}')
+    async with get_async_client() as client:
+        # fetch the dist
+        async with client.stream('GET', f'{settings.CACHE_URL}/{id}.tar.lz4') as r:
             if r.status_code != 200:
-                raise BuildFailed(f"Failed to contact cykube: {r.status_code}")
+                raise BuildFailed("Distribution missing")
 
-            testrun = TestRunDetail.parse_obj(r.json())
-            status = testrun.status
-            if status == 'running':
-                # fetch the dist
-                async with client.stream('GET', f'{settings.CACHE_URL}/{testrun.sha}.tar.lz4') as r:
-                    if r.status_code != 200:
-                        raise BuildFailed("Distribution missing")
+            logger.info('Fetch distribution')
+            with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
+                async for chunk in r.aiter_bytes():
+                    outfile.write(chunk)
 
-                    logger.info('Fetch distribution')
-                    with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-                        async for chunk in r.aiter_bytes():
-                            outfile.write(chunk)
-
-                        outfile.flush()
-                        if not os.path.getsize(outfile.name):
-                            raise BuildFailed("Zero-length dist file")
-                        # untar
-                        subprocess.check_call(['/bin/tar', 'xf', outfile.name, '-I', 'lz4'], cwd=settings.BUILD_DIR)
-                        logger.info('Unpacked distribution')
-                return testrun
-            elif status in ['failed', 'cancelled']:
-                raise BuildFailed("Build failed or cancelled: quit")
-
-        # otherwise sleep
-        sleep(settings.HUB_POLL_PERIOD)
-
-    raise BuildFailed("Reached timeout - quitting")
+                outfile.flush()
+                if not os.path.getsize(outfile.name):
+                    raise BuildFailed("Zero-length dist file")
+                # untar
+                runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
+                logger.info('Unpacked distribution')
 
 
 def get_env():
@@ -99,39 +83,54 @@ def get_env():
     return env
 
 
-async def start_server(testrun: TestRunDetail) -> subprocess.Popen:
+class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=settings.BUILD_DIR, **kwargs)
+
+
+class ServerThread(threading.Thread):
+    def run(self):
+        with socketserver.TCPServer(("", 4200), Handler) as httpd:
+            self.httpd = httpd
+            httpd.serve_forever()
+
+    def stop(self):
+        self.httpd.shutdown()
+        self.join()
+
+
+def start_server() -> ServerThread:
     """
     Start the server
     :return:
     """
-    proc = subprocess.Popen(testrun.project.server_cmd, shell=True, cwd=settings.BUILD_DIR,
-                            env=get_env())
-    if not proc.pid:
-        raise BuildFailed("Cannot start server")
+
+    server = ServerThread()
+    server.start()
 
     # wait until it's ready
     endtime = time() + settings.SERVER_START_TIMEOUT
     logger.info("Waiting for server to be ready...")
     # wait 5 secs - trying to fetch from ng serve too soon can crash it (!)
-    await asyncio.sleep(5)
+    sleep(5)
     while True:
-        async with httpx.AsyncClient() as client:
-            ready = False
-            try:
-                r = await client.get(f'http://localhost:{testrun.project.server_port}')
-                if r.status_code == 200:
-                    ready = True
-            except ConnectionRefusedError:
-                logger.info("...connection refused to server")
-                pass
+        ready = False
+        try:
+            r = httpx.get(f'http://localhost:4200')
+            if r.status_code == 200:
+                ready = True
+        except ConnectionRefusedError:
+            logger.info("...connection refused to server")
+            pass
 
-            if ready:
-                logger.info('Server is ready')
-                return proc
+        if ready:
+            logger.info('Server is ready')
+            return server
 
-            if time() > endtime:
-                raise BuildFailed('Failed to start server')
-            await asyncio.sleep(10)
+        if time() > endtime:
+            server.stop()
+            raise BuildFailed('Failed to start server')
+        sleep(10)
 
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
@@ -253,11 +252,11 @@ async def upload_results(spec_id, result: SpecResult):
             raise BuildFailed(f'Failed to contact Cykube server')
 
 
-async def run_tests(testrun: TestRunDetail):
+async def run_tests(id: int):
 
     while True:
         async with httpx.AsyncClient() as client:
-            r = await client.get(f'{settings.AGENT_URL}/testrun/{testrun.id}/next-spec')
+            r = await client.get(f'{settings.MAIN_API_URL}/testrun/{id}/next')
             if r.status_code == 204:
                 # we're done
                 break
@@ -284,18 +283,14 @@ async def start(testrun_id: int):
     # fetch the distribution
     testrun = await fetch_dist(testrun_id)
     # start the server
-    proc = await start_server(testrun)
+    server = start_server()
 
     try:
         # now fetch specs until we're done or the build is cancelled
-        await run_tests(testrun)
+        await run_tests(testrun_id)
     except BuildFailed as ex:
         # TODO inform the server
         logger.exception(ex)
-        if proc:
-            proc.kill()
-            proc = None
     finally:
         # kill the server
-        if proc:
-            proc.kill()
+        server.stop()
