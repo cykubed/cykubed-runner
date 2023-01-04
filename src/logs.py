@@ -13,7 +13,7 @@ from settings import settings
 
 class PublishThread(threading.Thread):
     def __init__(self, testrun_id: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(daemon=True, *args, **kwargs)
         self.q = queue.Queue()
         self.testrun_id = testrun_id
 
