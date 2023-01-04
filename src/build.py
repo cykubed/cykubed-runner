@@ -96,8 +96,6 @@ def make_array(x):
 def get_specs(wdir):
     cyjson = os.path.join(wdir, 'cypress.json')
 
-    tscdir = None
-
     if os.path.exists(cyjson):
         with open(cyjson, 'r') as f:
             config = json.loads(f.read())
@@ -121,8 +119,6 @@ def get_specs(wdir):
     specs = glob.glob(include_globs, root_dir=os.path.join(wdir, folder),
                       flags=glob.BRACE, exclude=exclude_globs)
 
-    if tscdir:
-        shutil.rmtree(tscdir)
 
     specs = [os.path.join(folder, s) for s in specs]
     return specs
@@ -133,8 +129,8 @@ def build_app(testrun: NewTestRun, wdir: str):
     env = os.environ.copy()
     env['PATH'] = './node_modules/.bin:' + env['PATH']
     env['CYPRESS_CACHE_FOLDER'] = os.path.join(wdir, 'cypress_cache')
-    result = subprocess.run(testrun.project.build_cmd, shell=True, capture_output=True, env=env, encoding='utf8',
-                            cwd=wdir)
+    result = subprocess.run(testrun.project.build_cmd, shell=True, capture_output=True, env=env,
+                            encoding='utf8', cwd=wdir)
     if result.returncode:
         raise BuildFailedException("Failed:\n"+result.stderr)
 

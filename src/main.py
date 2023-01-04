@@ -1,11 +1,13 @@
 import argparse
 import sys
+import threading
 
 import httpx
 from loguru import logger
 
 import build
 import cypress
+import logs
 from common.utils import get_headers
 from settings import settings
 
@@ -20,15 +22,7 @@ def main():
 
     cmd = args.command
 
-    def publish(message):
-        r = httpx.post(f'{settings.MAIN_API_URL}/agent/testrun/{args.id}/logs',
-                       data=message, headers=get_headers())
-        if r.status_code != 200:
-            logger.error(f"Failed to push logs to server: {r.text}")
-
-    fmt = "{time} {level} {message}"
-    logger.add(publish, level="INFO", format=fmt)
-    logger.add(sys.stderr, level=args.loglevel.upper(), format=fmt)
+    logs.configure(args.id)
 
     if cmd == 'build':
         try:

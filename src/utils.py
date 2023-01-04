@@ -18,13 +18,14 @@ def get_async_client():
 
 
 def runcmd(cmd: str, **kwargs):
-    logger.info(cmd)
+    logger.debug(cmd)
     env = os.environ.copy()
     env['PATH'] = './node_modules/.bin:' + env['PATH']
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     result = subprocess.run(cmd, shell=True, capture_output=True, env=env, encoding='utf8', **kwargs)
     if result.returncode:
-        raise BuildFailedException("Failed:\n"+result.stderr)
+        logger.error(result.stderr)
+        raise BuildFailedException()
 
 
 def upload_to_cache(filepath):

@@ -13,19 +13,6 @@ FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
 @respx.mock
-async def test_fetch_dist_poll(testrun):
-    settings.HUB_POLL_PERIOD = 0.1
-    settings.DIST_BUILD_TIMEOUT = 0.1
-    testrun['status'] = 'building'
-    tr_route = respx.get('http://127.0.0.1:5000/testrun/100').mock(return_value=Response(200, json=testrun))
-    cache_route = respx.get('http://127.0.0.1:5001/sha.tar.lz4')
-    with pytest.raises(BuildFailed):
-        await fetch_dist(100)
-    assert tr_route.called
-    assert not cache_route.called
-
-
-@respx.mock
 async def test_fetch_dist(testrun):
     tr_route = respx.get('http://127.0.0.1:5000/testrun/100').mock(return_value=Response(200, json=testrun))
     with open(FIXTURE_DIR+'/dummy-dist.tar.lz4', 'rb') as f:

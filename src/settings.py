@@ -16,8 +16,7 @@ class AppSettings(BaseSettings):
     SPEC_FILE_TIMEOUT: int = 5 * 60
     DIST_BUILD_TIMEOUT: int = 10 * 60
     SERVER_START_TIMEOUT: int = 10 * 60
-    LOG_UPDATE_PERIOD = 2
-    HUB_POLL_PERIOD: int = 5
+    LOG_UPDATE_PERIOD = 5
     CYPRESS_RUN_TIMEOUT: int = 10*60
 
     BUILD_TIMEOUT: int = 900
