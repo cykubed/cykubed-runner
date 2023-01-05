@@ -18,8 +18,12 @@ def create_runner_jobs(testrun: NewTestRun):
         image_pull_policy='IfNotPresent',
         env=get_job_env(),
         resources=client.V1ResourceRequirements(
+            requests={"cpu": testrun.project.runner_cpu,
+                      "memory": testrun.project.runner_memory,
+                      "ephemeral-storage": "2Gi"},
             limits={"cpu": testrun.project.runner_cpu,
-                    "memory": testrun.project.runner_memory}
+                    "memory": testrun.project.runner_memory,
+                    "ephemeral-storage": "4Gi"}
         ),
         args=['run', str(testrun.id)],
     )
