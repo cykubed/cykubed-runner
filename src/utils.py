@@ -35,4 +35,5 @@ def upload_to_cache(filepath):
                         files={'file': (filename, open(filepath, 'rb'), 'application/octet-stream')},
                         headers={'filename': filename})
     if r.status_code != 200:
-        raise BuildFailedException(f"Failed to upload {filename} to agent file cache")
+        logger.error(f"Failed to upload {filename} to agent file cache: {r.status_code} {r.text}")
+        raise BuildFailedException()
