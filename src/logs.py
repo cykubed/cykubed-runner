@@ -1,5 +1,4 @@
-import queue
-import sys
+import logging
 import threading
 import time
 from logging import Handler, LogRecord
@@ -12,20 +11,26 @@ from settings import settings
 
 
 class PublishThread(threading.Thread):
-    def __init__(self, testrun_id: int, *args, **kwargs):
+    def __init__(self, testrun_id: int, flush_period=5, *args, **kwargs):
         super().__init__(daemon=True, *args, **kwargs)
-        self.q = queue.Queue()
+        self.buffer = []
+        self.period = flush_period
         self.testrun_id = testrun_id
 
-    def add(self, logs):
-        self.q.put(logs)
+    def add(self, record: LogRecord):
+        self.buffer.append(record)
 
     def run(self) -> None:
         while True:
-            logs = self.q.get()
-            httpx.post(f'{settings.MAIN_API_URL}/agent/testrun/{self.testrun_id}/logs',
-                           data=logs, headers=get_headers())
-            self.q.task_done()
+            try:
+                time.sleep(self.period)
+                if len(self.buffer):
+                    payload = "\n".join([x.msg for x in self.buffer]) + '\n'
+                    httpx.post(f'{settings.MAIN_API_URL}/agent/testrun/{self.testrun_id}/logs',
+                               content=payload, headers=get_headers())
+                    self.buffer.clear()
+            except Exception as ex:
+                logging.error(f"Failed to post logs: {ex}")
 
 
 class PublishLogHandler(Handler):
@@ -33,30 +38,26 @@ class PublishLogHandler(Handler):
     def handle(self, record: LogRecord) -> bool:
         return super().handle(record)
 
-    def __init__(self, testrun_id: int, flush_period=5, max_buffer=100, *args, **kwargs):
+    def __init__(self, testrun_id: int, flush_period=5, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.buffer = []
         self.testrun_id = testrun_id
-        self.last_time = None
-        self.flush_period = flush_period
-        self.max_buffer = max_buffer
-        self.publish_thread = PublishThread(testrun_id)
+        self.publish_thread = PublishThread(testrun_id, flush_period)
         self.publish_thread.start()
 
     def emit(self, record: LogRecord) -> None:
-        self.buffer.append(record)
-        now = time.time()
-        if self.last_time is None:
-            self.last_time = now
-
-        since_last = now - self.last_time
-        if len(self.buffer) > self.max_buffer or since_last > self.flush_period:
-            # flush, using a thread
-            self.publish_thread.add(self.buffer)
-            self.buffer.clear()
+        # flush, using a thread
+        self.publish_thread.add(record)
 
 
 def configure(testrun_id: int):
-    fmt = "{time:HH:mm:ss} {level} {message}"
+    fmt = "{time:HH:mm:ss.SSS} {level} {message}"
     logger.add(PublishLogHandler(testrun_id, settings.LOG_UPDATE_PERIOD),
-               level='DEBUG', format=fmt, serialize=True)
+               level='DEBUG', format=fmt)
+
+
+if __name__ == '__main__':
+    configure(12)
+    x = 200
+    for i in range(x, x+1000):
+        logger.info(f"This is a test: {i}")
+        time.sleep(0.5)
