@@ -1,15 +1,11 @@
 import argparse
 import sys
-import threading
 
-import httpx
 from loguru import logger
 
 import build
 import cypress
 import logs
-from common.utils import get_headers
-from settings import settings
 
 
 def main():
@@ -28,7 +24,7 @@ def main():
         try:
             build.clone_and_build(args.id)
         except Exception:
-            logger.exception("Build failed")
+            logger.exception("Build failed - bailing out")
             build.post_status(args.id, 'failed')
             sys.exit(1)
     else:
