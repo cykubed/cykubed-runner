@@ -18,7 +18,6 @@ def get_async_client():
 
 
 def runcmd(cmd: str, **kwargs):
-    logger.debug(cmd)
     env = os.environ.copy()
     env['PATH'] = './node_modules/.bin:' + env['PATH']
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
