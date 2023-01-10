@@ -4,9 +4,10 @@ from common.k8common import get_job_env, get_batch_api, NAMESPACE
 from common.schemas import NewTestRun
 
 
-def create_runner_jobs(testrun: NewTestRun):
+def create_runner_jobs(testrun: NewTestRun, lockhash: str):
     """
     Create runner jobs
+    :param lockhash: node modules hash
     :param testrun:
     :return:
     """
@@ -25,7 +26,7 @@ def create_runner_jobs(testrun: NewTestRun):
                     "memory": testrun.project.runner_memory,
                     "ephemeral-storage": "4Gi"}
         ),
-        args=['run', str(testrun.id)],
+        args=['run', str(testrun.id), lockhash],
     )
     pod_template = client.V1PodTemplateSpec(
         spec=client.V1PodSpec(restart_policy="Never",

@@ -4,7 +4,6 @@ import time
 from logging import Handler, LogRecord
 
 import httpx
-from loguru import logger
 
 from common.utils import get_headers
 from settings import settings
@@ -16,12 +15,13 @@ class PublishThread(threading.Thread):
         self.buffer = []
         self.period = flush_period
         self.testrun_id = testrun_id
+        self.running = True
 
     def add(self, record: LogRecord):
         self.buffer.append(record)
 
     def run(self) -> None:
-        while True:
+        while self.running:
             try:
                 time.sleep(self.period)
                 if len(self.buffer):
@@ -35,9 +35,6 @@ class PublishThread(threading.Thread):
 
 class PublishLogHandler(Handler):
 
-    def handle(self, record: LogRecord) -> bool:
-        return super().handle(record)
-
     def __init__(self, testrun_id: int, flush_period=5, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.testrun_id = testrun_id
@@ -48,16 +45,8 @@ class PublishLogHandler(Handler):
         # flush, using a thread
         self.publish_thread.add(record)
 
+    def close(self) -> None:
+        super().close()
+        self.publish_thread.running = False
+        self.publish_thread.join(timeout=10)
 
-def configure(testrun_id: int):
-    fmt = "{time:HH:mm:ss.SSS} {level} {message}"
-    logger.add(PublishLogHandler(testrun_id, settings.LOG_UPDATE_PERIOD),
-               level='DEBUG', format=fmt)
-
-
-if __name__ == '__main__':
-    configure(12)
-    x = 200
-    for i in range(x, x+1000):
-        logger.info(f"This is a test: {i}")
-        time.sleep(0.5)

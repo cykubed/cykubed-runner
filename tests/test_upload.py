@@ -2,11 +2,10 @@ import os
 from datetime import datetime
 
 import httpx
-import pytest
 import respx
 from httpx import Response
 
-from cypress import parse_results, upload_results, fetch_dist, BuildFailed
+from cypress import parse_results, upload_results, fetch
 from settings import settings
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -19,7 +18,7 @@ async def test_fetch_dist(testrun):
         data = f.read()
     cache_route = respx.get('http://127.0.0.1:5001/sha.tar.lz4')\
         .mock(return_value=Response(200, content=data))
-    await fetch_dist(100)
+    await fetch(100)
     assert tr_route.called
     assert cache_route.called
     files = list(os.listdir(os.path.join(settings.BUILD_DIR, 'dist')))

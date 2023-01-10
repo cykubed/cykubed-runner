@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import os
@@ -39,21 +40,12 @@ def init_build_dirs():
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-def fetch_dist(id: int):
-    """
-    Fetch the distribution from the cache server
-    :param id: test run ID
-    :return:
-    """
-    init_build_dirs()
-    # fetch the dist
-    with httpx.stream('GET', f'{settings.CACHE_URL}/{id}.tar.lz4') as r:
-        if r.status_code != 200:
-            raise BuildFailed("Distribution missing")
-
-        logger.info('Fetch distribution')
-        with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-            for chunk in r.iter_bytes():
+async def fetch_from_cache(path: str):
+    client = httpx.AsyncClient()
+    with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
+        logger.info(f'Fetch {path}')
+        async with client.stream('GET', f'{settings.CACHE_URL}/{path}.tar.lz4') as response:
+            async for chunk in response.aiter_bytes():
                 outfile.write(chunk)
 
             outfile.flush()
@@ -61,7 +53,16 @@ def fetch_dist(id: int):
                 raise BuildFailed("Zero-length dist file")
             # untar
             runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
-            logger.info('Unpacked distribution')
+            logger.info(f'Unpacked {path}')
+
+
+async def fetch(id: int, sha: str):
+    """
+    Fetch the node cache and distribution from the cache server
+    """
+    # fetch the dist
+    await asyncio.gather(fetch_from_cache(sha),
+                         fetch_from_cache(str(id)))
 
 
 def get_env():
@@ -200,7 +201,7 @@ def run_cypress(file: str, port: int):
                                    f'baseUrl={base_url},video=true,videosFolder={get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
 
-    logger.info(result.stdout)
+    logger.info(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
@@ -272,9 +273,10 @@ def run_tests(id: int, port: int):
             raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
 
 
-def start(testrun_id: int):
+def start(testrun_id: int, sha: str):
+    init_build_dirs()
     # fetch the distribution
-    fetch_dist(testrun_id)
+    asyncio.run(fetch(testrun_id, sha))
     # start the server
     server = start_server()
 

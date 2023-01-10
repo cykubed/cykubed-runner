@@ -2,7 +2,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import subprocess
 import tempfile
 import time
@@ -46,7 +45,7 @@ def get_lock_hash(build_dir):
     return m.hexdigest()
 
 
-def create_node_environment(testrun: NewTestRun, builddir: str):
+def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
     """
     Build the app. Uses a cache for node_modules
     """
@@ -85,6 +84,7 @@ def create_node_environment(testrun: NewTestRun, builddir: str):
             upload_to_cache(tarfile)
             logger.info(f'Cache uploaded')
             os.remove(tarfile)
+    return lockhash
 
 
 def make_array(x):
@@ -119,7 +119,6 @@ def get_specs(wdir):
     specs = glob.glob(include_globs, root_dir=os.path.join(wdir, folder),
                       flags=glob.BRACE, exclude=exclude_globs)
 
-
     specs = [os.path.join(folder, s) for s in specs]
     return specs
 
@@ -137,8 +136,8 @@ def build_app(testrun: NewTestRun, wdir: str):
     # tar it up
     logger.info("Create distribution and cleanup")
     filename = f'/tmp/{testrun.id}.tar.lz4'
-    # tarball everything
-    runcmd(f'tar cf {filename} . -I lz4', cwd=wdir)
+    # tarball everything bar the cached stuff
+    runcmd(f'tar cf {filename} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
     # upload to cache
     upload_to_cache(filename)
 
@@ -172,7 +171,7 @@ def clone_and_build(testrun_id: int):
                                               text=True).strip('\n')
 
     # install node packages first (or fetch from cache)
-    create_node_environment(testrun, wdir)
+    lockhash = create_node_environment(testrun, wdir)
 
     # now we can determine the specs
     specs = get_specs(wdir)
@@ -194,9 +193,9 @@ def clone_and_build(testrun_id: int):
 
     if settings.K8:
         logger.info(f"Starting {testrun.project.parallelism} Jobs")
-        create_runner_jobs(testrun)
+        create_runner_jobs(testrun, lockhash)
     else:
-        logger.info(f'Start runner with "./main.py run {testrun_id}"')
+        logger.info(f'Start runner with "./main.py run {testrun_id} {lockhash}"')
 
     # now we can run
     post_status(testrun_id, 'running')
