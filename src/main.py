@@ -7,7 +7,6 @@ from loguru import logger
 import build
 import cypress
 import logs
-from common import k8common
 from settings import settings
 
 
@@ -28,8 +27,6 @@ def main():
     args = parser.parse_args()
 
     cmd = args.command
-
-    k8common.init()
 
     fmt = "{time:HH:mm:ss.SSS} (" + cmd + ") {level} {message}"
     handler = logs.PublishLogHandler(args.id, settings.LOG_UPDATE_PERIOD)

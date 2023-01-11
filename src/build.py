@@ -11,9 +11,8 @@ from loguru import logger
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun, TestRunDetail
+from common.schemas import NewTestRun, TestRunDetail, CompletedBuild
 from common.utils import get_headers
-from jobs import create_runner_jobs
 from settings import settings
 from utils import runcmd, upload_to_cache
 
@@ -191,14 +190,10 @@ def clone_and_build(testrun_id: int):
     logger.info(f"Found {len(specs)} spec files: building the app")
     build_app(testrun, wdir)
 
-    if settings.K8:
-        logger.info(f"Starting {testrun.project.parallelism} Jobs")
-        create_runner_jobs(testrun, lockhash)
-    else:
-        logger.info(f'Start runner with "./main.py run {testrun_id} {lockhash}"')
-
-    # now we can run
-    post_status(testrun_id, 'running')
+    completed_build = CompletedBuild(testrun=testrun, cache_hash=lockhash)
+    r = httpx.post(f'{settings.AGENT_URL}/build-complete', data=completed_build.json())
+    if r.status_code != 200:
+        raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
     t = time.time() - t
     logger.info(f"Distribution created in {t:.1f}s")
 

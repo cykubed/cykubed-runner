@@ -27,9 +27,6 @@ RUN apt-get install --no-install-recommends -y \
   xvfb \
   # install text editors
   vim-tiny \
-  nano \
-  # install emoji font
-  fonts-noto-color-emoji \
   # install Chinese fonts
   # this list was copied from https://github.com/jim3ma/docker-leanote
   fonts-arphic-bkai00mp \
