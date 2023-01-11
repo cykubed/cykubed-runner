@@ -132,8 +132,17 @@ def build_app(testrun: NewTestRun, wdir: str):
     if result.returncode:
         raise BuildFailedException("Failed:\n"+result.stderr)
 
+    # check for dist and index file
+    distdir = os.path.join(wdir, 'dist')
+
+    if not os.path.exists(distdir):
+        raise BuildFailedException("No dist directory: please check your build command")
+
+    if not os.path.exists(os.path.join(distdir, 'index.html')):
+        raise BuildFailedException("Could not find index.html file in dist directory")
+
     # tar it up
-    logger.info("Create distribution and cleanup")
+    logger.info("Create distribution and upload")
     filename = f'/tmp/{testrun.id}.tar.lz4'
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filename} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
