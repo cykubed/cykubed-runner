@@ -246,11 +246,11 @@ def upload_results(spec_id, result: SpecResult):
             raise BuildFailed(f'Failed to contact Cykube server')
 
 
-def run_tests(id: int, port: int):
+def run_tests(project_id: int, local_id: int, port: int):
 
     while True:
 
-        r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{id}/next', headers=get_headers())
+        r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/next', headers=get_headers())
         if r.status_code == 204:
             # we're done
             break
@@ -283,7 +283,7 @@ def start(project_id: int, local_id: int, cache_key: str):
     try:
         # now fetch specs until we're done or the build is cancelled
         logger.info(f"Server running on port {server.port}")
-        run_tests(testrun_id, server.port)
+        run_tests(project_id, local_id, server.port)
     except BuildFailed as ex:
         # TODO inform the server
         logger.exception(ex)

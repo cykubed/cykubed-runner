@@ -7,6 +7,7 @@ from loguru import logger
 import build
 import cypress
 import logs
+from common.exceptions import BuildFailedException
 from settings import settings
 
 
@@ -44,6 +45,9 @@ def main():
         else:
             cypress.start(args.project_id, args.local_id, args.cache_key)
         return
+    except BuildFailedException as ex:
+        build.post_status(args.project_id, args.local_id, 'failed')
+        sys.exit(1)
     except Exception:
         logger.exception(f"{cmd.capitalize()} failed")
         build.post_status(args.project_id, args.local_id, 'failed')
