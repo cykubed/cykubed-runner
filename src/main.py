@@ -18,46 +18,37 @@ def main():
     subparsers.required = True
 
     build_parser = subparsers.add_parser('build')
-    build_parser.add_argument('id', help='Test run ID')
+    build_parser.add_argument('project_id', help='Project ID')
+    build_parser.add_argument('local_id', help='Test run local ID')
 
     run_parser = subparsers.add_parser('run')
-    run_parser.add_argument('id', help='Test run ID')
-    run_parser.add_argument('sha', help='SHA')
+    run_parser.add_argument('project_id', help='Project ID')
+    run_parser.add_argument('local_id', help='Test run local ID')
+    run_parser.add_argument('cache_key', help='Node cache key')
 
     args = parser.parse_args()
 
     cmd = args.command
 
-    fmt = "{time:HH:mm:ss.SSS} (" + cmd + ") {level} {message}"
-    handler = logs.PublishLogHandler(args.id, settings.LOG_UPDATE_PERIOD)
-    logger.add(handler,
-               level=args.loglevel.upper(), format=fmt)
+    try:
+        fmt = "{time:HH:mm:ss.SSS} (" + cmd + ") {level} {message}"
+        handler = logs.PublishLogHandler(args.project_id, args.local_id, settings.LOG_UPDATE_PERIOD)
+        logger.add(handler,
+                   level=args.loglevel.upper(), format=fmt)
 
-    if cmd == 'shell':
-        sleep(3600*24)
-        sys.exit(0)
-
-    if cmd == 'build':
-        try:
-            build.clone_and_build(args.id)
-        except Exception:
-            logger.exception("Build failed - bailing out")
-            build.post_status(args.id, 'failed')
-            sys.exit(1)
-    else:
-        try:
-            cypress.start(args.id, args.sha)
-        except Exception:
-            logger.exception("Run failed")
-            build.post_status(args.id, 'failed')
-            sys.exit(1)
+        if cmd == 'shell':
+            sleep(3600*24)
+            sys.exit(0)
+        elif cmd == 'build':
+            build.clone_and_build(args.project_id, args.local_id)
+        else:
+            cypress.start(args.project_id, args.local_id, args.cache_key)
+        return
+    except Exception:
+        logger.exception(f"{cmd.capitalize()} failed")
+        build.post_status(args.project_id, args.local_id, 'failed')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
-    try:
-        main()
-        sys.exit(0)
-    except Exception as ex:
-        # bail out with an error - if we hit an OOM or similar we'll want to rerun the parent Job
-        logger.exception(f"Failed: {ex}")
-        sys.exit(1)
+    main()

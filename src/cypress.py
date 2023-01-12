@@ -56,13 +56,13 @@ async def fetch_from_cache(path: str):
             logger.info(f'Unpacked {path}')
 
 
-async def fetch(id: int, sha: str):
+async def fetch(project_id: int, local_id: int, cache_key: str):
     """
     Fetch the node cache and distribution from the cache server
     """
     # fetch the dist
-    await asyncio.gather(fetch_from_cache(sha),
-                         fetch_from_cache(str(id)))
+    await asyncio.gather(fetch_from_cache(cache_key),
+                         fetch_from_cache(f'{project_id}/{local_id}'))
 
 
 def get_env():
@@ -273,10 +273,10 @@ def run_tests(id: int, port: int):
             raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
 
 
-def start(testrun_id: int, sha: str):
+def start(project_id: int, local_id: int, cache_key: str):
     init_build_dirs()
     # fetch the distribution
-    asyncio.run(fetch(testrun_id, sha))
+    asyncio.run(fetch(project_id, local_id, cache_key))
     # start the server
     server = start_server()
 

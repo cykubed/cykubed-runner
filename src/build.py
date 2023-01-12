@@ -80,7 +80,7 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
             runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
             # upload to cache
             logger.info(f'Uploading node_modules cache')
-            upload_to_cache(tarfile)
+            upload_to_cache(tarfile, cache_filename)
             logger.info(f'Cache uploaded')
             os.remove(tarfile)
     return lockhash
@@ -143,34 +143,35 @@ def build_app(testrun: NewTestRun, wdir: str):
 
     # tar it up
     logger.info("Create distribution and upload")
-    filename = f'/tmp/{testrun.id}.tar.lz4'
+    filename = f'/tmp/{testrun.local_id}.tar.lz4'
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filename} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
     # upload to cache
-    upload_to_cache(filename)
+    upload_to_cache(filename, f'{testrun.project.id}/{testrun.local_id}.tar.lz4')
 
 
-def post_status(testrun_id: int, status: str):
-    resp = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun_id}/status/{status}', headers=get_headers())
+def post_status(project_id: int, local_id: int, status: str):
+    resp = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/status/{status}',
+                     headers=get_headers())
     if resp.status_code != 200:
-        raise BuildFailedException(f"Failed to update status for run {testrun_id}: bailing out")
+        raise BuildFailedException(f"Failed to update status for run {local_id}: bailing out")
 
 
-def clone_and_build(testrun_id: int):
+def clone_and_build(project_id: int, local_id: int):
     """
     Clone and build
     """
-    logger.info(f'** Clone and build distribution for test run {testrun_id} **')
+    logger.info(f'** Clone and build distribution for test run {local_id} **')
 
-    r = httpx.get(f'{settings.MAIN_API_URL}/testrun/{testrun_id}', headers=get_headers())
+    r = httpx.get(f'{settings.MAIN_API_URL}/testrun/{project_id}/{local_id}', headers=get_headers())
     if r.status_code != 200:
         logger.warning("Failed to fetch test run config - quitting")
-        raise BuildFailedException(f"Failed to fetch testrun {testrun_id} status: {r.text}")
+        raise BuildFailedException(f"Failed to fetch testrun {local_id} status: {r.text}")
 
     testrun = NewTestRun.parse_obj(r.json())
     t = time.time()
 
-    post_status(testrun_id, 'building')
+    post_status(project_id, local_id, 'building')
 
     # clone
     wdir = clone_repos(testrun.project.url, testrun.branch)
@@ -185,15 +186,16 @@ def clone_and_build(testrun_id: int):
     specs = get_specs(wdir)
 
     # tell cykube
-    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun.id}/specs', headers=get_headers(),
-                             json={'specs': specs, 'sha': testrun.sha})
+    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{testrun.local_id}/specs',
+                  headers=get_headers(),
+                  json={'specs': specs, 'sha': testrun.sha})
     if r.status_code != 200:
         raise BuildFailedException(f"Failed to update cykube with list of specs - bailing out: {r.text}")
     testrun = TestRunDetail.parse_obj(r.json())
 
     if not specs:
         logger.info("No specs - nothing to test")
-        post_status(testrun_id, 'passed')
+        post_status(project_id, local_id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files: building the app")

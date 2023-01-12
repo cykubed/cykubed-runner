@@ -27,12 +27,10 @@ def runcmd(cmd: str, **kwargs):
         raise BuildFailedException()
 
 
-def upload_to_cache(filepath):
+def upload_to_cache(filepath, filename):
     # upload to cache
-    filename = os.path.split(filepath)[-1]
     r = httpx.post(os.path.join(settings.AGENT_URL, 'upload'),
-                        files={'file': (filename, open(filepath, 'rb'), 'application/octet-stream')},
-                        headers={'filename': filename})
+                    files={'file': (filename, open(filepath, 'rb'), 'application/octet-stream')})
     if r.status_code != 200:
         logger.error(f"Failed to upload {filename} to agent file cache: {r.status_code} {r.text}")
         raise BuildFailedException()
