@@ -1,54 +1,25 @@
-import logging
-import threading
-import time
+from datetime import datetime
 from logging import Handler, LogRecord
 
 import httpx
 
-from common.utils import get_headers
+from common import schemas
 from settings import settings
-
-
-class PublishThread(threading.Thread):
-    def __init__(self, project_id: int, local_id: int, flush_period=5, *args, **kwargs):
-        super().__init__(daemon=True, *args, **kwargs)
-        self.buffer = []
-        self.period = flush_period
-        self.project_id = project_id
-        self.local_id = local_id
-        self.running = True
-
-    def add(self, record: LogRecord):
-        self.buffer.append(record)
-
-    def run(self) -> None:
-        while self.running:
-            try:
-                time.sleep(self.period)
-                if len(self.buffer):
-                    payload = "\n".join([x.msg for x in self.buffer]) + '\n'
-                    httpx.post(f'{settings.MAIN_API_URL}/agent/testrun/{self.project_id}/{self.local_id}/logs',
-                               content=payload, headers=get_headers())
-                    self.buffer.clear()
-            except Exception as ex:
-                logging.error(f"Failed to post logs: {ex}")
 
 
 class PublishLogHandler(Handler):
 
-    def __init__(self, project_id: int, local_id: int, flush_period=5, *args, **kwargs):
+    def __init__(self, project_id: int, local_id: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.project_id = project_id
         self.local_id = local_id
-        self.publish_thread = PublishThread(project_id, local_id, flush_period)
-        self.publish_thread.start()
 
     def emit(self, record: LogRecord) -> None:
-        # flush, using a thread
-        self.publish_thread.add(record)
-
-    def close(self) -> None:
-        super().close()
-        self.publish_thread.running = False
-        self.publish_thread.join(timeout=10)
-
+        # post to the agent
+        msg = schemas.AgentLogMessage(ts=datetime.fromtimestamp(record.created),
+                                                project_id=self.project_id,
+                                                local_id=self.local_id,
+                                                level=record.levelname.lower(),
+                                                msg=record.msg,
+                                                source='runner')
+        httpx.post(f'{settings.AGENT_URL}/log', data=msg.json())

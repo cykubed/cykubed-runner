@@ -8,7 +8,6 @@ import build
 import cypress
 import logs
 from common.exceptions import BuildFailedException
-from settings import settings
 
 
 def main():
@@ -32,10 +31,9 @@ def main():
     cmd = args.command
 
     try:
-        fmt = "{time:HH:mm:ss.SSS} (" + cmd + ") {level} {message}"
-        handler = logs.PublishLogHandler(args.project_id, args.local_id, settings.LOG_UPDATE_PERIOD)
-        logger.add(handler,
-                   level=args.loglevel.upper(), format=fmt)
+        fmt = "{message}"
+        handler = logs.PublishLogHandler(args.project_id, args.local_id)
+        logger.add(handler, level=args.loglevel.upper(), format=fmt)
 
         if cmd == 'shell':
             sleep(3600*24)
