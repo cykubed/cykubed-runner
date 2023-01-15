@@ -7,12 +7,12 @@ import tempfile
 import time
 
 import httpx
-from loguru import logger
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, TestRunDetail, CompletedBuild
 from common.utils import get_headers
+from logs import logger
 from settings import settings
 from utils import runcmd, upload_to_cache
 
@@ -21,7 +21,7 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 
 def clone_repos(url: str, branch: str) -> str:
-    logger.info("Cloning repository")
+    logger.cmd("Cloning repository")
     builddir = tempfile.mkdtemp()
     os.chdir(builddir)
     runcmd(f'git clone --single-branch --depth 1 --recursive --branch {branch} {url} {builddir}')
@@ -50,13 +50,13 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
     """
     branch = testrun.branch
 
-    logger.info(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
+    logger.cmd(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
     os.chdir(builddir)
     lockhash = get_lock_hash(builddir)
 
     cache_filename = f'{lockhash}.tar.lz4'
     url = os.path.join(settings.CACHE_URL, cache_filename)
-    logger.info(f"Checking node_modules cache for {url}")
+    logger.debug(f"Checking node_modules cache for {url}")
 
     with httpx.stream('GET', url) as resp:
         if resp.status_code == 200:
@@ -123,14 +123,10 @@ def get_specs(wdir):
 
 
 def build_app(testrun: NewTestRun, wdir: str):
+    logger.cmd('Building app')
+
     # build the app
-    env = os.environ.copy()
-    env['PATH'] = './node_modules/.bin:' + env['PATH']
-    env['CYPRESS_CACHE_FOLDER'] = os.path.join(wdir, 'cypress_cache')
-    result = subprocess.run(testrun.project.build_cmd, shell=True, capture_output=True, env=env,
-                            encoding='utf8', cwd=wdir)
-    if result.returncode:
-        raise BuildFailedException("Failed:\n"+result.stderr)
+    runcmd(testrun.project.build_cmd)
 
     # check for dist and index file
     distdir = os.path.join(wdir, 'dist')
@@ -198,7 +194,7 @@ def clone_and_build(project_id: int, local_id: int):
         post_status(project_id, local_id, 'passed')
         return
 
-    logger.info(f"Found {len(specs)} spec files: building the app")
+    logger.info(f"Found {len(specs)} spec files")
     build_app(testrun, wdir)
 
     completed_build = CompletedBuild(testrun=testrun, cache_hash=lockhash)

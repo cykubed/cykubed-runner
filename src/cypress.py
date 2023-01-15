@@ -12,11 +12,11 @@ from time import time, sleep
 
 import httpx
 from httpx import HTTPError
-from loguru import logger
 
 from common.enums import TestResultStatus
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
 from common.utils import get_headers
+from logs import logger
 from settings import settings
 from utils import runcmd, get_sync_client
 

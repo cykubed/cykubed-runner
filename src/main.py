@@ -2,8 +2,6 @@ import argparse
 import sys
 from time import sleep
 
-from loguru import logger
-
 import build
 import cypress
 import logs
@@ -31,9 +29,7 @@ def main():
     cmd = args.command
 
     try:
-        fmt = "{message}"
-        handler = logs.PublishLogHandler(args.project_id, args.local_id)
-        logger.add(handler, level=args.loglevel.upper(), format=fmt)
+        logs.logger = logs.Logger(args.project_id, args.local_id, source=cmd)
 
         if cmd == 'shell':
             sleep(3600*24)
@@ -47,7 +43,7 @@ def main():
         build.post_status(args.project_id, args.local_id, 'failed')
         sys.exit(1)
     except Exception:
-        logger.exception(f"{cmd.capitalize()} failed")
+        logs.logger.exception(f"{cmd.capitalize()} failed")
         build.post_status(args.project_id, args.local_id, 'failed')
         sys.exit(1)
 

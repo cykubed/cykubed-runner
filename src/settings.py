@@ -18,6 +18,8 @@ class AppSettings(BaseSettings):
     SERVER_START_TIMEOUT: int = 10 * 60
     CYPRESS_RUN_TIMEOUT: int = 10*60
 
+    ENCODING = 'utf8'
+
     BUILD_TIMEOUT: int = 900
 
     K8: bool = True

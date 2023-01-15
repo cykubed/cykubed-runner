@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.10"
 pydantic = "^1.10.3"
 httpx = "^0.23.1"
-loguru = "^0.6.0"
 wcmatch = "^8.4.1"
 
 [tool.poetry.group.dev.dependencies]
