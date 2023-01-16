@@ -4,8 +4,8 @@ from time import sleep
 
 import build
 import cypress
-import logs
 from common.exceptions import BuildFailedException
+from logs import logger
 
 
 def main():
@@ -29,7 +29,7 @@ def main():
     cmd = args.command
 
     try:
-        logs.logger = logs.Logger(args.project_id, args.local_id, source=cmd)
+        logger.init(args.project_id, args.local_id, source=cmd, level=args.loglevel)
 
         if cmd == 'shell':
             sleep(3600*24)
@@ -43,7 +43,7 @@ def main():
         build.post_status(args.project_id, args.local_id, 'failed')
         sys.exit(1)
     except Exception:
-        logs.logger.exception(f"{cmd.capitalize()} failed")
+        logger.exception(f"{cmd.capitalize()} failed")
         build.post_status(args.project_id, args.local_id, 'failed')
         sys.exit(1)
 

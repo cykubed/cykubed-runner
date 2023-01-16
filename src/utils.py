@@ -18,24 +18,32 @@ def get_async_client():
     return httpx.AsyncClient(headers=get_headers())
 
 
-def runcmd(cmd: str, **kwargs):
-    env = os.environ.copy()
-    env['PATH'] = './node_modules/.bin:' + env['PATH']
-    env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
-    with subprocess.Popen(shlex.split(cmd), shell=True, env=env, encoding=settings.ENCODING,
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                          **kwargs) as proc:
-        while True:
-            line = proc.stdout.readline()
-            if not line and proc.returncode is not None:
-                break
-            if line:
-                logger.cmdout(line)
-            proc.poll()
+def runcmd(args: str, cmd=False, env=None, **kwargs):
+    cmdenv = os.environ.copy()
+    cmdenv['PATH'] = './node_modules/.bin:' + cmdenv['PATH']
+    cmdenv['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
+    if env:
+        cmdenv.update(env)
+    if not cmd:
+        result = subprocess.run(args, env=cmdenv, shell=True, encoding=settings.ENCODING, capture_output=True)
+        if result.returncode:
+            logger.error(result.stderr)
+    else:
+        logger.cmd(args)
+        with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              **kwargs) as proc:
+            while True:
+                line = proc.stdout.readline()
+                if not line and proc.returncode is not None:
+                    break
+                if line:
+                    logger.cmdout(line)
+                proc.poll()
 
-        if proc.returncode:
-            logger.error(f"Command failed: error code {proc.returncode}")
-            raise BuildFailedException()
+            if proc.returncode:
+                logger.error(f"Command failed: error code {proc.returncode}")
+                raise BuildFailedException()
 
 
 def upload_to_cache(filepath, filename):

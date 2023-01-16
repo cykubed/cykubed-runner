@@ -21,7 +21,7 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 
 def clone_repos(url: str, branch: str) -> str:
-    logger.cmd("Cloning repository")
+    logger.info("Cloning repository")
     builddir = tempfile.mkdtemp()
     os.chdir(builddir)
     runcmd(f'git clone --single-branch --depth 1 --recursive --branch {branch} {url} {builddir}')
@@ -50,7 +50,7 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
     """
     branch = testrun.branch
 
-    logger.cmd(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
+    logger.info(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
     os.chdir(builddir)
     lockhash = get_lock_hash(builddir)
 
@@ -70,16 +70,19 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
             # build node_modules
             if os.path.exists('yarn.lock'):
                 logger.info("Building new node cache using yarn")
-                runcmd('yarn install --pure-lockfile')
+                runcmd('yarn install --pure-lockfile', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
             else:
                 logger.info("Building new node cache using npm")
-                runcmd('npm ci')
-
+                runcmd('npm ci', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
+            # install Cypress binary
+            os.mkdir('cypress_cache')
+            logger.info("Installing Cypress binary")
+            runcmd('cypress install')
             # tar up and store
             tarfile = f'/tmp/{cache_filename}'
+            logger.info(f'Uploading node_modules cache')
             runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
             # upload to cache
-            logger.info(f'Uploading node_modules cache')
             upload_to_cache(tarfile, cache_filename)
             logger.info(f'Cache uploaded')
             os.remove(tarfile)
@@ -123,10 +126,10 @@ def get_specs(wdir):
 
 
 def build_app(testrun: NewTestRun, wdir: str):
-    logger.cmd('Building app')
+    logger.info('Building app')
 
     # build the app
-    runcmd(testrun.project.build_cmd)
+    runcmd(testrun.project.build_cmd, cmd=True)
 
     # check for dist and index file
     distdir = os.path.join(wdir, 'dist')
@@ -138,7 +141,7 @@ def build_app(testrun: NewTestRun, wdir: str):
         raise BuildFailedException("Could not find index.html file in dist directory")
 
     # tar it up
-    logger.info("Create distribution and upload")
+    logger.info("Upload distribution")
     filename = f'/tmp/{testrun.local_id}.tar.lz4'
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filename} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
