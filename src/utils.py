@@ -7,7 +7,7 @@ import httpx
 from common.exceptions import BuildFailedException
 from common.settings import settings
 from common.utils import get_headers
-from logging import logger
+from logs import logger
 
 
 def get_sync_client():

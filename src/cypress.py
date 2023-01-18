@@ -17,7 +17,7 @@ from common.enums import TestResultStatus
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
 from common.settings import settings
 from common.utils import get_headers
-from logging import logger
+from logs import logger
 from utils import runcmd, get_sync_client
 
 
