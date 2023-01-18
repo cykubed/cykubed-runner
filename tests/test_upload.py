@@ -5,8 +5,8 @@ import httpx
 import respx
 from httpx import Response
 
+from common.settings import settings
 from cypress import parse_results, upload_results, fetch
-from settings import settings
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 

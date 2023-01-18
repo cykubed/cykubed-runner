@@ -5,9 +5,9 @@ import subprocess
 import httpx
 
 from common.exceptions import BuildFailedException
+from common.logs import logger
+from common.settings import settings
 from common.utils import get_headers
-from logs import logger
-from settings import settings
 
 
 def get_sync_client():

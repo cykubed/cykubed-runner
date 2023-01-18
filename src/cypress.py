@@ -14,10 +14,10 @@ import httpx
 from httpx import HTTPError
 
 from common.enums import TestResultStatus
+from common.logs import logger
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
+from common.settings import settings
 from common.utils import get_headers
-from logs import logger
-from settings import settings
 from utils import runcmd, get_sync_client
 
 
