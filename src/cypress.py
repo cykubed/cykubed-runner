@@ -190,7 +190,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
 
 
 def run_cypress(file: str, port: int):
-    logger.info(f'Run Cypress for {file}')
+    logger.debug(f'Run Cypress for {file}')
     results_file = f'{settings.RESULTS_FOLDER}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath('json-reporter.js')
@@ -201,7 +201,7 @@ def run_cypress(file: str, port: int):
                                    f'baseUrl={base_url},video=true,videosFolder={get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
 
-    logger.info(result.stdout.decode('utf8'))
+    logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
@@ -217,7 +217,7 @@ def upload_results(spec_id, result: SpecResult):
                 if sshot:
                     # this will be the full path - we'll upload the file but just use the filename
                     filename = os.path.split(sshot)[-1]
-                    logger.info(f'Upload screenshot {filename}')
+                    logger.debug(f'Upload screenshot {filename}')
                     r = client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
                                   headers={'filename': filename})
                     if r.status_code != 200:
@@ -228,7 +228,7 @@ def upload_results(spec_id, result: SpecResult):
 
         if result.video:
             filename = os.path.split(result.video)[-1]
-            logger.info(f'Upload video {filename}')
+            logger.debug(f'Upload video {filename}')
             r = client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
                               headers={'filename': filename})
             if r.status_code != 200:
@@ -237,7 +237,7 @@ def upload_results(spec_id, result: SpecResult):
 
         # finally upload result
         try:
-            logger.info(f'Upload JSON results')
+            logger.debug(f'Upload JSON results')
             r = client.post(f'{settings.MAIN_API_URL}/agent/testrun/spec/{spec_id}/completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
