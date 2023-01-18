@@ -10,10 +10,10 @@ import httpx
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
-from common.logs import logger
 from common.schemas import NewTestRun, TestRunDetail, CompletedBuild
 from common.settings import settings
 from common.utils import get_headers
+from logging import logger
 from utils import runcmd, upload_to_cache
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')

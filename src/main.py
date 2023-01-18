@@ -5,7 +5,7 @@ from time import sleep
 import build
 import cypress
 from common.exceptions import BuildFailedException
-from common.logs import logger
+from logging import logger
 
 
 def main():

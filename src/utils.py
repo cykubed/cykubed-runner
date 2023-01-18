@@ -5,9 +5,9 @@ import subprocess
 import httpx
 
 from common.exceptions import BuildFailedException
-from common.logs import logger
 from common.settings import settings
 from common.utils import get_headers
+from logging import logger
 
 
 def get_sync_client():
@@ -25,7 +25,8 @@ def runcmd(args: str, cmd=False, env=None, **kwargs):
     if env:
         cmdenv.update(env)
     if not cmd:
-        result = subprocess.run(args, env=cmdenv, shell=True, encoding=settings.ENCODING, capture_output=True)
+        result = subprocess.run(args, env=cmdenv, shell=True, encoding=settings.ENCODING, capture_output=True,
+                                **kwargs)
         if result.returncode:
             logger.error(result.stderr)
     else:
