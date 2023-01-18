@@ -43,7 +43,7 @@ def init_build_dirs():
 async def fetch_from_cache(path: str):
     client = httpx.AsyncClient()
     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-        logger.info(f'Fetch {path}')
+        logger.debug(f'Fetch {path}')
         async with client.stream('GET', f'{settings.CACHE_URL}/{path}.tar.lz4') as response:
             async for chunk in response.aiter_bytes():
                 outfile.write(chunk)
@@ -53,7 +53,7 @@ async def fetch_from_cache(path: str):
                 raise BuildFailed("Zero-length dist file")
             # untar
             runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
-            logger.info(f'Unpacked {path}')
+            logger.debug(f'Unpacked {path}')
 
 
 async def fetch(project_id: int, local_id: int, cache_key: str):
@@ -100,7 +100,7 @@ def start_server() -> ServerThread:
 
     # wait until it's ready
     endtime = time() + settings.SERVER_START_TIMEOUT
-    logger.info("Waiting for server to be ready...")
+    logger.debug("Waiting for server to be ready...")
     # wait 5 secs - trying to fetch from ng serve too soon can crash it (!)
     sleep(5)
     while True:
@@ -114,7 +114,7 @@ def start_server() -> ServerThread:
             pass
 
         if ready:
-            logger.info('Server is ready')
+            logger.debug('Server is ready')
             return server
 
         if time() > endtime:
