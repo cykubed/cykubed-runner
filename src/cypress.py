@@ -211,9 +211,9 @@ def upload_results(spec_id, result: SpecResult):
 
     with get_sync_client() as client:
         for test in result.tests:
-            if test.error:
-                sshot = test.error.screenshot
-                if sshot:
+            if test.failure_screenshots:
+                new_urls = []
+                for sshot in test.failure_screenshots:
                     # this will be the full path - we'll upload the file but just use the filename
                     filename = os.path.split(sshot)[-1]
                     logger.debug(f'Upload screenshot {filename}')
@@ -222,8 +222,8 @@ def upload_results(spec_id, result: SpecResult):
                     if r.status_code != 200:
                         # TODO retry?
                         raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
-
-                    test.error.screenshot = r.text
+                    new_urls.append(r.text)
+                test.failure_screenshots = new_urls
 
         if result.video:
             filename = os.path.split(result.video)[-1]
