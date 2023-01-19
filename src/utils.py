@@ -18,17 +18,21 @@ def get_async_client():
     return httpx.AsyncClient(headers=get_headers())
 
 
-def runcmd(args: str, cmd=False, env=None, **kwargs):
+def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     cmdenv = os.environ.copy()
     cmdenv['PATH'] = './node_modules/.bin:' + cmdenv['PATH']
     cmdenv['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     if env:
         cmdenv.update(env)
+
     if not cmd:
         result = subprocess.run(args, env=cmdenv, shell=True, encoding=settings.ENCODING, capture_output=True,
                                 **kwargs)
+        if log:
+            logger.debug(args)
         if result.returncode:
-            logger.error(result.stderr)
+            logger.error(f"Command failed: {result.returncode}: {result.stderr}")
+            raise BuildFailedException()
     else:
         logger.cmd(args)
         with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,

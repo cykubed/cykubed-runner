@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -20,12 +21,19 @@ INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 
-def clone_repos(url: str, branch: str) -> str:
+def clone_repos(testrun: NewTestRun) -> str:
     logger.info("Cloning repository")
     builddir = tempfile.mkdtemp()
     os.chdir(builddir)
-    runcmd(f'git clone --single-branch --depth 1 --recursive --branch {branch} {url} {builddir}')
-    logger.info(f"Cloned branch {branch}")
+    if not testrun.sha:
+        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.project.url} {builddir}',
+               log=True)
+    else:
+        runcmd(f'git clone --recursive {testrun.project.url} {builddir}', log=True)
+
+    logger.info(f"Cloned branch {testrun.branch}")
+    if testrun.sha:
+        runcmd(f'git reset --hard {testrun.sha}', cwd=builddir)
     return builddir
 
 
@@ -58,34 +66,44 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
     url = os.path.join(settings.CACHE_URL, cache_filename)
     logger.debug(f"Checking node_modules cache for {url}")
 
+    rebuild = True
+
     with httpx.stream('GET', url) as resp:
         if resp.status_code == 200:
             # unpack
+            rebuild = False
             logger.info("Node cache hit: fetch and unpack")
-            with tempfile.NamedTemporaryFile(suffix='.tar.lz4') as fdst:
-                for chunk in resp.iter_raw():
-                    fdst.write(chunk)
-                runcmd(f'tar xf {fdst.name} -I lz4')
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.tar.lz4') as fdst:
+                    for chunk in resp.iter_raw():
+                        fdst.write(chunk)
+                    fdst.flush()
+                    runcmd(f'tar xf {fdst.name} -I lz4')
+            except:
+                logger.error('Failed to unpack cached distribution: rebuilding it')
+                shutil.rmtree('node_modules')
+                shutil.rmtree('cypress_cache')
+                rebuild = True
+    if rebuild:
+        # build node_modules
+        if os.path.exists('yarn.lock'):
+            logger.info("Building new node cache using yarn")
+            runcmd('yarn install --pure-lockfile', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
         else:
-            # build node_modules
-            if os.path.exists('yarn.lock'):
-                logger.info("Building new node cache using yarn")
-                runcmd('yarn install --pure-lockfile', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
-            else:
-                logger.info("Building new node cache using npm")
-                runcmd('npm ci', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
-            # install Cypress binary
-            os.mkdir('cypress_cache')
-            logger.info("Installing Cypress binary")
-            runcmd('cypress install')
-            # tar up and store
-            tarfile = f'/tmp/{cache_filename}'
-            logger.info(f'Uploading node_modules cache')
-            runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
-            # upload to cache
-            upload_to_cache(tarfile, cache_filename)
-            logger.info(f'Cache uploaded')
-            os.remove(tarfile)
+            logger.info("Building new node cache using npm")
+            runcmd('npm ci', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
+        # install Cypress binary
+        os.mkdir('cypress_cache')
+        logger.info("Installing Cypress binary")
+        runcmd('cypress install')
+        # tar up and store
+        tarfile = f'/tmp/{cache_filename}'
+        logger.info(f'Uploading node_modules cache')
+        runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
+        # upload to cache
+        upload_to_cache(tarfile, cache_filename)
+        logger.info(f'Cache uploaded')
+        os.remove(tarfile)
     return lockhash
 
 
@@ -173,7 +191,7 @@ def clone_and_build(project_id: int, local_id: int):
     post_status(project_id, local_id, 'building')
 
     # clone
-    wdir = clone_repos(testrun.project.url, testrun.branch)
+    wdir = clone_repos(testrun)
     if not testrun.sha:
         testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
                                               text=True).strip('\n')

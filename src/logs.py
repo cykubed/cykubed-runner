@@ -30,7 +30,8 @@ class Logger:
             loguru_level = 'debug'
         else:
             loguru_level = level.name
-        loguru.logger.log(loguru_level.upper(), msg)
+
+        loguru.logger.log(loguru_level.upper(), msg.strip('\n'))
 
         if loglevelToInt[level] < self.level:
             return
