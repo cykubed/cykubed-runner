@@ -6,6 +6,7 @@ import httpx
 from common import schemas
 from common.enums import LogLevel, loglevelToInt
 from common.settings import settings
+import loguru
 
 
 class Logger:
@@ -23,6 +24,14 @@ class Logger:
         self.level = loglevelToInt[level]
 
     def log(self, msg: str, level: LogLevel):
+        if level == LogLevel.cmd:
+            loguru_level = 'info'
+        elif level == LogLevel.cmdout:
+            loguru_level = 'debug'
+        else:
+            loguru_level = level.name
+        loguru.logger.log(loguru_level.upper(), msg)
+
         if loglevelToInt[level] < self.level:
             return
         # post to the agent
@@ -35,8 +44,6 @@ class Logger:
                                             step=self.step,
                                             source=self.source)
             httpx.post(f'{settings.AGENT_URL}/log', data=event.json())
-
-        print(msg)
 
     def cmd(self, msg: str):
         self.step += 1

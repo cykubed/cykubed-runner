@@ -128,6 +128,11 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
     failures = 0
     with open(os.path.join(settings.RESULTS_FOLDER, 'out.json')) as f:
         rawjson = json.loads(f.read())
+
+        sshot_fnames = []
+        for root, dirs, files in os.walk(get_screenshots_folder()):
+            sshot_fnames += [os.path.join(root, f) for f in files]
+
         for test in rawjson['tests']:
             err = test.get('err')
 
@@ -142,28 +147,22 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 started_at=started_at.isoformat(),
                                 finished_at=datetime.datetime.now().isoformat())
 
+            # check for screenshots
+            prefix = f'{result.context} -- {result.title} (failed)'
+            sshots = []
+            for fname in sshot_fnames:
+                if os.path.split(fname)[-1].startswith(prefix):
+                    sshots.append(fname)
+            if sshots:
+                result.failure_screenshots = sshots
+
             if err:
                 failures += 1
-                # check for screenshots
-                sshot_fnames = []
-                for root, dirs, files in os.walk(get_screenshots_folder()):
-                    sshot_fnames += [os.path.join(root, f) for f in files]
-
-                suffix = '' if not result.retry else f' (attempt {result.retry + 1})'
-                expected = f'{result.context} -- {result.title} (failed){suffix}.png'
-
-                failure_sshot = None
-                for fname in sshot_fnames:
-                    if os.path.split(fname)[-1] == expected:
-                        failure_sshot = fname
-                        break
-
                 frame = err['codeFrame']
                 result.error = TestResultError(title=err['name'],
                                                type=err['type'],
                                                message=err['message'],
                                                stack=err['stack'],
-                                               screenshot=failure_sshot,
                                                code_frame=CodeFrame(line=frame['line'],
                                                                     column=frame['column'],
                                                                     language=frame['language'],
@@ -262,8 +261,6 @@ def run_tests(project_id: int, local_id: int, port: int):
                 run_cypress(spec['file'], port)
                 result = parse_results(started_at, spec['file'])
                 upload_results(spec['id'], result)
-                # cleanup
-                shutil.rmtree(settings.RESULTS_FOLDER, ignore_errors=True)
 
             except subprocess.CalledProcessError as ex:
                 raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')
@@ -282,7 +279,7 @@ def start(project_id: int, local_id: int, cache_key: str):
 
     try:
         # now fetch specs until we're done or the build is cancelled
-        logger.info(f"Server running on port {server.port}")
+        logger.debug(f"Server running on port {server.port}")
         run_tests(project_id, local_id, server.port)
     except BuildFailed as ex:
         # TODO inform the server
