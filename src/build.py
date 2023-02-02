@@ -14,6 +14,7 @@ from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, TestRunDetail, CompletedBuild
 from common.settings import settings
 from common.utils import get_headers
+from cypress import fetch_from_cache, BuildFailed
 from logs import logger
 from utils import runcmd, upload_to_cache
 
@@ -68,22 +69,19 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
 
     rebuild = True
 
-    with httpx.stream('GET', url) as resp:
-        if resp.status_code == 200:
-            # unpack
-            rebuild = False
+    resp = httpx.head(url)
+    if resp.status_code == 200:
+        try:
             logger.info("Node cache hit: fetch and unpack")
-            try:
-                with tempfile.NamedTemporaryFile(suffix='.tar.lz4') as fdst:
-                    for chunk in resp.iter_raw():
-                        fdst.write(chunk)
-                    fdst.flush()
-                    runcmd(f'tar xf {fdst.name} -I lz4')
-            except:
-                logger.error('Failed to unpack cached distribution: rebuilding it')
-                shutil.rmtree('node_modules')
-                shutil.rmtree('cypress_cache')
-                rebuild = True
+            fetch_from_cache(lockhash, builddir)
+            rebuild = False
+        except BuildFailed:
+            # unpack
+            logger.error('Failed to unpack cached distribution: rebuilding it')
+            shutil.rmtree('node_modules')
+            shutil.rmtree('cypress_cache')
+            rebuild = True
+
     if rebuild:
         # build node_modules
         if os.path.exists('yarn.lock'):
@@ -160,11 +158,12 @@ def build_app(testrun: NewTestRun, wdir: str):
 
     # tar it up
     logger.info("Upload distribution")
-    filename = f'/tmp/{testrun.local_id}.tar.lz4'
+    filename = f'{testrun.project.id}-{testrun.local_id}.tar.lz4'
+    filepath = os.path.join('/tmp', filename)
     # tarball everything bar the cached stuff
-    runcmd(f'tar cf {filename} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
+    runcmd(f'tar cf {filepath} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
     # upload to cache
-    upload_to_cache(filename, f'{testrun.project.id}/{testrun.local_id}.tar.lz4')
+    upload_to_cache(filepath, filename)
 
 
 def post_status(project_id: int, local_id: int, status: str):

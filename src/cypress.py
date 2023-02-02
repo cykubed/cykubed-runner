@@ -40,29 +40,28 @@ def init_build_dirs():
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-async def fetch_from_cache(path: str):
-    client = httpx.AsyncClient()
+def fetch_from_cache(path: str, build_dir=None):
     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-        logger.debug(f'Fetch {path}')
-        async with client.stream('GET', f'{settings.CACHE_URL}/{path}.tar.lz4') as response:
-            async for chunk in response.aiter_bytes():
-                outfile.write(chunk)
+        runcmd(f'/usr/bin/curl -s -o {outfile.name} {settings.CACHE_URL}/{path}.tar.lz4')
+        if not os.path.getsize(outfile.name):
+            raise BuildFailed("Zero-length file")
+        # untar
+        runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=build_dir or settings.BUILD_DIR)
 
-            outfile.flush()
-            if not os.path.getsize(outfile.name):
-                raise BuildFailed("Zero-length dist file")
-            # untar
-            runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
-            logger.debug(f'Unpacked {path}')
+    logger.debug(f'Unpacked {path}')
 
 
-async def fetch(project_id: int, local_id: int, cache_key: str):
+def fetch(project_id: int, local_id: int, cache_key: str):
     """
     Fetch the node cache and distribution from the cache server
     """
     # fetch the dist
-    await asyncio.gather(fetch_from_cache(cache_key),
-                         fetch_from_cache(f'{project_id}/{local_id}'))
+    t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
+    t2 = threading.Thread(target=fetch_from_cache, args=[f'{project_id}-{local_id}'])
+    t1.start()
+    t2.start()
+    t1.join(settings.BUILD_TIMEOUT)
+    t2.join(settings.BUILD_TIMEOUT)
 
 
 def get_env():
@@ -252,6 +251,7 @@ def run_tests(project_id: int, local_id: int, port: int):
         r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/next', headers=get_headers())
         if r.status_code == 204:
             # we're done
+            logger.info("No more tests - exiting")
             break
         elif r.status_code == 200:
             # run the test
@@ -273,7 +273,7 @@ def run_tests(project_id: int, local_id: int, port: int):
 def start(project_id: int, local_id: int, cache_key: str):
     init_build_dirs()
     # fetch the distribution
-    asyncio.run(fetch(project_id, local_id, cache_key))
+    fetch(project_id, local_id, cache_key)
     # start the server
     server = start_server()
 

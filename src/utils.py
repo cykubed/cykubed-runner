@@ -53,8 +53,9 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
 
 def upload_to_cache(filepath, filename):
     # upload to cache
-    r = httpx.post(os.path.join(settings.AGENT_URL, 'upload'),
-                   files={'file': (filename, open(filepath, 'rb'), 'application/octet-stream')})
-    if r.status_code != 200:
-        logger.error(f"Failed to upload {filename} to agent file cache: {r.status_code} {r.text}")
-        raise BuildFailedException()
+    url = os.path.join(settings.AGENT_URL, 'upload')
+    try:
+        runcmd(f'/usr/bin/curl -s -F "file=@{filepath}" {url}')
+    except BuildFailedException as ex:
+        logger.error(f"Failed to upload {filename} to agent file cache")
+        raise ex
