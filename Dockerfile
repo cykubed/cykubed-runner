@@ -48,7 +48,7 @@ RUN apt-get install -y nodejs
 WORKDIR /usr/app
 ENV PATH="/usr/app/venv/bin:$PATH"
 
-RUN useradd cykube -d /home/cykube && mkdir /home/cykube && chown cykube /home/cykube && chown -R cykube /usr/app
+RUN useradd -m cykube && chown cykube /usr/app
 USER cykube
 
 RUN mkdir -p /tmp/cykube/build
