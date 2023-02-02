@@ -35,7 +35,7 @@ def get_videos_folder():
 
 def init_build_dirs():
     shutil.rmtree(settings.BUILD_DIR, ignore_errors=True)
-    os.makedirs(settings.BUILD_DIR)
+    os.makedirs(settings.BUILD_DIR, exist_ok=True)
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 

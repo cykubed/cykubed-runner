@@ -161,7 +161,7 @@ def build_app(testrun: NewTestRun, wdir: str):
     filename = f'{testrun.project.id}-{testrun.local_id}.tar.lz4'
     filepath = os.path.join('/tmp', filename)
     # tarball everything bar the cached stuff
-    runcmd(f'tar cf {filepath} --exclude="node_modules cypress_cache" . -I lz4', cwd=wdir)
+    runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
     # upload to cache
     upload_to_cache(filepath, filename)
 

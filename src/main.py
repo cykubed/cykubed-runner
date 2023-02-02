@@ -45,6 +45,7 @@ def main():
     except Exception:
         logger.exception(f"{cmd.capitalize()} failed")
         build.post_status(args.project_id, args.local_id, 'failed')
+        sleep(3600)
         sys.exit(1)
 
 
