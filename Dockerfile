@@ -45,7 +45,6 @@ RUN apt-get install --no-install-recommends -y \
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
-
 WORKDIR /usr/app
 ENV PATH="/usr/app/venv/bin:$PATH"
 
@@ -53,6 +52,8 @@ COPY --from=build /usr/app/venv ./venv
 COPY src/ .
 COPY json-reporter.js .
 
+RUN useradd -Ml cykube && chown -R cykube /usr/app
+USER cykube
 
 ENTRYPOINT ["python", "./main.py"]
 

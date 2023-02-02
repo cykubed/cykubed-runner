@@ -251,7 +251,7 @@ def run_tests(project_id: int, local_id: int, port: int):
         r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/next', headers=get_headers())
         if r.status_code == 204:
             # we're done
-            logger.info("No more tests - exiting")
+            logger.debug("No more tests - exiting")
             break
         elif r.status_code == 200:
             # run the test
