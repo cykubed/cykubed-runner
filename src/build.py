@@ -219,9 +219,12 @@ def clone_and_build(project_id: int, local_id: int):
     build_app(testrun, wdir)
 
     completed_build = CompletedBuild(testrun=testrun, cache_hash=lockhash)
-    r = httpx.post(f'{settings.AGENT_URL}/build-complete', data=completed_build.json())
-    if r.status_code != 200:
-        raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
+    try:
+        r = httpx.post(f'{settings.AGENT_URL}/build-complete', data=completed_build.json())
+        if r.status_code != 200:
+            raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
+    except Exception as ex:
+        raise BuildFailedException(f"Failed to update complete build: {ex}")
     t = time.time() - t
     logger.info(f"Distribution created in {t:.1f}s")
 
