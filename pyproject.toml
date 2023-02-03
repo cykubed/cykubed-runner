@@ -9,9 +9,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-#packages = [
-#  { include = "src/**/*.py"}
-#]
+packages = [
+  { include = "src/**/*.py"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"

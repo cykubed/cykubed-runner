@@ -1,7 +1,7 @@
 FROM cypress/browsers:node16.17.0-chrome106 as build
 
 RUN apt-get update
-RUN apt-get install -y pip python3-venv
+RUN apt-get install -y pip python3-venv lz4
 
 WORKDIR /usr/app
 
@@ -13,7 +13,7 @@ ENV PATH="/home/cykube/.local/bin:$PATH"
 
 RUN pip install poetry==1.3.1
 COPY pyproject.toml poetry.lock ./
-RUN poetry install
+RUN poetry install --no-root
 COPY src .
 
 ENTRYPOINT ["poetry", "run", "python", "main.py"]

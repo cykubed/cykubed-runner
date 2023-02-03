@@ -191,7 +191,8 @@ def run_cypress(file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
     results_file = f'{settings.RESULTS_FOLDER}/out.json'
     base_url = f'http://localhost:{port}'
-    json_reporter = os.path.abspath('json-reporter.js')
+    json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
+    print(f"Using JSON reporter {json_reporter}")
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={json_reporter}',
                              '-o', f'output={results_file}',
