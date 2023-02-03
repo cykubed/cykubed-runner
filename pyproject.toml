@@ -9,13 +9,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-packages = [
-    { include = "src/**/*.py"}
-]
+#packages = [
+#  { include = "src/**/*.py"}
+#]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-pydantic = "^1.10.3"
+python = "^3.9"
+pydantic = "^1.10.4"
 httpx = "^0.23.1"
 wcmatch = "^8.4.1"
 loguru = "^0.6.0"
