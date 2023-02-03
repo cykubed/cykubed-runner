@@ -1,9 +1,17 @@
 [tool.poetry]
-name = "cykuberunner"
+name = "cykube-runner"
 version = "0.1.0"
 description = ""
-authors = ["nick <nickbrook72@gmail.com>"]
+authors = ["nick <nick@cykube.net>"]
 readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+packages = [
+    { include = "src/**/*.py"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
