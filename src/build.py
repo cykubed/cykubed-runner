@@ -27,10 +27,10 @@ def clone_repos(testrun: NewTestRun) -> str:
     builddir = tempfile.mkdtemp()
     os.chdir(builddir)
     if not testrun.sha:
-        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.project.url} {builddir}',
+        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
     else:
-        runcmd(f'git clone --recursive {testrun.project.url} {builddir}', log=True)
+        runcmd(f'git clone --recursive {testrun.url} {builddir}', log=True)
 
     logger.info(f"Cloned branch {testrun.branch}")
     if testrun.sha:
