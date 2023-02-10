@@ -5,6 +5,7 @@ from time import sleep
 import build
 import cypress
 from common.exceptions import BuildFailedException
+from common.utils import decode_testrun
 from logs import logger
 
 
@@ -16,8 +17,7 @@ def main():
     subparsers.required = True
 
     build_parser = subparsers.add_parser('build')
-    build_parser.add_argument('project_id', help='Project ID')
-    build_parser.add_argument('local_id', help='Test run local ID')
+    build_parser.add_argument('testrun', help='Base64-encoded NewTestRun')
 
     run_parser = subparsers.add_parser('run')
     run_parser.add_argument('project_id', help='Project ID')
@@ -35,7 +35,7 @@ def main():
             sleep(3600*24)
             sys.exit(0)
         elif cmd == 'build':
-            build.clone_and_build(args.project_id, args.local_id)
+            build.clone_and_build(decode_testrun(args.testrun))
         else:
             cypress.start(args.project_id, args.local_id, args.cache_key)
         return

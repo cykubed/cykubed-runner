@@ -173,21 +173,15 @@ def post_status(project_id: int, local_id: int, status: str):
         raise BuildFailedException(f"Failed to update status for run {local_id}: bailing out")
 
 
-def clone_and_build(project_id: int, local_id: int):
+def clone_and_build(testrun: NewTestRun):
     """
     Clone and build
     """
-    logger.info(f'** Clone and build distribution for test run {local_id} **')
+    logger.info(f'** Clone and build distribution for test run {testrun.local_id} **')
 
-    r = httpx.get(f'{settings.MAIN_API_URL}/testrun/{project_id}/{local_id}', headers=get_headers())
-    if r.status_code != 200:
-        logger.warning("Failed to fetch test run config - quitting")
-        raise BuildFailedException(f"Failed to fetch testrun {local_id} status: {r.text}")
-
-    testrun = NewTestRun.parse_obj(r.json())
     t = time.time()
 
-    post_status(project_id, local_id, 'building')
+    post_status(testrun.project.id, testrun.local_id, 'building')
 
     # clone
     wdir = clone_repos(testrun)
@@ -202,7 +196,7 @@ def clone_and_build(project_id: int, local_id: int):
     specs = get_specs(wdir)
 
     # tell cykube
-    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{testrun.local_id}/specs',
+    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun.project.id}/{testrun.local_id}/specs',
                   headers=get_headers(),
                   json={'specs': specs, 'sha': testrun.sha})
     if r.status_code != 200:
@@ -211,7 +205,7 @@ def clone_and_build(project_id: int, local_id: int):
 
     if not specs:
         logger.info("No specs - nothing to test")
-        post_status(project_id, local_id, 'passed')
+        post_status(testrun.project.id, testrun.local_id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files")

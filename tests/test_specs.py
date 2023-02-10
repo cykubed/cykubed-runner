@@ -29,9 +29,8 @@ def test_b64():
     project = schemas.Project(id=1, name='test', platform=PlatformEnum.GITHUB,
                               url='https://xxx.github.com', parallelism=1,
                               build_cmd='ng build', build_cpu='2', build_memory='100mb',
-                              agent_image='foo',
                               runner_image='blah', runner_cpu='1', runner_memory='1000mb')
-    tr = schemas.NewTestRun(id=2, project=project, branch='master')
+    tr = schemas.NewTestRun(id=10, local_id=2, project=project, branch='master', url='https://clone.me')
     x = encode_testrun(tr)
     # back the other way
     newtr = decode_testrun(x)
