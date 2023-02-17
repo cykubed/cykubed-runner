@@ -27,26 +27,25 @@ def main():
     args = parser.parse_args()
 
     cmd = args.command
-
-    try:
-        logger.init(args.project_id, args.local_id, source=cmd, level=args.loglevel)
-
-        if cmd == 'shell':
-            sleep(3600*24)
-            sys.exit(0)
-        elif cmd == 'build':
-            build.clone_and_build(decode_testrun(args.testrun))
-        else:
+    if cmd == 'shell':
+        sleep(3600*24)
+        sys.exit(0)
+    elif cmd == 'build':
+        tr = None
+        try:
+            tr = decode_testrun(args.testrun.strip())
+            build.clone_and_build(tr)
+        except Exception:
+            logger.exception("Build failed")
+            if tr:
+                build.post_status(tr.project.id, tr.local_id, 'failed')
+            sys.exit(1)
+    else:
+        try:
             cypress.start(args.project_id, args.local_id, args.cache_key)
-        return
-    except BuildFailedException as ex:
-        build.post_status(args.project_id, args.local_id, 'failed')
-        sys.exit(1)
-    except Exception:
-        logger.exception(f"{cmd.capitalize()} failed")
-        build.post_status(args.project_id, args.local_id, 'failed')
-        sleep(60*5)
-        sys.exit(1)
+        except:
+            logger.exception("Cypress run failed")
+            sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -177,6 +177,9 @@ def clone_and_build(testrun: NewTestRun):
     """
     Clone and build
     """
+
+    logger.init(testrun.project.id, testrun.local_id, source="builder")
+
     logger.info(f'** Clone and build distribution for test run {testrun.local_id} **')
 
     t = time.time()
