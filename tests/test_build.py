@@ -2,7 +2,6 @@ import os
 
 import httpx
 import pytest
-import tempfile
 
 from build import create_node_environment
 from common.schemas import NewTestRun
@@ -19,7 +18,8 @@ def test_create_node_environment_cache_miss(respx_mock, mocker, testrun, fixture
     respx_mock.head(
         'http://127.0.0.1:5001/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4').mock(
         return_value=httpx.Response(404))
-    create_node_environment(NewTestRun.parse_obj(testrun), project)
+    tr = NewTestRun.parse_obj(testrun)
+    create_node_environment(tr, project)
 
     cmds = [x[0][0] for x in runcmd.call_args_list]
     assert cmds == ['npm ci',
@@ -28,6 +28,17 @@ def test_create_node_environment_cache_miss(respx_mock, mocker, testrun, fixture
 
     upload_to_cache.assert_called_with('/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
                                        '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4')
+
+    # try again with yarn
+    respx_mock.head(
+        'http://127.0.0.1:5001/c286ee67fcc0b00334cb1d1fcaa1940fa97a9a641d2396e20f06e7d67166d47b.tar.lz4').mock(
+        return_value=httpx.Response(404))
+    runcmd = mocker.patch('build.runcmd')
+    project = os.path.join(fixturedir, 'project-yarn')
+    create_node_environment(tr, project)
+
+    cmds = [x[0][0] for x in runcmd.call_args_list]
+    assert cmds[0] == 'yarn install --pure-lockfile'
 
 
 @pytest.mark.respx
