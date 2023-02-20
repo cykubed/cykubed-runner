@@ -166,7 +166,7 @@ def build_app(testrun: NewTestRun, wdir: str):
 
 
 def post_status(trid: int, status: str):
-    httpx.put(f'{settings.AGENT_URL}/agent/testrun/{trid}/status/{status}')
+    httpx.put(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
 
 
 def clone_and_build(testrun: NewTestRun):

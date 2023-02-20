@@ -25,8 +25,9 @@ async def project() -> Project:
 @pytest.fixture()
 async def testrun(project: Project) -> NewTestRun:
     return NewTestRun(url='git@github.org/dummy.git',
-                    id=10,
+                    id=20,
                     local_id=1,
+                    sha='deadbeef0101',
                     project=project,
                     status='started',
                     branch='master')
