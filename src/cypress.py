@@ -51,13 +51,13 @@ def fetch_from_cache(path: str, build_dir=None):
     logger.debug(f'Unpacked {path}')
 
 
-def fetch(project_id: int, local_id: int, cache_key: str):
+def fetch(testrun_id: int, cache_key: str):
     """
     Fetch the node cache and distribution from the cache server
     """
     # fetch the dist
     t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
-    t2 = threading.Thread(target=fetch_from_cache, args=[f'{project_id}-{local_id}'])
+    t2 = threading.Thread(target=fetch_from_cache, args=[f'{testrun_id}'])
     t1.start()
     t2.start()
     t1.join(settings.BUILD_TIMEOUT)
@@ -205,8 +205,10 @@ def run_cypress(file: str, port: int):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
-def upload_results(spec_id, result: SpecResult):
+def upload_results(testrun_id: int, result: SpecResult):
 
+    # For now upload images and videos directly to the main service rather than via the websocket
+    # This may change
     upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload'
 
     with get_sync_client() as client:
@@ -237,7 +239,7 @@ def upload_results(spec_id, result: SpecResult):
         # finally upload result
         try:
             logger.debug(f'Upload JSON results')
-            r = client.post(f'{settings.MAIN_API_URL}/agent/testrun/spec/{spec_id}/completed',
+            r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
                 raise BuildFailed(f'Test result post failed: {r.status_code}')
@@ -245,11 +247,11 @@ def upload_results(spec_id, result: SpecResult):
             raise BuildFailed(f'Failed to contact Cykube server')
 
 
-def run_tests(project_id: int, local_id: int, port: int):
+def run_tests(testrun_id: int, port: int):
 
     while True:
 
-        r = httpx.get(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/next', headers=get_headers())
+        r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', headers=get_headers())
         if r.status_code == 204:
             # we're done
             logger.debug("No more tests - exiting")
@@ -271,17 +273,17 @@ def run_tests(project_id: int, local_id: int, port: int):
             raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
 
 
-def start(project_id: int, local_id: int, cache_key: str):
+def start(testrun_id: int, cache_key: str):
     init_build_dirs()
     # fetch the distribution
-    fetch(project_id, local_id, cache_key)
+    fetch(testrun_id, cache_key)
     # start the server
     server = start_server()
 
     try:
         # now fetch specs until we're done or the build is cancelled
         logger.debug(f"Server running on port {server.port}")
-        run_tests(project_id, local_id, server.port)
+        run_tests(testrun_id, server.port)
     except BuildFailed as ex:
         # TODO inform the server
         logger.exception(ex)

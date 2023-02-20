@@ -4,22 +4,21 @@ from datetime import datetime
 import httpx
 
 from common import schemas
-from common.enums import LogLevel, loglevelToInt
+from common.enums import LogLevel, loglevelToInt, AgentEventType
+from common.schemas import AppLogMessage
 from common.settings import settings
 import loguru
 
 
 class Logger:
     def __init__(self):
-        self.project_id = None
-        self.local_id = None
+        self.testrun_id = None
         self.source = None
         self.step = 0
         self.level = loglevelToInt[LogLevel.info]
 
-    def init(self, project_id: int, local_id: int, source: str, level: LogLevel = LogLevel.info):
-        self.project_id = project_id
-        self.local_id = local_id
+    def init(self, testrun_id: int, source: str, level: LogLevel = LogLevel.info):
+        self.testrun_id = testrun_id
         self.source = source
         self.level = loglevelToInt[level]
 
@@ -36,14 +35,15 @@ class Logger:
         if loglevelToInt[level] < self.level:
             return
         # post to the agent
-        if self.project_id:
-            event = schemas.AgentLogMessage(ts=datetime.now(),
-                                            project_id=self.project_id,
-                                            local_id=self.local_id,
-                                            level=level,
-                                            msg=msg,
-                                            step=self.step,
-                                            source=self.source)
+        if self.testrun_id:
+            event = schemas.AgentLogMessage(type=AgentEventType.log,
+                                            testrun_id=self.testrun_id,
+                                            msg=AppLogMessage(
+                                                ts=datetime.now(),
+                                                level=level,
+                                                msg=msg,
+                                                step=self.step,
+                                                source=self.source))
             httpx.post(f'{settings.AGENT_URL}/log', data=event.json())
 
     def cmd(self, msg: str):

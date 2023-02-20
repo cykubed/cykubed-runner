@@ -20,8 +20,7 @@ def main():
     build_parser.add_argument('testrun', help='Base64-encoded NewTestRun')
 
     run_parser = subparsers.add_parser('run')
-    run_parser.add_argument('project_id', help='Project ID')
-    run_parser.add_argument('local_id', help='Test run local ID')
+    run_parser.add_argument('testrun_id', help='Test run ID')
     run_parser.add_argument('cache_key', help='Node cache key')
 
     args = parser.parse_args()
@@ -38,11 +37,11 @@ def main():
         except Exception:
             logger.exception("Build failed")
             if tr:
-                build.post_status(tr.project.id, tr.local_id, 'failed')
+                build.post_status(tr.id, 'failed')
             sys.exit(1)
     else:
         try:
-            cypress.start(args.project_id, args.local_id, args.cache_key)
+            cypress.start(args.testrun_id, args.cache_key)
         except:
             logger.exception("Cypress run failed")
             sys.exit(1)

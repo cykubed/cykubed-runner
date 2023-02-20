@@ -11,7 +11,7 @@ import httpx
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun, TestRunDetail, CompletedBuild
+from common.schemas import NewTestRun, TestRunDetail, CompletedBuild, SpecResult
 from common.settings import settings
 from common.utils import get_headers
 from cypress import fetch_from_cache, BuildFailed
@@ -158,7 +158,7 @@ def build_app(testrun: NewTestRun, wdir: str):
 
     # tar it up
     logger.info("Upload distribution")
-    filename = f'{testrun.project.id}-{testrun.local_id}.tar.lz4'
+    filename = f'{testrun.id}.tar.lz4'
     filepath = os.path.join('/tmp', filename)
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
@@ -166,11 +166,8 @@ def build_app(testrun: NewTestRun, wdir: str):
     upload_to_cache(filepath, filename)
 
 
-def post_status(project_id: int, local_id: int, status: str):
-    resp = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{project_id}/{local_id}/status/{status}',
-                     headers=get_headers())
-    if resp.status_code != 200:
-        raise BuildFailedException(f"Failed to update status for run {local_id}: bailing out")
+def post_status(trid: int, status: str):
+    httpx.put(f'{settings.AGENT_URL}/agent/testrun/{trid}/status/{status}')
 
 
 def clone_and_build(testrun: NewTestRun):
@@ -178,13 +175,13 @@ def clone_and_build(testrun: NewTestRun):
     Clone and build
     """
 
-    logger.init(testrun.project.id, testrun.local_id, source="builder")
+    logger.init(testrun.id, source="builder")
 
     logger.info(f'** Clone and build distribution for test run {testrun.local_id} **')
 
     t = time.time()
 
-    post_status(testrun.project.id, testrun.local_id, 'building')
+    post_status(testrun.id, 'building')
 
     # clone
     wdir = clone_repos(testrun)
@@ -198,25 +195,19 @@ def clone_and_build(testrun: NewTestRun):
     # now we can determine the specs
     specs = get_specs(wdir)
 
-    # tell cykube
-    r = httpx.put(f'{settings.MAIN_API_URL}/agent/testrun/{testrun.project.id}/{testrun.local_id}/specs',
-                  headers=get_headers(),
-                  json={'specs': specs, 'sha': testrun.sha})
-    if r.status_code != 200:
-        raise BuildFailedException(f"Failed to update cykube with list of specs - bailing out: {r.text}")
-    testrun = TestRunDetail.parse_obj(r.json())
-
     if not specs:
         logger.info("No specs - nothing to test")
-        post_status(testrun.project.id, testrun.local_id, 'passed')
+        post_status(testrun.id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files")
     build_app(testrun, wdir)
 
-    completed_build = CompletedBuild(testrun=testrun, cache_hash=lockhash)
+    completed_build = CompletedBuild(sha=testrun.sha,
+                                     specs=specs,
+                                     cache_hash=lockhash)
     try:
-        r = httpx.post(f'{settings.AGENT_URL}/build-complete', data=completed_build.json())
+        r = httpx.post(f'{settings.AGENT_URL}/testrun/{testrun.id}/build-complete', data=completed_build.json())
         if r.status_code != 200:
             raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
     except Exception as ex:
