@@ -1,39 +1,32 @@
+import os
+
 import pytest
+
+from common.enums import PlatformEnum
+from common.schemas import OrganisationSummary, Project, NewTestRun
 
 
 @pytest.fixture
-def testrun():
-    return {
-            "id": 100,
-            "branch": "master",
-            "sha": "sha",
-            "project": {
-                "id": 40,
-                "name": "dummy",
-                "platform": "github",
-                "url": "git@github.com:nickbrook72/dummyui.git",
-                "parallelism": 4,
-                "build_cmd": "ng build",
-                "agent_image": "cykube/agent",
-                "server_cmd": "ng serve",
-                "server_port": 4200,
-                "build_cpu": "2",
-                "build_memory": "2G",
-                "runner_cpu": "2",
-                "runner_memory": "2G",
-                "runner_image": "cykube/runner"
-            },
-            "total_files": 2,
-            "completed_files": 0,
-            "progress_percentage": 0,
-            "status": "running",
-            "started": "2022-05-01T15:00:12",
-            "active": True
-        }
+def fixturedir():
+    return os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
-# setting a fixed port for httpserver
-@pytest.fixture(scope="session")
-def httpserver_listen_address():
-    return ("127.0.0.1", 5300)
+@pytest.fixture()
+async def project() -> Project:
+    org = OrganisationSummary(id=5, name='MyOrg')
+    return Project(id=10,
+                   name='project',
+                   default_branch='master',
+                   platform=PlatformEnum.GITHUB,
+                   url='git@github.org/dummy.git',
+                   organisation=org)
 
+
+@pytest.fixture()
+async def testrun(project: Project) -> NewTestRun:
+    return NewTestRun(url='git@github.org/dummy.git',
+                    id=10,
+                    local_id=1,
+                    project=project,
+                    status='started',
+                    branch='master')

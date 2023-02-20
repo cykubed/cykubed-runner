@@ -26,7 +26,15 @@ respx = "^0.20.1"
 pre-commit = "^2.20.0"
 pytest-asyncio = "^0.20.2"
 ipython = "^8.7.0"
+pytest-mock = "^3.10.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--ignore=src/common"
+testpaths = "tests"
+python_classes = "!Test"
+

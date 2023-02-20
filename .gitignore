@@ -149,3 +149,4 @@ cython_debug/
 /src/k8config/secrets.yaml
 
 .idea
+/tests/fixtures/project/node_modules/

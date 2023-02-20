@@ -5,16 +5,14 @@ from common.enums import TestResultStatus
 from common.settings import settings
 from cypress import parse_results
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
-
-def test_parse_fail():
-    settings.RESULTS_FOLDER = os.path.join(FIXTURE_DIR, 'two-fails-with-retries')
+def test_parse_fail(fixturedir):
+    settings.RESULTS_FOLDER = os.path.join(fixturedir, 'two-fails-with-retries')
 
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
     # these will be the full paths
-    sshotdir = os.path.join(FIXTURE_DIR, 'two-fails-with-retries', 'screenshots')
-    viddir = os.path.join(FIXTURE_DIR, 'two-fails-with-retries', 'videos')
+    sshotdir = os.path.join(fixturedir, 'two-fails-with-retries', 'screenshots')
+    viddir = os.path.join(fixturedir, 'two-fails-with-retries', 'videos')
     assert result.video == os.path.join(viddir, 'test1.spec.ts.mp4')
     assert result.file == 'test1.spec.ts'
     assert len(result.tests) == 4
