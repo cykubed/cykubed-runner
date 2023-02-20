@@ -30,3 +30,10 @@ def testrun():
             "started": "2022-05-01T15:00:12",
             "active": True
         }
+
+
+# setting a fixed port for httpserver
+@pytest.fixture(scope="session")
+def httpserver_listen_address():
+    return ("127.0.0.1", 5300)
+

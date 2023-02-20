@@ -1,9 +1,12 @@
 import os
+import tempfile
 from datetime import datetime
+from http.server import SimpleHTTPRequestHandler
 
 import httpx
 import respx
 from httpx import Response
+from pytest_httpserver import HTTPServer
 
 from common.settings import settings
 from cypress import parse_results, upload_results, fetch
@@ -11,18 +14,25 @@ from cypress import parse_results, upload_results, fetch
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
-@respx.mock
-async def test_fetch_dist(testrun):
-    tr_route = respx.get('http://127.0.0.1:5000/testrun/100').mock(return_value=Response(200, json=testrun))
-    with open(FIXTURE_DIR+'/dummy-dist.tar.lz4', 'rb') as f:
-        data = f.read()
-    cache_route = respx.get('http://127.0.0.1:5001/sha.tar.lz4')\
-        .mock(return_value=Response(200, content=data))
-    await fetch(100)
-    assert tr_route.called
-    assert cache_route.called
-    files = list(os.listdir(os.path.join(settings.BUILD_DIR, 'dist')))
+class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=FIXTURE_DIR, **kwargs)
+
+
+def test_fetch_dist(testrun, httpserver: HTTPServer):
+    builddir = tempfile.mkdtemp()
+    settings.CACHE_URL = 'http://localhost:5300'
+    settings.BUILD_DIR = builddir
+    httpserver.expect_oneshot_request('/deadbeef0101.tar.lz4')\
+        .respond_with_data(open(FIXTURE_DIR+'/deadbeef0101.tar.lz4', 'rb').read())
+    httpserver.expect_oneshot_request('/1-20.tar.lz4')\
+        .respond_with_data(open(FIXTURE_DIR+'/1-20.tar.lz4', 'rb').read())
+    fetch(1, 20, 'deadbeef0101')
+    files = list(os.listdir(os.path.join(builddir, 'dist')))
     assert set(files) == {'one.txt', 'two.txt'}
+    rootfiles = set(os.listdir(os.path.join(builddir)))
+    assert 'node_modules' in rootfiles
+    assert 'cypress_cache' in rootfiles
 
 
 @respx.mock
@@ -33,10 +43,8 @@ async def test_upload_results():
         return_value=httpx.Response(200, text='anewpath.png'))
     completed_route = respx.post('https://app.cykube.net/api/agent/testrun/spec/10/completed')\
         .mock(return_value=Response(200, json=result.json()))
-    await upload_results(10, result)
-    assert result.tests[1].error.screenshot == 'anewpath.png'
-    # in fact all paths will be set to this
-    assert result.video == 'anewpath.png'
-    assert upload_route.call_count == 3
+    upload_results(10, result)
+    # 5 uploads: 4 images and one video
+    assert upload_route.call_count == 5
     assert completed_route.called
 

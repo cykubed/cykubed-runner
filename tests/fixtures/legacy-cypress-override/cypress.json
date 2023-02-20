@@ -1,0 +1,14 @@
+{
+  "video": false,
+  "pageLoadTimeout": 60000,
+  "defaultCommandTimeout": 10000,
+  "reporter": "junit",
+  "baseUrl": "http://localhost:4200",
+  "projectId": "blah",
+  "viewportWidth": 1024,
+  "viewportHeight": 900,
+  "chromeWebSecurity": false,
+  "numTestsKeptInMemory": 1,
+  "screenshotsFolder": "./cypress/screenshots",
+  "integrationFolder": "cypress/e2e"
+}

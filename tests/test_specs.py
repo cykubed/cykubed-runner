@@ -1,39 +1,25 @@
 import os
 
 from build import get_specs
-from common import schemas
-from common.enums import PlatformEnum
-from common.utils import encode_testrun, decode_testrun
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
-def test_get_specs_defaults():
-    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'jsoncfg_defaults')))
+def test_get_specs_new_style():
+    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'new-style-cypress')))
+    assert specs == {'cypress/e2e/stuff/test1.spec.ts',
+                     'cypress/e2e/stuff/test2.spec.ts',
+                     'cypress/e2e/nonsense/another-test.spec.ts',
+                     'cypress/components/button/button.cy.ts'}
+
+
+def test_get_specs_legacy_default():
+    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'legacy-cypress-defaults')))
     assert specs == {'cypress/integration/stuff/test1.spec.ts',
-                     'cypress/integration/stuff/test2.spec.ts'}
+                     'cypress/integration/stuff/test2.spec.js'}
 
 
-def test_get_specs_json():
-    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'jsoncfg_specified')))
-    assert specs == {'cypress/tests/test2.cy.ts'}
-
-
-def test_get_specs_ts():
-    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'tscfg')))
-    assert specs == {'cypress/xe2e/tests/test1.cy.js',
-                     'cypress/xe2e/tests/test2.cy.ts'}
-
-
-def test_b64():
-    project = schemas.Project(id=1, name='test', platform=PlatformEnum.GITHUB,
-                              url='https://xxx.github.com', parallelism=1,
-                              build_cmd='ng build', build_cpu='2', build_memory='100mb',
-                              runner_image='blah', runner_cpu='1', runner_memory='1000mb')
-    tr = schemas.NewTestRun(id=10, local_id=2, project=project, branch='master', url='https://clone.me')
-    x = encode_testrun(tr)
-    # back the other way
-    newtr = decode_testrun(x)
-    assert newtr.id == tr.id
-    assert newtr.project.url == tr.project.url
+def test_get_specs_legacy_override():
+    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'legacy-cypress-override')))
+    assert specs == {'cypress/e2e/stuff/test1.spec.ts'}
 
