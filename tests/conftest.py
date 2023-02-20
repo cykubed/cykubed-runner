@@ -1,9 +1,17 @@
 import os
 
 import pytest
+from loguru import logger
 
 from common.enums import PlatformEnum
 from common.schemas import OrganisationSummary, Project, NewTestRun
+from common.settings import settings
+
+
+@pytest.fixture(autouse=True)
+async def init():
+    settings.TEST = True
+    logger.remove()
 
 
 @pytest.fixture

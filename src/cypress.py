@@ -192,7 +192,6 @@ def run_cypress(file: str, port: int):
     results_file = f'{settings.RESULTS_FOLDER}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
-    print(f"Using JSON reporter {json_reporter}")
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={json_reporter}',
                              '-o', f'output={results_file}',
@@ -258,12 +257,12 @@ def run_tests(testrun_id: int, port: int):
             break
         elif r.status_code == 200:
             # run the test
-            spec = r.json()
+            spec = r.text
             try:
                 started_at = datetime.datetime.now()
-                run_cypress(spec['file'], port)
-                result = parse_results(started_at, spec['file'])
-                upload_results(spec['id'], result)
+                run_cypress(spec, port)
+                result = parse_results(started_at, spec)
+                upload_results(testrun_id, result)
 
             except subprocess.CalledProcessError as ex:
                 raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')
