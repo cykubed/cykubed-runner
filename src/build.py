@@ -11,9 +11,8 @@ import httpx
 from wcmatch import glob
 
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun, TestRunDetail, CompletedBuild, SpecResult
+from common.schemas import NewTestRun, CompletedBuild
 from common.settings import settings
-from common.utils import get_headers
 from cypress import fetch_from_cache, BuildFailed
 from logs import logger
 from utils import runcmd, upload_to_cache
