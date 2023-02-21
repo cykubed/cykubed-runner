@@ -249,8 +249,11 @@ def upload_results(testrun_id: int, result: SpecResult):
 def run_tests(testrun_id: int, port: int):
 
     while True:
+        with open('/etc/hostname') as f:
+            hostname = f.read().strip()
 
-        r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', headers=get_headers())
+        r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', params={'name': hostname},
+                      headers=get_headers())
         if r.status_code == 204:
             # we're done
             logger.debug("No more tests - exiting")

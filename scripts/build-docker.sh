@@ -5,7 +5,8 @@ docker build . -f dockerfiles/chrome/Dockerfile -t nickbrookck/cykube-runner:chr
 docker build . -f dockerfiles/node16.13.0/Dockerfile -t nickbrookck/cykube-runner:chrome-16.13.0
 docker build . -f dockerfiles/node16.x/Dockerfile -t nickbrookck/cykube-runner:chrome-16.x
 
-mysql cykubemain < "delete from runnerimage"
+mysql cykubemain < scripts/runner-images.sql
+
 
 
 
