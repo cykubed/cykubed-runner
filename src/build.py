@@ -166,7 +166,9 @@ def build_app(testrun: NewTestRun, wdir: str):
 
 
 def post_status(trid: int, status: str):
-    httpx.put(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
+    resp = httpx.post(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
+    if resp.status_code != 200:
+        raise BuildFailedException(f"Cannot contact agent: {resp.status_code}")
 
 
 def clone_and_build(testrun: NewTestRun):
