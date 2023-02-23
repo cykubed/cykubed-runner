@@ -37,6 +37,7 @@ def main():
             except Exception:
                 logger.exception("Build failed")
                 build.post_status(tr.id, 'failed')
+                # sleep(3600)
                 sys.exit(1)
         else:
             if not tr.cache_key:

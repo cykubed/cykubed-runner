@@ -44,10 +44,12 @@ WORKDIR /usr/app
 RUN useradd -m cykube && chown cykube /usr/app
 USER cykube
 
-RUN mkdir -p /tmp/cykube/build
-ENV PATH="/home/cykube/.local/bin:$PATH"
+RUN mkdir /tmp/cykube
+ENV PATH="/home/cykube/.local/bin:/tmp/cykube/build/node_modules/.bin:$PATH"
+RUN CYPRESS_CACHE_FOLDER=/tmp/cykube/build/cypresscache
 
 RUN pip install poetry==1.3.1
 COPY pyproject.toml poetry.lock ./
+RUN poetry config installer.max-workers 10
 RUN poetry install --no-root --without=dev
 

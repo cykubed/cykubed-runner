@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import subprocess
-import tempfile
 import time
 
 import httpx
@@ -23,8 +22,11 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 def clone_repos(testrun: NewTestRun) -> str:
     logger.info("Cloning repository")
-    builddir = tempfile.mkdtemp()
-    os.chdir(builddir)
+    builddir = settings.BUILD_DIR
+    if os.path.exists(builddir):
+        # this is just for when we're running locally during development
+        shutil.rmtree(builddir)
+    os.mkdir(settings.BUILD_DIR)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
