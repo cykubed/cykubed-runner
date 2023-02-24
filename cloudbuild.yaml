@@ -7,6 +7,11 @@ steps:
       git submodule update
 
   - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker login --username=$$USERNAME --password=$$PASSWORD']
+    secretEnv: ['USERNAME', 'PASSWORD']
+
+  - name: 'gcr.io/cloud-builders/docker'
     script: |
       docker login --username=$$USERNAME --password=$$PASSWORD
     secretEnv: [ 'USERNAME', 'PASSWORD' ]
