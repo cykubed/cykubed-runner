@@ -1,4 +1,5 @@
-FROM nickbrookck/cykube-runner:base
+ARG TAG=1.0
+FROM nickbrookck/cykube-runner:base-$TAG
 
 USER root
 

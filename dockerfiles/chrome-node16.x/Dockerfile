@@ -1,4 +1,5 @@
-FROM nickbrookck/cykube-runner:chrome-base
+ARG TAG=1.0
+FROM nickbrookck/cykube-runner:chrome90-$TAG
 
 USER root
 
