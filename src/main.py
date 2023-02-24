@@ -26,7 +26,11 @@ def main():
     else:
         # we'll need the test run from the agent
         try:
-            tr = NewTestRun.parse_raw(httpx.get(f'{settings.AGENT_URL}/testrun/{args.testrun_id}').text)
+            resp = httpx.get(f'{settings.AGENT_URL}/testrun/{args.testrun_id}')
+            if resp.status_code != 200:
+                logger.exception("Failed to fetch test run from agent: quitting")
+                sys.exit(1)
+            tr = NewTestRun.parse_raw(resp.text)
         except:
             logger.exception("Failed to fetch test run from agent: quitting")
             sys.exit(1)
