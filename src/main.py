@@ -24,35 +24,23 @@ def main():
         sleep(3600*24)
         sys.exit(0)
     else:
-        # we'll need the test run from the agent
-        try:
-            resp = httpx.get(f'{settings.AGENT_URL}/testrun/{args.testrun_id}')
-            if resp.status_code != 200:
-                logger.exception("Failed to fetch test run from agent: quitting")
-                sys.exit(1)
-            tr = NewTestRun.parse_raw(resp.text)
-        except:
-            logger.exception("Failed to fetch test run from agent: quitting")
-            sys.exit(1)
-
         if cmd == 'build':
             try:
-                build.clone_and_build(tr)
+                build.clone_and_build(args.testrun_id)
             except Exception:
                 logger.exception("Build failed")
-                build.post_status(tr.id, 'failed')
+                build.post_status(args.testrun_id, 'failed')
                 # sleep(3600)
                 sys.exit(1)
         else:
-            if not tr.cache_key:
-                logger.error("Missing cache key: quitting")
-                sys.exit(1)
             try:
-                cypress.start(args.testrun_id, tr.cache_key)
+                cypress.start(args.testrun_id)
             except:
                 logger.exception("Cypress run failed")
                 sys.exit(1)
+                # sleep(300)
 
 
 if __name__ == '__main__':
     main()
+    sys.exit(0)

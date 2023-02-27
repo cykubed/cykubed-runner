@@ -1,4 +1,4 @@
-import asyncio
+import datetime
 import datetime
 import json
 import os
@@ -13,16 +13,14 @@ from time import time, sleep
 import httpx
 from httpx import HTTPError
 
-from common.enums import TestResultStatus
+from common.enums import TestResultStatus, TestRunStatus
+from common.exceptions import BuildFailedException
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
 from common.settings import settings
 from common.utils import get_headers
 from logs import logger
-from utils import runcmd, get_sync_client
-
-
-class BuildFailed(Exception):
-    pass
+from server import start_server
+from utils import runcmd, get_sync_client, fetch_testrun
 
 
 def get_screenshots_folder():
@@ -34,19 +32,23 @@ def get_videos_folder():
 
 
 def init_build_dirs():
-    shutil.rmtree(settings.BUILD_DIR, ignore_errors=True)
-    os.makedirs(settings.BUILD_DIR, exist_ok=True)
+
+    if os.path.exists(settings.BUILD_DIR):
+        # probably running as developer
+        shutil.rmtree(settings.BUILD_DIR, ignore_errors=True)
+        os.makedirs(settings.BUILD_DIR, exist_ok=True)
+
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
 
-def fetch_from_cache(path: str, build_dir=None):
+def fetch_from_cache(path: str):
     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
         runcmd(f'/usr/bin/curl -s -o {outfile.name} {settings.CACHE_URL}/{path}.tar.lz4')
         if not os.path.getsize(outfile.name):
-            raise BuildFailed("Zero-length file")
+            raise BuildFailedException("Zero-length file")
         # untar
-        runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=build_dir or settings.BUILD_DIR)
+        runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
 
     logger.debug(f'Unpacked {path}')
 
@@ -69,57 +71,6 @@ def get_env():
     env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     return env
-
-
-class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=os.path.join(settings.BUILD_DIR, 'dist'), **kwargs)
-
-
-class ServerThread(threading.Thread):
-    def run(self):
-        with socketserver.TCPServer(("", 0), Handler) as httpd:
-            self.httpd = httpd
-            self.port = httpd.server_address[1]
-            httpd.serve_forever()
-
-    def stop(self):
-        self.httpd.shutdown()
-        self.join()
-
-
-def start_server() -> ServerThread:
-    """
-    Start the server
-    :return:
-    """
-
-    server = ServerThread()
-    server.start()
-
-    # wait until it's ready
-    endtime = time() + settings.SERVER_START_TIMEOUT
-    logger.debug("Waiting for server to be ready...")
-    # wait 5 secs - trying to fetch from ng serve too soon can crash it (!)
-    sleep(5)
-    while True:
-        ready = False
-        try:
-            r = httpx.get(f'http://localhost:{server.port}')
-            if r.status_code == 200:
-                ready = True
-        except ConnectionRefusedError:
-            logger.info("...connection refused to server")
-            pass
-
-        if ready:
-            logger.debug('Server is ready')
-            return server
-
-        if time() > endtime:
-            server.stop()
-            raise BuildFailed('Failed to start server')
-        sleep(5)
 
 
 def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
@@ -158,14 +109,17 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
             if err:
                 failures += 1
                 frame = err['codeFrame']
-                result.error = TestResultError(title=err['name'],
-                                               type=err['type'],
-                                               message=err['message'],
-                                               stack=err['stack'],
-                                               code_frame=CodeFrame(line=frame['line'],
-                                                                    column=frame['column'],
-                                                                    language=frame['language'],
-                                                                    frame=frame['frame']))
+                try:
+                    result.error = TestResultError(title=err['name'],
+                                                   type=err.get('type'),
+                                                   message=err['message'],
+                                                   stack=err['stack'],
+                                                   code_frame=CodeFrame(line=frame['line'],
+                                                                        column=frame['column'],
+                                                                        language=frame['language'],
+                                                                        frame=frame['frame']))
+                except:
+                    raise BuildFailedException("Failed to parse test result")
 
             tests.append(result)
 
@@ -222,7 +176,7 @@ def upload_results(testrun_id: int, result: SpecResult):
                                   headers={'filename': filename})
                     if r.status_code != 200:
                         # TODO retry?
-                        raise BuildFailed(f'Failed to upload screenshot to cykube: {r.status_code}')
+                        raise BuildFailedException(f'Failed to upload screenshot to cykube: {r.status_code}')
                     new_urls.append(r.text)
                 test.failure_screenshots = new_urls
 
@@ -232,7 +186,7 @@ def upload_results(testrun_id: int, result: SpecResult):
             r = client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
                               headers={'filename': filename})
             if r.status_code != 200:
-                raise BuildFailed(f'Failed to upload video to cykube: {r.status_code}')
+                raise BuildFailedException(f'Failed to upload video to cykube: {r.status_code}')
             result.video = r.text
 
         # finally upload result
@@ -241,9 +195,9 @@ def upload_results(testrun_id: int, result: SpecResult):
             r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
-                raise BuildFailed(f'Test result post failed: {r.status_code}')
+                raise BuildFailedException(f'Test result post failed: {r.status_code}')
         except HTTPError:
-            raise BuildFailed(f'Failed to contact Cykube server')
+            raise BuildFailedException(f'Failed to contact Cykube server')
 
 
 def run_tests(testrun_id: int, port: int):
@@ -268,17 +222,34 @@ def run_tests(testrun_id: int, port: int):
                 upload_results(testrun_id, result)
 
             except subprocess.CalledProcessError as ex:
-                raise BuildFailed(f'Cypress run failed with return code {ex.returncode}')
+                raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
             except subprocess.TimeoutExpired:
-                raise BuildFailed("Exceeded run timeout")
+                raise BuildFailedException("Exceeded run timeout")
         else:
-            raise BuildFailed(f"Received unexpected status code from hub: {r.status_code}")
+            raise BuildFailedException(f"Received unexpected status code from hub: {r.status_code}")
 
 
-def start(testrun_id: int, cache_key: str):
+def start(testrun_id: int):
     init_build_dirs()
+
+    start_time = time()
+    testrun = None
+
+    while time() - start_time < settings.BUILD_TIMEOUT:
+        testrun = fetch_testrun(testrun_id)
+        if testrun.status in [TestRunStatus.started, TestRunStatus.building]:
+            logger.debug("Still building...")
+            sleep(10)
+        elif testrun.status == TestRunStatus.running:
+            if not testrun.cache_key:
+                raise BuildFailedException("Missing cache key: quitting")
+            logger.debug("Ready to run")
+            break
+        else:
+            raise BuildFailedException(f"Test run is {testrun.status}: quitting")
+
     # fetch the distribution
-    fetch(testrun_id, cache_key)
+    fetch(testrun_id, testrun.cache_key)
     # start the server
     server = start_server()
 
@@ -286,7 +257,7 @@ def start(testrun_id: int, cache_key: str):
         # now fetch specs until we're done or the build is cancelled
         logger.debug(f"Server running on port {server.port}")
         run_tests(testrun_id, server.port)
-    except BuildFailed as ex:
+    except BuildFailedException as ex:
         # TODO inform the server
         logger.exception(ex)
     finally:

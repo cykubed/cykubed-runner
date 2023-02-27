@@ -5,6 +5,7 @@ import subprocess
 import httpx
 
 from common.exceptions import BuildFailedException
+from common.schemas import NewTestRun
 from common.settings import settings
 from common.utils import get_headers
 from logs import logger
@@ -59,3 +60,15 @@ def upload_to_cache(filepath, filename):
     except BuildFailedException as ex:
         logger.error(f"Failed to upload {filename} to agent file cache")
         raise ex
+
+
+def fetch_testrun(testrun_id: int) -> NewTestRun:
+    # we'll need the test run from the agent
+    try:
+        resp = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}')
+        if resp.status_code != 200:
+            raise BuildFailedException(f"Failed to fetch test run from agent ({resp.status_code}): quitting")
+
+        return NewTestRun.parse_raw(resp.text)
+    except:
+        raise BuildFailedException("Failed to fetch test run from agent: quitting")

@@ -12,21 +12,21 @@ from wcmatch import glob
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, CompletedBuild
 from common.settings import settings
-from cypress import fetch_from_cache, BuildFailed
+from cypress import fetch_from_cache
 from logs import logger
-from utils import runcmd, upload_to_cache
+from utils import runcmd, upload_to_cache, fetch_testrun
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 
-def clone_repos(testrun: NewTestRun) -> str:
+def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
     if os.path.exists(builddir):
         # this is just for when we're running locally during development
         shutil.rmtree(builddir)
-    os.mkdir(settings.BUILD_DIR)
+    os.makedirs(settings.BUILD_DIR)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
@@ -36,7 +36,6 @@ def clone_repos(testrun: NewTestRun) -> str:
     logger.info(f"Cloned branch {testrun.branch}")
     if testrun.sha:
         runcmd(f'git reset --hard {testrun.sha}', cwd=builddir)
-    return builddir
 
 
 def get_lock_hash(build_dir):
@@ -54,10 +53,12 @@ def get_lock_hash(build_dir):
     return m.hexdigest()
 
 
-def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
+def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
     """
     Build the app. Uses a cache for node_modules
+    Returns (cache_hash, was_rebuilt)
     """
+    builddir = settings.BUILD_DIR
     branch = testrun.branch
 
     logger.info(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
@@ -74,9 +75,9 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
     if resp.status_code == 200:
         try:
             logger.info("Node cache hit: fetch and unpack")
-            fetch_from_cache(lockhash, builddir)
+            fetch_from_cache(lockhash)
             rebuild = False
-        except BuildFailed:
+        except BuildFailedException:
             # unpack
             logger.error('Failed to unpack cached distribution: rebuilding it')
             shutil.rmtree('node_modules')
@@ -87,7 +88,7 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
         # build node_modules
         if os.path.exists('yarn.lock'):
             logger.info("Building new node cache using yarn")
-            runcmd('yarn install --pure-lockfile', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
+            runcmd('yarn install', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
         else:
             logger.info("Building new node cache using npm")
             runcmd('npm ci', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
@@ -95,15 +96,7 @@ def create_node_environment(testrun: NewTestRun, builddir: str) -> str:
         os.mkdir('cypress_cache')
         logger.info("Installing Cypress binary")
         runcmd('cypress install')
-        # tar up and store
-        tarfile = f'/tmp/{cache_filename}'
-        logger.info(f'Uploading node_modules cache')
-        runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
-        # upload to cache
-        upload_to_cache(tarfile, cache_filename)
-        logger.info(f'Cache uploaded')
-        os.remove(tarfile)
-    return lockhash
+    return lockhash, rebuild
 
 
 def make_array(x):
@@ -142,8 +135,9 @@ def get_specs(wdir):
     return specs
 
 
-def build_app(testrun: NewTestRun, wdir: str):
+def build_app(testrun: NewTestRun):
     logger.info('Building app')
+    wdir = settings.BUILD_DIR
 
     # build the app
     runcmd(testrun.project.build_cmd, cmd=True)
@@ -165,6 +159,7 @@ def build_app(testrun: NewTestRun, wdir: str):
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
     # upload to cache
     upload_to_cache(filepath, filename)
+    logger.info("Distribution uploaded")
 
 
 def post_status(trid: int, status: str):
@@ -173,10 +168,11 @@ def post_status(trid: int, status: str):
         raise BuildFailedException(f"Cannot contact agent: {resp.status_code}")
 
 
-def clone_and_build(testrun: NewTestRun):
+def clone_and_build(trid: int):
     """
     Clone and build
     """
+    testrun = fetch_testrun(trid)
 
     logger.init(testrun.id, source="builder")
 
@@ -187,13 +183,14 @@ def clone_and_build(testrun: NewTestRun):
     post_status(testrun.id, 'building')
 
     # clone
-    wdir = clone_repos(testrun)
+    wdir = settings.BUILD_DIR
+    clone_repos(testrun)
     if not testrun.sha:
         testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
                                               text=True).strip('\n')
 
     # install node packages first (or fetch from cache)
-    lockhash = create_node_environment(testrun, wdir)
+    lockhash, upload = create_node_environment(testrun)
 
     # now we can determine the specs
     specs = get_specs(wdir)
@@ -204,7 +201,18 @@ def clone_and_build(testrun: NewTestRun):
         return
 
     logger.info(f"Found {len(specs)} spec files")
-    build_app(testrun, wdir)
+    build_app(testrun)
+
+    if upload:
+        cache_filename = f'{lockhash}.tar.lz4'
+        # tar up and store
+        tarfile = f'/tmp/{cache_filename}'
+        logger.info(f'Uploading node_modules cache')
+        runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
+        # upload to cache
+        upload_to_cache(tarfile, cache_filename)
+        logger.info(f'Cache uploaded')
+        os.remove(tarfile)
 
     completed_build = CompletedBuild(sha=testrun.sha,
                                      specs=specs,

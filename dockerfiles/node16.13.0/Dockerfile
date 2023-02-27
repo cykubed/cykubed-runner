@@ -1,5 +1,5 @@
 ARG TAG=1.0
-FROM nickbrookck/cykube-runner:chrome90-$TAG
+FROM nickbrookck/cykube-runner:base-$TAG
 
 USER root
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -17,8 +17,12 @@ RUN curl https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash 
 ENV NODE_PATH $NVM_DIR/versions/node/v$NODE_VERSION/lib/node_modules
 ENV PATH      $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-WORKDIR /usr/app
+RUN corepack enable
+RUN corepack prepare yarn@3.4.1 --activate
+
 USER cykube
+
+WORKDIR /usr/app
 
 COPY src .
 

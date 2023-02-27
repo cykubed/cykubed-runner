@@ -41,12 +41,15 @@ RUN apt-get update && \
 
 WORKDIR /usr/app
 
+RUN mkdir /build
+
 RUN useradd -m cykube && chown cykube /usr/app
 USER cykube
 
-RUN mkdir /tmp/cykube
-ENV PATH="/home/cykube/.local/bin:/tmp/cykube/build/node_modules/.bin:$PATH"
-RUN CYPRESS_CACHE_FOLDER=/tmp/cykube/build/cypresscache
+ENV PATH="/home/cykube/.local/bin:/build/node_modules/.bin:$PATH"
+ENV CYPRESS_CACHE_FOLDER=/tmp/build/cypress_cache
+ENV BUILD_DIR=/tmp/build
+ENV RESULTS_FOLDER=/tmp/build/results
 
 RUN pip install poetry==1.3.1
 COPY pyproject.toml poetry.lock ./
