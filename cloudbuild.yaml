@@ -21,6 +21,11 @@ steps:
     args: [ './scripts/build-docker.sh', $TAG_NAME ]
     secretEnv: [ 'USERNAME' ]
 
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [ './scripts/push-docker.sh', $TAG_NAME ]
+    secretEnv: [ 'USERNAME' ]
+
 availableSecrets:
   secretManager:
     - versionName: projects/1090211518452/secrets/docker-username/versions/1
