@@ -212,7 +212,6 @@ def clone_and_build(trid: int):
         # upload to cache
         upload_to_cache(tarfile, cache_filename)
         logger.info(f'Cache uploaded')
-        os.remove(tarfile)
 
     completed_build = CompletedBuild(sha=testrun.sha,
                                      specs=specs,

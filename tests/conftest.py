@@ -1,4 +1,6 @@
 import os
+import shutil
+from uuid import uuid4
 
 import pytest
 from loguru import logger
@@ -27,6 +29,8 @@ async def project() -> Project:
                    default_branch='master',
                    platform=PlatformEnum.GITHUB,
                    url='git@github.org/dummy.git',
+                   start_runners_first=False,
+                   agent_id=uuid4(),
                    organisation=org)
 
 
