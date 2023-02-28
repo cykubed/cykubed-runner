@@ -23,5 +23,5 @@ availableSecrets:
   secretManager:
 #    - versionName: projects/1090211518452/secrets/docker-username/versions/1
 #      env: 'USERNAME'
-    - versionName: projects/1090211518452/secrets/docker-password/versions/2
+    - versionName: projects/1090211518452/secrets/docker-hub-password/versions/1
       env: 'PASSWORD'
