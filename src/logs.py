@@ -10,7 +10,7 @@ from common.settings import settings
 import loguru
 
 
-class Logger:
+class TestRunLogger:
     def __init__(self):
         self.testrun_id = None
         self.source = None
@@ -69,4 +69,4 @@ class Logger:
         self.log(str(msg) + '\n' + traceback.format_exc() + '\n', LogLevel.error)
 
 
-logger = Logger()
+logger = TestRunLogger()

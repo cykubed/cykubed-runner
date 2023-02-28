@@ -2,12 +2,9 @@ import argparse
 import sys
 from time import sleep
 
-import httpx
-
 import build
 import cypress
-from common.schemas import NewTestRun
-from common.settings import settings
+from common.cloudlogging import configure_stackdriver_logging
 from logs import logger
 
 
@@ -18,6 +15,8 @@ def main():
     parser.add_argument('testrun_id', help='Test run ID')
 
     args = parser.parse_args()
+
+    configure_stackdriver_logging('cykube-runner')
 
     cmd = args.command
     if cmd == 'shell':
