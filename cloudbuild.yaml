@@ -12,11 +12,6 @@ steps:
     secretEnv: ['USERNAME', 'PASSWORD']
 
   - name: 'gcr.io/cloud-builders/docker'
-    script: |
-      docker login --username=$$USERNAME --password=$$PASSWORD
-    secretEnv: [ 'USERNAME', 'PASSWORD' ]
-
-  - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args: [ './scripts/build-docker.sh', $TAG_NAME ]
     secretEnv: [ 'USERNAME' ]
