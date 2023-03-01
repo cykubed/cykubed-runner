@@ -12,7 +12,7 @@ from httpx import HTTPError
 
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, CompletedSpecFile
 from common.settings import settings
 from common.utils import get_headers
 from logs import logger
@@ -126,7 +126,7 @@ def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
                                 context=skipped['context'],
                                 title=skipped['title']))
 
-    result = SpecResult(file=spec, tests=tests)
+    result = SpecResult(tests=tests)
     # we should have a single video - but only add it if we have failures
     if failures:
         video_fnames = []
@@ -155,7 +155,7 @@ def run_cypress(file: str, port: int):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
-def upload_results(testrun_id: int, result: SpecResult):
+def upload_results(testrun_id: int, spec: str, result: SpecResult):
 
     # For now upload images and videos directly to the main service rather than via the websocket
     # This may change
@@ -189,8 +189,9 @@ def upload_results(testrun_id: int, result: SpecResult):
         # finally upload result
         try:
             logger.debug(f'Upload JSON results')
+            item = CompletedSpecFile(file=spec, result=result, finished=datetime.datetime.utcnow())
             r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
-                                  data=result.json().encode('utf8'))
+                              data=item.json().encode('utf8'))
             if not r.status_code == 200:
                 raise BuildFailedException(f'Test result post failed: {r.status_code}: {r.json()}')
         except HTTPError:
@@ -216,7 +217,7 @@ def run_tests(testrun_id: int, port: int):
                 started_at = datetime.datetime.now()
                 run_cypress(spec, port)
                 result = parse_results(started_at, spec)
-                upload_results(testrun_id, result)
+                upload_results(testrun_id, spec, result)
 
             except subprocess.CalledProcessError as ex:
                 raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
