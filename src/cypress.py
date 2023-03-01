@@ -205,7 +205,7 @@ def run_tests(testrun_id: int, port: int):
 
         r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', params={'name': hostname},
                       headers=get_headers())
-        if r.status_code == 204:
+        if r.status_code in [404, 204]:
             # we're done
             logger.debug("No more tests - exiting")
             break
