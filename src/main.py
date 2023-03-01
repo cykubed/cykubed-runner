@@ -37,6 +37,7 @@ def main():
                 cypress.start(args.testrun_id)
             except BuildFailedException:
                 logger.exception("Cypress run failed")
+                build.post_status(args.testrun_id, 'failed')
                 sys.exit(1)
 
 
