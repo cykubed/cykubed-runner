@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from time import sleep
 
@@ -16,6 +17,12 @@ def main():
     parser.add_argument('testrun_id', help='Test run ID')
 
     args = parser.parse_args()
+
+    if os.environ.get('SENTRY_DSN'):
+        sentry_sdk.init(integrations=[
+            HttpxIntegration(),
+            AsyncioIntegration(),
+        ], )
 
     configure_stackdriver_logging('cykube-runner')
 

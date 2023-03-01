@@ -192,7 +192,7 @@ def upload_results(testrun_id: int, result: SpecResult):
             r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
                                   data=result.json().encode('utf8'))
             if not r.status_code == 200:
-                raise BuildFailedException(f'Test result post failed: {r.status_code}')
+                raise BuildFailedException(f'Test result post failed: {r.status_code}: {r.json()}')
         except HTTPError:
             raise BuildFailedException(f'Failed to contact Cykube server')
 
