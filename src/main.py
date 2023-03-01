@@ -5,6 +5,7 @@ from time import sleep
 import build
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
+from common.exceptions import BuildFailedException
 from logs import logger
 
 
@@ -34,10 +35,9 @@ def main():
         else:
             try:
                 cypress.start(args.testrun_id)
-            except:
+            except BuildFailedException:
                 logger.exception("Cypress run failed")
                 sys.exit(1)
-                # sleep(300)
 
 
 if __name__ == '__main__':

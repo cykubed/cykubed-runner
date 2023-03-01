@@ -232,6 +232,8 @@ def run_tests(testrun_id: int, port: int):
 def start(testrun_id: int):
     init_build_dirs()
 
+    logger.init(testrun_id, source="runner")
+
     start_time = time()
     testrun = None
 
@@ -257,9 +259,6 @@ def start(testrun_id: int):
         # now fetch specs until we're done or the build is cancelled
         logger.debug(f"Server running on port {server.port}")
         run_tests(testrun_id, server.port)
-    except BuildFailedException as ex:
-        # TODO inform the server
-        logger.exception(ex)
     finally:
         # kill the server
         server.stop()
