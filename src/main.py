@@ -9,6 +9,8 @@ from common.cloudlogging import configure_stackdriver_logging
 from common.exceptions import BuildFailedException
 from logs import logger
 import sentry_sdk
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
+from sentry_sdk.integrations.httpx import HttpxIntegration
 
 
 def main():
