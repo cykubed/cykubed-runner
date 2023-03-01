@@ -8,6 +8,7 @@ import cypress
 from common.cloudlogging import configure_stackdriver_logging
 from common.exceptions import BuildFailedException
 from logs import logger
+import sentry_sdk
 
 
 def main():
