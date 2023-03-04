@@ -2,7 +2,9 @@ import datetime
 import json
 import os
 import shutil
+import signal
 import subprocess
+import sys
 import tempfile
 import threading
 from time import time, sleep
@@ -213,6 +215,23 @@ def run_tests(testrun_id: int, port: int):
         elif r.status_code == 200:
             # run the test
             spec = r.text
+
+            def handle_sigterm_runner(signum, frame):
+                """
+                We can tell the agent that they should reassign the spec
+                """
+                resp =httpx.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-terminated', json={
+                    'file': spec
+                })
+                logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+                if resp.status_code != 200:
+                    logger.error("Failed to notify agent of termination: bailing out")
+                    sys.exit(1)
+                else:
+                    sys.exit(0)
+
+            signal.signal(signal.SIGTERM, handle_sigterm_runner)
+            signal.signal(signal.SIGINT, handle_sigterm_runner)
             try:
                 started_at = datetime.datetime.now()
                 run_cypress(spec, port)
@@ -223,6 +242,7 @@ def run_tests(testrun_id: int, port: int):
                 raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
             except subprocess.TimeoutExpired:
                 raise BuildFailedException("Exceeded run timeout")
+
         else:
             raise BuildFailedException(f"Received unexpected status code from hub: {r.status_code}")
 

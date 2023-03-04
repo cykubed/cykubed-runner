@@ -3,14 +3,24 @@ import os
 import sys
 from time import sleep
 
+import httpx
+
 import build
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
 from common.exceptions import BuildFailedException
+from common.settings import settings
 from logs import logger
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
+
+
+def handle_sigterm_builder(signum, frame):
+    """
+    The builder can just exit with an error code: the parent Job will recreate up to the backoff limit
+    """
+    sys.exit(1)
 
 
 def main():

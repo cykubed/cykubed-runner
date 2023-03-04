@@ -86,12 +86,15 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
 
     if rebuild:
         # build node_modules
+        env = dict(CYPRESS_INSTALL_BINARY='0')
+        if settings.NODE_PATH:
+            env['PATH'] = settings.NODE_PATH+':'+os.environ['PATH']
         if os.path.exists('yarn.lock'):
             logger.info("Building new node cache using yarn")
-            runcmd('yarn install', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
+            runcmd('yarn install', cmd=True, env=env)
         else:
             logger.info("Building new node cache using npm")
-            runcmd('npm ci', cmd=True, env=dict(CYPRESS_INSTALL_BINARY='0'))
+            runcmd('npm ci', cmd=True, env=env)
         # install Cypress binary
         os.mkdir('cypress_cache')
         logger.info("Installing Cypress binary")
