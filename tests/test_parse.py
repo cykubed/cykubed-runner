@@ -14,7 +14,6 @@ def test_parse_fail(fixturedir):
     sshotdir = os.path.join(fixturedir, 'two-fails-with-retries', 'screenshots')
     viddir = os.path.join(fixturedir, 'two-fails-with-retries', 'videos')
     assert result.video == os.path.join(viddir, 'test1.spec.ts.mp4')
-    assert result.file == 'test1.spec.ts'
     assert len(result.tests) == 4
     # first test passed
     test1 = result.tests[0]

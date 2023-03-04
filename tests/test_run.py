@@ -3,7 +3,7 @@ import os
 import pytest
 from httpx import Response
 
-from common.schemas import SpecResult
+from common.schemas import SpecResult, CompletedSpecFile
 from common.settings import settings
 from cypress import run_tests
 
@@ -36,9 +36,9 @@ def test_run_tests(respx_mock, mocker, testrun, fixturedir):
     cypressrun.assert_called_once()
     assert upload_file.call_count == 6
     assert spec_completed.call_count == 1
-    payload = spec_completed.calls[0].request.content.decode()
-    result = SpecResult.parse_raw(payload)
-    assert result.file == "cypress/e2e/stuff/test1.spec.ts"
+    completed_spec_file = CompletedSpecFile.parse_raw(spec_completed.calls[0].request.content.decode())
+    assert completed_spec_file.file == 'cypress/e2e/stuff/test1.spec.ts'
+    result = completed_spec_file.result
     assert len(result.tests) == 5
 
     test0 = result.tests[0]
