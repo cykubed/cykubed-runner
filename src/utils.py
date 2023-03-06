@@ -2,21 +2,11 @@ import os
 import shlex
 import subprocess
 
-import httpx
-
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun
 from common.settings import settings
-from common.utils import get_headers
+from httpclient import get_sync_client
 from logs import logger
-
-
-def get_sync_client():
-    return httpx.Client(headers=get_headers())
-
-
-def get_async_client():
-    return httpx.AsyncClient(headers=get_headers())
 
 
 def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
@@ -54,18 +44,16 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
 
 def upload_to_cache(filepath, filename):
     # upload to cache
-    url = os.path.join(settings.AGENT_URL, 'upload')
-    try:
-        runcmd(f'/usr/bin/curl -s -F "file=@{filepath}" {url}')
-    except BuildFailedException as ex:
-        logger.error(f"Failed to upload {filename} to agent file cache")
-        raise ex
+    files = {'file': (filename, open(filepath, 'rb'), 'application/octet-stream')}
+    resp = get_sync_client().post(os.path.join(settings.AGENT_URL, 'upload'), files=files)
+    if resp.status_code != 200:
+        raise BuildFailedException(f"Failed to upload {filename} to agent file cache")
 
 
 def fetch_testrun(testrun_id: int) -> NewTestRun:
     # we'll need the test run from the agent
     try:
-        resp = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}')
+        resp = get_sync_client().get(f'{settings.AGENT_URL}/testrun/{testrun_id}')
         if resp.status_code != 200:
             raise BuildFailedException(f"Failed to fetch test run from agent ({resp.status_code}): quitting")
 

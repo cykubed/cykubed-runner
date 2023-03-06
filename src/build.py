@@ -15,6 +15,7 @@ from common.settings import settings
 from cypress import fetch_from_cache
 from logs import logger
 from utils import runcmd, upload_to_cache, fetch_testrun
+from httpclient import get_sync_client
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -71,7 +72,7 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
 
     rebuild = True
 
-    resp = httpx.head(url)
+    resp = get_sync_client().head(url)
     if resp.status_code == 200:
         try:
             logger.info("Node cache hit: fetch and unpack")
@@ -156,7 +157,7 @@ def build_app(testrun: NewTestRun):
 
     # tar it up
     logger.info("Upload distribution")
-    filename = f'{testrun.id}.tar.lz4'
+    filename = f'{testrun.sha}.tar.lz4'
     filepath = os.path.join('/tmp', filename)
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
@@ -166,7 +167,7 @@ def build_app(testrun: NewTestRun):
 
 
 def post_status(trid: int, status: str):
-    resp = httpx.post(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
+    resp = get_sync_client().post(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
     if resp.status_code != 200:
         raise BuildFailedException(f"Cannot contact agent: {resp.status_code}")
 
@@ -204,7 +205,13 @@ def clone_and_build(trid: int):
         return
 
     logger.info(f"Found {len(specs)} spec files")
-    build_app(testrun)
+
+    logger.debug(f"Checking cache for distribution for SHA {testrun.sha}")
+    resp = get_sync_client().head(os.path.join(settings.CACHE_URL, f'{testrun.sha}.tar.lz4'))
+    if resp.status_code == 200:
+        logger.info(f"Cache hit")
+    else:
+        build_app(testrun)
 
     if upload:
         cache_filename = f'{lockhash}.tar.lz4'
@@ -220,7 +227,8 @@ def clone_and_build(trid: int):
                                      specs=specs,
                                      cache_hash=lockhash)
     try:
-        r = httpx.post(f'{settings.AGENT_URL}/testrun/{testrun.id}/build-complete', data=completed_build.json())
+        r = get_sync_client().post(f'{settings.AGENT_URL}/testrun/{testrun.id}/build-complete',
+                                   data=completed_build.json())
         if r.status_code != 200:
             raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
     except Exception as ex:

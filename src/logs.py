@@ -1,13 +1,13 @@
 import traceback
 from datetime import datetime
 
-import httpx
+import loguru
 
 from common import schemas
 from common.enums import LogLevel, loglevelToInt, AgentEventType
 from common.schemas import AppLogMessage
 from common.settings import settings
-import loguru
+from httpclient import get_sync_client
 
 
 class TestRunLogger:
@@ -44,7 +44,7 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            httpx.post(f'{settings.AGENT_URL}/log', data=event.json())
+            get_sync_client().post(f'{settings.AGENT_URL}/log', data=event.json())
 
     def cmd(self, msg: str):
         self.step += 1

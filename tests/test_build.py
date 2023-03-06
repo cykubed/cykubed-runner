@@ -53,6 +53,7 @@ def test_create_node_environment_cache_hit(respx_mock, mocker, testrun, fixtured
 
 @pytest.mark.respx
 def test_clone_and_build(respx_mock, mocker, testrun: NewTestRun, fixturedir):
+    testrun.sha = 'deadbeef0101'
     mocker.patch('build.logger')
     mocker.patch('build.clone_repos')
     settings.BUILD_DIR = fixturedir+'/project'
@@ -60,6 +61,9 @@ def test_clone_and_build(respx_mock, mocker, testrun: NewTestRun, fixturedir):
                  return_value=('74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2', True))
     fetch_testrun = respx_mock.get('http://127.0.0.1:5000/testrun/20')
     fetch_testrun.mock(return_value=httpx.Response(200, text=testrun.json()))
+
+    check_app_dist_cache = respx_mock.head('http://127.0.0.1:5001/deadbeef0101.tar.lz4')
+    check_app_dist_cache.mock(return_value=httpx.Response(404))
 
     upload_to_cache = mocker.patch('build.upload_to_cache')
     update_status = respx_mock.post('http://127.0.0.1:5000/testrun/20/status/building')
@@ -72,7 +76,7 @@ def test_clone_and_build(respx_mock, mocker, testrun: NewTestRun, fixturedir):
 
     assert upload_to_cache.call_count == 2
 
-    assert upload_to_cache.call_args_list[0].args == ('/tmp/20.tar.lz4', '20.tar.lz4')
+    assert upload_to_cache.call_args_list[0].args == ('/tmp/deadbeef0101.tar.lz4', 'deadbeef0101.tar.lz4')
     assert upload_to_cache.call_args_list[1].args == ('/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
                                        '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4')
 
@@ -88,8 +92,9 @@ def test_clone_and_build(respx_mock, mocker, testrun: NewTestRun, fixturedir):
                                  'cypress/e2e/nonsense/another-test.spec.ts']}
 
     cmds = [x[0][0] for x in runcmd.call_args_list]
-    assert cmds == ['ng build --output-path=dist',
-                    'tar cf /tmp/20.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I '
-                    'lz4',
-                    'tar cf /tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4 -I lz4 '
-                    'node_modules cypress_cache']
+    assert cmds == [
+        'ng build --output-path=dist',
+        'tar cf /tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I '
+        'lz4',
+        'tar cf /tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4 -I lz4 '
+        'node_modules cypress_cache']

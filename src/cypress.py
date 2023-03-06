@@ -14,12 +14,13 @@ from httpx import HTTPError
 
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, CompletedSpecFile
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, CompletedSpecFile, NewTestRun
 from common.settings import settings
 from common.utils import get_headers
 from logs import logger
 from server import start_server
-from utils import runcmd, get_sync_client, fetch_testrun
+from utils import runcmd, fetch_testrun
+from httpclient import get_sync_client
 
 
 def get_screenshots_folder():
@@ -52,13 +53,13 @@ def fetch_from_cache(path: str):
     logger.debug(f'Unpacked {path}')
 
 
-def fetch(testrun_id: int, cache_key: str):
+def fetch(testrun: NewTestRun, cache_key: str):
     """
     Fetch the node cache and distribution from the cache server
     """
     # fetch the dist
     t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
-    t2 = threading.Thread(target=fetch_from_cache, args=[f'{testrun_id}'])
+    t2 = threading.Thread(target=fetch_from_cache, args=[f'{testrun.sha}'])
     t1.start()
     t2.start()
     t1.join(settings.BUILD_TIMEOUT)
@@ -163,41 +164,40 @@ def upload_results(testrun_id: int, spec: str, result: SpecResult):
     # This may change
     upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload'
 
-    with get_sync_client() as client:
-        for test in result.tests:
-            if test.failure_screenshots:
-                new_urls = []
-                for sshot in test.failure_screenshots:
-                    # this will be the full path - we'll upload the file but just use the filename
-                    filename = os.path.split(sshot)[-1]
-                    logger.debug(f'Upload screenshot {filename}')
-                    r = client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
-                                  headers={'filename': filename})
-                    if r.status_code != 200:
-                        # TODO retry?
-                        raise BuildFailedException(f'Failed to upload screenshot to cykube: {r.status_code}')
-                    new_urls.append(r.text)
-                test.failure_screenshots = new_urls
-
-        if result.video:
-            filename = os.path.split(result.video)[-1]
-            logger.debug(f'Upload video {filename}')
-            r = client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
+    client = get_sync_client()
+    for test in result.tests:
+        if test.failure_screenshots:
+            new_urls = []
+            for sshot in test.failure_screenshots:
+                # this will be the full path - we'll upload the file but just use the filename
+                filename = os.path.split(sshot)[-1]
+                logger.debug(f'Upload screenshot {filename}')
+                r = client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), 'image/png')},
                               headers={'filename': filename})
-            if r.status_code != 200:
-                raise BuildFailedException(f'Failed to upload video to cykube: {r.status_code}')
-            result.video = r.text
+                if r.status_code != 200:
+                    raise BuildFailedException(f'Failed to upload screenshot to cykube: {r.status_code}')
+                new_urls.append(r.text)
+            test.failure_screenshots = new_urls
 
-        # finally upload result
-        try:
-            logger.debug(f'Upload JSON results')
-            item = CompletedSpecFile(file=spec, result=result, finished=datetime.datetime.utcnow())
-            r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
-                              data=item.json().encode('utf8'))
-            if not r.status_code == 200:
-                raise BuildFailedException(f'Test result post failed: {r.status_code}: {r.json()}')
-        except HTTPError:
-            raise BuildFailedException(f'Failed to contact Cykube server')
+    if result.video:
+        filename = os.path.split(result.video)[-1]
+        logger.debug(f'Upload video {filename}')
+        r = client.post(upload_url, files={'file': (result.video, open(result.video, 'rb'), 'video/mp4')},
+                          headers={'filename': filename})
+        if r.status_code != 200:
+            raise BuildFailedException(f'Failed to upload video to cykube: {r.status_code}')
+        result.video = r.text
+
+    # finally upload result
+    try:
+        logger.debug(f'Upload JSON results')
+        item = CompletedSpecFile(file=spec, result=result, finished=datetime.datetime.utcnow())
+        r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
+                          data=item.json().encode('utf8'))
+        if not r.status_code == 200:
+            raise BuildFailedException(f'Test result post failed: {r.status_code}: {r.json()}')
+    except HTTPError:
+        raise BuildFailedException(f'Failed to contact Cykube server')
 
 
 def run_tests(testrun_id: int, port: int):
@@ -206,8 +206,7 @@ def run_tests(testrun_id: int, port: int):
         with open('/etc/hostname') as f:
             hostname = f.read().strip()
 
-        r = httpx.get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', params={'name': hostname},
-                      headers=get_headers())
+        r = get_sync_client().get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', params={'name': hostname})
         if r.status_code in [404, 204]:
             # we're done
             logger.debug("No more tests - exiting")
@@ -220,11 +219,15 @@ def run_tests(testrun_id: int, port: int):
                 """
                 We can tell the agent that they should reassign the spec
                 """
-                resp =httpx.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-terminated', json={
-                    'file': spec
-                })
-                logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-                if resp.status_code != 200:
+                try:
+                    resp = httpx.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-terminated', json={
+                        'file': spec
+                    })
+                    logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+                    if resp.status_code != 200:
+                        logger.error("Failed to notify agent of termination: bailing out")
+                        sys.exit(1)
+                except httpx.ConnectError:
                     logger.error("Failed to notify agent of termination: bailing out")
                     sys.exit(1)
                 else:
@@ -269,7 +272,7 @@ def start(testrun_id: int):
             raise BuildFailedException(f"Test run is {testrun.status}: quitting")
 
     # fetch the distribution
-    fetch(testrun_id, testrun.cache_key)
+    fetch(testrun, testrun.cache_key)
     # start the server
     server = start_server()
 
