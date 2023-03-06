@@ -3,17 +3,14 @@ import os
 import sys
 from time import sleep
 
-import httpx
-
-import build
-import cypress
-from common.cloudlogging import configure_stackdriver_logging
-from common.exceptions import BuildFailedException
-from common.settings import settings
-from logs import logger
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
+
+import build
+import cypress
+from common.exceptions import BuildFailedException
+from logs import logger
 
 
 def handle_sigterm_builder(signum, frame):
@@ -36,8 +33,6 @@ def main():
             HttpxIntegration(),
             AsyncioIntegration(),
         ], )
-
-    configure_stackdriver_logging('cykube-runner')
 
     cmd = args.command
     if cmd == 'shell':

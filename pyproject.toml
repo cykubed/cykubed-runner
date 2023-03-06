@@ -19,7 +19,6 @@ pydantic = "^1.10.4"
 httpx = "^0.23.1"
 wcmatch = "^8.4.1"
 loguru = "^0.6.0"
-google-cloud-logging = "^3.5.0"
 sentry-sdk = {extras = ["httpx"], version = "^1.16.0"}
 
 [tool.poetry.group.dev.dependencies]
