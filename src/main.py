@@ -35,6 +35,7 @@ def main():
         ], )
 
     cmd = args.command
+
     if cmd == 'shell':
         sleep(3600*24)
         sys.exit(0)
