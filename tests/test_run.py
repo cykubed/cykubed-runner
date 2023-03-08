@@ -3,7 +3,9 @@ import os
 import pytest
 from httpx import Response
 
-from common.schemas import SpecResult, CompletedSpecFile
+from common.enums import AgentEventType
+from common.mongo import runs_coll, specs_coll, messages_coll
+from common.schemas import SpecResult, CompletedSpecFile, AgentSpecStarted, AgentSpecCompleted
 from common.settings import settings
 from cypress import run_tests
 
@@ -11,15 +13,13 @@ from cypress import run_tests
 @pytest.mark.respx
 def test_run_tests(respx_mock, mocker, testrun, fixturedir):
     settings.RESULTS_FOLDER = os.path.join(fixturedir, 'results/test1')
+    testrun.status = 'running'
+    runs_coll().insert_one(testrun.dict())
 
-    def next_spec_side_effect(request, route):
-        if route.call_count == 0:
-            return Response(200, text='cypress/e2e/stuff/test1.spec.ts')
-        return Response(204)
+    # single spec
+    specs_coll().insert_one({'trid': 20, 'file': 'cypress/e2e/stuff/test1.spec.ts'})
 
-    next_spec_mock = respx_mock.get('http://127.0.0.1:5000/testrun/20/next')\
-        .mock(side_effect=next_spec_side_effect)
-
+    # mock the actual Cypress run
     cypressrun = mocker.patch('subprocess.run')
 
     def upload_side_effect(request, route):
@@ -28,17 +28,30 @@ def test_run_tests(respx_mock, mocker, testrun, fixturedir):
     upload_file = respx_mock.post(f'{settings.MAIN_API_URL}/agent/testrun/upload').mock(
         side_effect=upload_side_effect
     )
-    spec_completed = respx_mock.post(f'{settings.AGENT_URL}/testrun/20/spec-completed')
 
-    run_tests(20, 2400)
+    run_tests(testrun, 2400)
 
-    assert next_spec_mock.call_count == 2
+    # the spec will be finished
+    spec = specs_coll().find_one()
+    assert spec['finished'] is not None
+
+    # we'll have two messages for the agent: a spec_started and a spec_completed
+    msgs = list(messages_coll().find())
+    assert len(msgs) == 2
+    msg0 = AgentSpecStarted.parse_raw(msgs[0]['msg'])
+    assert msg0.type == AgentEventType.spec_started
+    assert msg0.testrun_id == 20
+    assert msg0.file == 'cypress/e2e/stuff/test1.spec.ts'
+    msg1 = AgentSpecCompleted.parse_raw(msgs[1]['msg'])
+    assert msg1.type == AgentEventType.spec_completed
+    assert msg1.testrun_id == 20
+    assert msg1.file == 'cypress/e2e/stuff/test1.spec.ts'
+
+    # a 6 artifacts will have been uploaded to the main server
     cypressrun.assert_called_once()
     assert upload_file.call_count == 6
-    assert spec_completed.call_count == 1
-    completed_spec_file = CompletedSpecFile.parse_raw(spec_completed.calls[0].request.content.decode())
-    assert completed_spec_file.file == 'cypress/e2e/stuff/test1.spec.ts'
-    result = completed_spec_file.result
+
+    result = SpecResult.parse_obj(spec['result'])
     assert len(result.tests) == 5
 
     test0 = result.tests[0]

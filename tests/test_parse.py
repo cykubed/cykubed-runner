@@ -9,7 +9,7 @@ from cypress import parse_results
 def test_parse_fail(fixturedir):
     settings.RESULTS_FOLDER = os.path.join(fixturedir, 'two-fails-with-retries')
 
-    result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'test1.spec.ts')
+    result = parse_results(datetime(2022, 11, 23, 13, 0, 0))
     # these will be the full paths
     sshotdir = os.path.join(fixturedir, 'two-fails-with-retries', 'screenshots')
     viddir = os.path.join(fixturedir, 'two-fails-with-retries', 'videos')

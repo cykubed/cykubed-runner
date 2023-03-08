@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from build import create_node_environment, clone_and_build
+from common.mongo import runs_coll, check_file_exists, specs_coll
 from common.schemas import NewTestRun
 from common.settings import settings
 
@@ -51,45 +52,39 @@ def test_create_node_environment_cache_hit(respx_mock, mocker, testrun, fixtured
     fetch_from_cache.assert_called_once()
 
 
-@pytest.mark.respx
-def test_clone_and_build(respx_mock, mocker, testrun: NewTestRun, fixturedir):
+def test_clone_and_build(mocker, testrun: NewTestRun, fixturedir):
     testrun.sha = 'deadbeef0101'
+    trdict = testrun.dict()
+    runs_coll().insert_one(trdict)
+
     mocker.patch('build.logger')
     mocker.patch('build.clone_repos')
     settings.BUILD_DIR = fixturedir+'/project'
     mocker.patch('build.create_node_environment',
                  return_value=('74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2', True))
-    fetch_testrun = respx_mock.get('http://127.0.0.1:5000/testrun/20')
-    fetch_testrun.mock(return_value=httpx.Response(200, text=testrun.json()))
 
-    check_app_dist_cache = respx_mock.head('http://127.0.0.1:5001/deadbeef0101.tar.lz4')
-    check_app_dist_cache.mock(return_value=httpx.Response(404))
-
-    upload_to_cache = mocker.patch('build.upload_to_cache')
-    update_status = respx_mock.post('http://127.0.0.1:5000/testrun/20/status/building')
-    build_complete = respx_mock.post('http://127.0.0.1:5000/testrun/20/build-complete')
     runcmd = mocker.patch('build.runcmd')
+    # create some dummy files
+    with open('/tmp/deadbeef0101.tar.lz4', 'wb') as f:
+        f.write('dummy'.encode())
+    with open('/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4', 'wb') as f:
+        f.write('dummy'.encode())
 
     clone_and_build(20)
 
-    assert fetch_testrun.called
+    # this will have built and stored the node cache and app distribution in GridFS
+    tr = runs_coll().find_one({'id': 20})
+    assert tr['status'] == 'running'
 
-    assert upload_to_cache.call_count == 2
+    assert check_file_exists('deadbeef0101')
+    assert check_file_exists('74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2')
 
-    assert upload_to_cache.call_args_list[0].args == ('/tmp/deadbeef0101.tar.lz4', 'deadbeef0101.tar.lz4')
-    assert upload_to_cache.call_args_list[1].args == ('/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
-                                       '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4')
-
-    assert update_status.called
-    assert build_complete.called
-    payload = json.loads(build_complete.calls[0].request.content.decode())
-    assert payload == {'cache_hash': '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2',
-                       'sha': 'deadbeef0101',
-                       'specs': ['cypress/e2e/stuff/test2.spec.ts',
-                                 'cypress/e2e/stuff/test3.spec.ts',
-                                 'cypress/e2e/stuff/test1.spec.ts',
-                                 'cypress/e2e/nonsense/test4.spec.ts',
-                                 'cypress/e2e/nonsense/another-test.spec.ts']}
+    specs = {x['file'] for x in specs_coll().find({'trid': 20})}
+    assert specs == {'cypress/e2e/stuff/test2.spec.ts',
+                     'cypress/e2e/stuff/test3.spec.ts',
+                     'cypress/e2e/stuff/test1.spec.ts',
+                     'cypress/e2e/nonsense/test4.spec.ts',
+                     'cypress/e2e/nonsense/another-test.spec.ts'}
 
     cmds = [x[0][0] for x in runcmd.call_args_list]
     assert cmds == [

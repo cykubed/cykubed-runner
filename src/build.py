@@ -6,16 +6,17 @@ import shutil
 import subprocess
 import time
 
-import httpx
 from wcmatch import glob
 
+from common import mongo
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun, CompletedBuild
+from common.mongo import get_testrun, update_status
+from common.schemas import NewTestRun
 from common.settings import settings
 from cypress import fetch_from_cache
-from logs import logger
-from utils import runcmd, upload_to_cache, fetch_testrun
 from httpclient import get_sync_client
+from logs import logger
+from utils import runcmd
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -162,21 +163,19 @@ def build_app(testrun: NewTestRun):
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
     # upload to cache
-    upload_to_cache(filepath, filename)
+    mongo.store_file(filepath, testrun.sha)
     logger.info("Distribution uploaded")
-
-
-def post_status(trid: int, status: str):
-    resp = get_sync_client().post(f'{settings.AGENT_URL}/testrun/{trid}/status/{status}')
-    if resp.status_code != 200:
-        raise BuildFailedException(f"Cannot contact agent: {resp.status_code}")
 
 
 def clone_and_build(trid: int):
     """
     Clone and build
     """
-    testrun = fetch_testrun(trid)
+    testrun = get_testrun(trid)
+    if not testrun:
+        raise BuildFailedException("No such testrun")
+    if testrun.status != 'started':
+        raise BuildFailedException(f"Testrun is in {testrun.status} state")
 
     logger.init(testrun.id, source="builder")
 
@@ -184,7 +183,7 @@ def clone_and_build(trid: int):
 
     t = time.time()
 
-    post_status(testrun.id, 'building')
+    update_status(testrun.id, 'building')
 
     # clone
     wdir = settings.BUILD_DIR
@@ -201,14 +200,14 @@ def clone_and_build(trid: int):
 
     if not specs:
         logger.info("No specs - nothing to test")
-        post_status(testrun.id, 'passed')
+        update_status(testrun.id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files")
 
     logger.debug(f"Checking cache for distribution for SHA {testrun.sha}")
-    resp = get_sync_client().head(os.path.join(settings.CACHE_URL, f'{testrun.sha}.tar.lz4'))
-    if resp.status_code == 200:
+
+    if mongo.check_file_exists(testrun.sha):
         logger.info(f"Cache hit")
     else:
         build_app(testrun)
@@ -220,19 +219,10 @@ def clone_and_build(trid: int):
         logger.info(f'Uploading node_modules cache')
         runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
         # upload to cache
-        upload_to_cache(tarfile, cache_filename)
+        mongo.store_file(tarfile, lockhash)
         logger.info(f'Cache uploaded')
 
-    completed_build = CompletedBuild(sha=testrun.sha,
-                                     specs=specs,
-                                     cache_hash=lockhash)
-    try:
-        r = get_sync_client().post(f'{settings.AGENT_URL}/testrun/{testrun.id}/build-complete',
-                                   data=completed_build.json())
-        if r.status_code != 200:
-            raise BuildFailedException(f"Failed to update complete build - bailing out: {r.text}")
-    except Exception as ex:
-        raise BuildFailedException(f"Failed to update complete build: {ex}")
+    mongo.set_build_details(testrun, specs, lockhash)
     t = time.time() - t
     logger.info(f"Distribution created in {t:.1f}s")
 

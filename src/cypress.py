@@ -9,18 +9,17 @@ import tempfile
 import threading
 from time import time, sleep
 
-import httpx
 from httpx import HTTPError
 
+from common import mongo
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, CompletedSpecFile, NewTestRun
 from common.settings import settings
-from common.utils import get_headers
+from httpclient import get_sync_client
 from logs import logger
 from server import start_server
-from utils import runcmd, fetch_testrun
-from httpclient import get_sync_client
+from utils import runcmd
 
 
 def get_screenshots_folder():
@@ -44,9 +43,7 @@ def init_build_dirs():
 
 def fetch_from_cache(path: str):
     with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-        runcmd(f'/usr/bin/curl -s -o {outfile.name} {settings.CACHE_URL}/{path}.tar.lz4')
-        if not os.path.getsize(outfile.name):
-            raise BuildFailedException("Zero-length file")
+        mongo.fetch_file(path, outfile)
         # untar
         runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
 
@@ -59,7 +56,7 @@ def fetch(testrun: NewTestRun, cache_key: str):
     """
     # fetch the dist
     t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
-    t2 = threading.Thread(target=fetch_from_cache, args=[f'{testrun.sha}'])
+    t2 = threading.Thread(target=fetch_from_cache, args=[testrun.sha])
     t1.start()
     t2.start()
     t1.join(settings.BUILD_TIMEOUT)
@@ -73,7 +70,7 @@ def get_env():
     return env
 
 
-def parse_results(started_at: datetime.datetime, spec: str) -> SpecResult:
+def parse_results(started_at: datetime.datetime) -> SpecResult:
     tests = []
     failures = 0
     with open(os.path.join(settings.RESULTS_FOLDER, 'out.json')) as f:
@@ -158,7 +155,7 @@ def run_cypress(file: str, port: int):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
-def upload_results(testrun_id: int, spec: str, result: SpecResult):
+def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
 
     # For now upload images and videos directly to the main service rather than via the websocket
     # This may change
@@ -189,65 +186,41 @@ def upload_results(testrun_id: int, spec: str, result: SpecResult):
         result.video = r.text
 
     # finally upload result
-    try:
-        logger.debug(f'Upload JSON results')
-        item = CompletedSpecFile(file=spec, result=result, finished=datetime.datetime.utcnow())
-        r = client.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-completed',
-                          data=item.json().encode('utf8'))
-        if not r.status_code == 200:
-            raise BuildFailedException(f'Test result post failed: {r.status_code}: {r.json()}')
-    except HTTPError:
-        raise BuildFailedException(f'Failed to contact Cykube server')
+    mongo.spec_completed(testrun, spec, result)
 
 
-def run_tests(testrun_id: int, port: int):
+def run_tests(testrun: NewTestRun, port: int):
 
     while True:
         with open('/etc/hostname') as f:
             hostname = f.read().strip()
 
-        r = get_sync_client().get(f'{settings.AGENT_URL}/testrun/{testrun_id}/next', params={'name': hostname})
-        if r.status_code in [404, 204]:
+        spec = mongo.get_next_spec(testrun.id, hostname)
+        if not spec:
             # we're done
             logger.debug("No more tests - exiting")
             break
-        elif r.status_code == 200:
-            # run the test
-            spec = r.text
 
-            def handle_sigterm_runner(signum, frame):
-                """
-                We can tell the agent that they should reassign the spec
-                """
-                try:
-                    resp = httpx.post(f'{settings.AGENT_URL}/testrun/{testrun_id}/spec-terminated', json={
-                        'file': spec
-                    })
-                    logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-                    if resp.status_code != 200:
-                        logger.error("Failed to notify agent of termination: bailing out")
-                        sys.exit(1)
-                except httpx.ConnectError:
-                    logger.error("Failed to notify agent of termination: bailing out")
-                    sys.exit(1)
-                else:
-                    sys.exit(0)
+        def handle_sigterm_runner(signum, frame):
+            """
+            We can tell the agent that they should reassign the spec
+            """
+            mongo.spec_terminated(testrun.id, spec)
+            logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+            sys.exit(1)
 
-            signal.signal(signal.SIGTERM, handle_sigterm_runner)
-            signal.signal(signal.SIGINT, handle_sigterm_runner)
-            try:
-                started_at = datetime.datetime.now()
-                run_cypress(spec, port)
-                result = parse_results(started_at, spec)
-                upload_results(testrun_id, spec, result)
+        signal.signal(signal.SIGTERM, handle_sigterm_runner)
+        signal.signal(signal.SIGINT, handle_sigterm_runner)
+        try:
+            started_at = datetime.datetime.now()
+            run_cypress(spec, port)
+            result = parse_results(started_at)
+            upload_results(testrun, spec, result)
 
-            except subprocess.CalledProcessError as ex:
-                raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
-            except subprocess.TimeoutExpired:
-                raise BuildFailedException("Exceeded run timeout")
-
-        else:
-            raise BuildFailedException(f"Received unexpected status code from hub: {r.status_code}")
+        except subprocess.CalledProcessError as ex:
+            raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
+        except subprocess.TimeoutExpired:
+            raise BuildFailedException("Exceeded run timeout")
 
 
 def start(testrun_id: int):
@@ -259,7 +232,7 @@ def start(testrun_id: int):
     testrun = None
 
     while time() - start_time < settings.BUILD_TIMEOUT:
-        testrun = fetch_testrun(testrun_id)
+        testrun = mongo.get_testrun(testrun_id)
         if testrun.status in [TestRunStatus.started, TestRunStatus.building]:
             logger.debug("Still building...")
             sleep(10)
@@ -279,7 +252,7 @@ def start(testrun_id: int):
     try:
         # now fetch specs until we're done or the build is cancelled
         logger.debug(f"Server running on port {server.port}")
-        run_tests(testrun_id, server.port)
+        run_tests(testrun, server.port)
     finally:
         # kill the server
         server.stop()

@@ -43,7 +43,7 @@ def main():
     else:
         # we'll need access to MongoDB
         try:
-            mongo.connect()
+            mongo.ensure_connection()
         except MongoConnectionException:
             logger.error("Failed to connect to MongoDB: bailing out")
             sys.exit(1)
@@ -53,7 +53,7 @@ def main():
                 build.clone_and_build(args.testrun_id)
             except Exception:
                 logger.exception("Build failed")
-                build.post_status(args.testrun_id, 'failed')
+                mongo.update_status(args.testrun_id, 'failed')
                 # sleep(3600)
                 sys.exit(1)
         else:
@@ -61,7 +61,7 @@ def main():
                 cypress.start(args.testrun_id)
             except BuildFailedException:
                 logger.exception("Cypress run failed")
-                build.post_status(args.testrun_id, 'failed')
+                mongo.update_status(args.testrun_id, 'failed')
                 sys.exit(1)
 
 
