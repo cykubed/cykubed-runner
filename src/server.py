@@ -136,7 +136,6 @@ def start_server() -> ServerThread:
             logger.warning(f"...{ex}: keep waiting")
         except ConnectionRefusedError:
             logger.info("...connection refused to server")
-            pass
 
         if ready:
             logger.debug('Server is ready')
