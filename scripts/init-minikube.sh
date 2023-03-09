@@ -1,5 +1,4 @@
-eval $(minikube docker-env)
-./scripts/build-docker.sh $1
-./scripts/update-runner-images.sh $1
+minikube start --cpus 8 --memory 20000
+./scripts/build-minikube.sh $1
 
 

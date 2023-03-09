@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from functools import cache
 from typing import BinaryIO
@@ -34,6 +35,14 @@ def messages_coll():
 
 
 @cache
+def fsfetched_coll():
+    """
+    The fetched collection stores a timestamp each time a GridFS-cached item is fetched
+    """
+    return db()['fetched']
+
+
+@cache
 def fs():
     return gridfs.GridFS(db())
 
@@ -67,6 +76,8 @@ def check_file_exists(filename: str):
 
 def fetch_file(filename: str, target: BinaryIO):
     fsbucket().download_to_stream_by_name(filename, target)
+    # update fetched timestamp
+    fsfetched_coll().update_one({'filename': filename}, {'filename': filename, 'ts': time.time()}, upsert=True)
 
 
 def store_file(filepath: str, filename: str):
