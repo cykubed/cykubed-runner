@@ -10,6 +10,7 @@ from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
 
 import httpx
+from httpx import RemoteProtocolError
 from loguru import logger
 
 from common.exceptions import BuildFailedException
@@ -131,6 +132,8 @@ def start_server() -> ServerThread:
             r = httpx.get(f'http://localhost:{server.port}')
             if r.status_code == 200:
                 ready = True
+        except RemoteProtocolError as ex:
+            logger.warning(f"...{ex}: keep waiting")
         except ConnectionRefusedError:
             logger.info("...connection refused to server")
             pass

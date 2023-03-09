@@ -66,6 +66,9 @@ def main():
                 logger.exception("Cypress run failed")
                 mongo.update_status(args.testrun_id, 'failed')
                 sys.exit(1)
+            except Exception as ex:
+                logger.exception("Cypress run crashs")
+                sleep(3600)
 
 
 if __name__ == '__main__':
