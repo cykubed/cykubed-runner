@@ -77,7 +77,8 @@ def check_file_exists(filename: str):
 def fetch_file(filename: str, target: BinaryIO):
     fsbucket().download_to_stream_by_name(filename, target)
     # update fetched timestamp
-    fsfetched_coll().update_one({'filename': filename}, {'filename': filename, 'ts': time.time()}, upsert=True)
+    fsfetched_coll().update_one({'filename': filename}, {'$set': {'filename': filename, 'ts': time.time()}},
+                                upsert=True)
 
 
 def store_file(filepath: str, filename: str):
