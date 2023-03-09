@@ -1,34 +1,21 @@
-import time
 from datetime import datetime
 from functools import cache
-from time import sleep
 from typing import BinaryIO
 
 import gridfs
 from loguru import logger
-from pymongo import MongoClient
 
 from common import schemas
 from common.enums import TestRunStatus, AgentEventType
-from common.exceptions import MongoConnectionException
 from common.schemas import AgentStatusChanged, AgentCompletedBuildMessage, AgentSpecCompleted, AgentSpecStarted, \
     AgentEvent
 from common.settings import settings
-from common.utils import utcnow
-
-
-@cache
-def client():
-    if settings.MONGO_ROOT_PASSWORD:
-        return MongoClient(host=settings.MONGO_HOST,
-                           username=settings.MONGO_USER,
-                           password=settings.MONGO_ROOT_PASSWORD)
-    return MongoClient()
+from common.utils import utcnow, mongo_sync_client
 
 
 @cache
 def db():
-    return client()[settings.MONGO_DATABASE]
+    return mongo_sync_client()[settings.MONGO_DATABASE]
 
 
 @cache
@@ -110,6 +97,9 @@ def set_build_details(testrun: schemas.NewTestRun, specs: list[str], lockhash: s
     runs_coll().find_one_and_update({'id': testrun.id}, {'$set': {'status': 'running',
                                                                   'sha': testrun.sha,
                                                                   'cache_key': lockhash}})
+    add_message(AgentStatusChanged(testrun_id=testrun.id,
+                                   type=AgentEventType.status,
+                                   status='running'))
     add_message(AgentCompletedBuildMessage(testrun_id=testrun.id,
                                            type=AgentEventType.build_completed,
                                            sha=testrun.sha,
@@ -145,17 +135,3 @@ def spec_terminated(trid: int, file: str):
     specs_coll().update_one({'trid': trid, 'file': file}, {'$set': {'started': None}})
 
 
-def ensure_connection():
-    cl = client()
-    if settings.MONGO_ROOT_PASSWORD:
-        start = time.time()
-        num_nodes = len(cl.nodes)
-        while num_nodes < 3:
-            logger.info(f"Only {num_nodes} available: waiting...")
-            t = time.time() - start
-            if t > settings.MONGO_CONNECT_TIMEOUT:
-                raise MongoConnectionException()
-            sleep(10)
-            num_nodes = len(cl.nodes)
-
-            logger.info(f"Connected to MongoDB replicaset")

@@ -1,4 +1,6 @@
 import argparse
+
+import common.utils
 import mongo
 import os
 import sys
@@ -10,6 +12,7 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 
 import build
 import cypress
+import utils
 from common.exceptions import BuildFailedException, MongoConnectionException
 from logs import logger
 
@@ -43,7 +46,7 @@ def main():
     else:
         # we'll need access to MongoDB
         try:
-            mongo.ensure_connection()
+            common.utils.ensure_mongo_connection()
         except MongoConnectionException:
             logger.error("Failed to connect to MongoDB: bailing out")
             sys.exit(1)
