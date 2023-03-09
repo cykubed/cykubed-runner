@@ -4,10 +4,9 @@ from datetime import datetime
 import loguru
 
 from common import schemas
+import mongo
 from common.enums import LogLevel, loglevelToInt, AgentEventType
 from common.schemas import AppLogMessage
-from common.settings import settings
-from httpclient import get_sync_client
 
 
 class TestRunLogger:
@@ -44,7 +43,7 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            get_sync_client().post(f'{settings.AGENT_URL}/log', data=event.json())
+            mongo.add_message(event)
 
     def cmd(self, msg: str):
         self.step += 1

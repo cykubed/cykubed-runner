@@ -9,14 +9,14 @@ import tempfile
 import threading
 from time import time, sleep
 
-from httpx import HTTPError
+import httpx
 
-from common import mongo
+import mongo
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, CompletedSpecFile, NewTestRun
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun
 from common.settings import settings
-from httpclient import get_sync_client
+from common.utils import get_headers
 from logs import logger
 from server import start_server
 from utils import runcmd
@@ -161,7 +161,8 @@ def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
     # This may change
     upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload'
 
-    client = get_sync_client()
+    transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
+    client = httpx.Client(headers=get_headers(), transport=transport)
     for test in result.tests:
         if test.failure_screenshots:
             new_urls = []

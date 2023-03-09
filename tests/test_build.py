@@ -1,11 +1,10 @@
-import json
 import os
 
 import httpx
 import pytest
 
 from build import create_node_environment, clone_and_build
-from common.mongo import runs_coll, check_file_exists, specs_coll
+from mongo import runs_coll, check_file_exists, specs_coll
 from common.schemas import NewTestRun
 from common.settings import settings
 

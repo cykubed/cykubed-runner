@@ -3,9 +3,7 @@ import shlex
 import subprocess
 
 from common.exceptions import BuildFailedException
-from common.schemas import NewTestRun
 from common.settings import settings
-from httpclient import get_sync_client
 from logs import logger
 
 
@@ -40,12 +38,4 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
             if proc.returncode:
                 logger.error(f"Command failed: error code {proc.returncode}")
                 raise BuildFailedException()
-
-
-def upload_to_cache(filepath, filename):
-    # upload to cache
-    files = {'file': (filename, open(filepath, 'rb'), 'application/octet-stream')}
-    resp = get_sync_client().post(os.path.join(settings.AGENT_URL, 'upload'), files=files)
-    if resp.status_code != 200:
-        raise BuildFailedException(f"Failed to upload {filename} to agent file cache")
 

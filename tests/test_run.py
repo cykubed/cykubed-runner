@@ -4,8 +4,8 @@ import pytest
 from httpx import Response
 
 from common.enums import AgentEventType
-from common.mongo import runs_coll, specs_coll, messages_coll
-from common.schemas import SpecResult, CompletedSpecFile, AgentSpecStarted, AgentSpecCompleted
+from mongo import runs_coll, specs_coll, messages_coll
+from common.schemas import SpecResult, AgentSpecStarted, AgentSpecCompleted
 from common.settings import settings
 from cypress import run_tests
 

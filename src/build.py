@@ -8,13 +8,12 @@ import time
 
 from wcmatch import glob
 
-from common import mongo
+import mongo
 from common.exceptions import BuildFailedException
-from common.mongo import get_testrun, update_status
+from mongo import get_testrun, update_status
 from common.schemas import NewTestRun
 from common.settings import settings
 from cypress import fetch_from_cache
-from httpclient import get_sync_client
 from logs import logger
 from utils import runcmd
 
@@ -67,14 +66,11 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
     os.chdir(builddir)
     lockhash = get_lock_hash(builddir)
 
-    cache_filename = f'{lockhash}.tar.lz4'
-    url = os.path.join(settings.CACHE_URL, cache_filename)
-    logger.debug(f"Checking node_modules cache for {url}")
+    logger.debug(f"Checking node_modules cache for {lockhash}")
 
     rebuild = True
 
-    resp = get_sync_client().head(url)
-    if resp.status_code == 200:
+    if mongo.check_file_exists(lockhash):
         try:
             logger.info("Node cache hit: fetch and unpack")
             fetch_from_cache(lockhash)

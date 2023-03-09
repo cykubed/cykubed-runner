@@ -1,5 +1,5 @@
 import argparse
-from common import mongo
+import mongo
 import os
 import sys
 from time import sleep
@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('--loglevel', default='info', help='Log level')
     parser.add_argument('command', choices=['shell', 'build', 'run'], help='Command')
-    parser.add_argument('testrun_id', help='Test run ID')
+    parser.add_argument('testrun_id', type=int, help='Test run ID')
 
     args = parser.parse_args()
 
