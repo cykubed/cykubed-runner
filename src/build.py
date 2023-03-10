@@ -89,7 +89,7 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
             env['PATH'] = settings.NODE_PATH+':'+os.environ['PATH']
         if os.path.exists('yarn.lock'):
             logger.info("Building new node cache using yarn")
-            runcmd('yarn install', cmd=True, env=env)
+            runcmd('yarn install --pure-lockfile', cmd=True, env=env)
         else:
             logger.info("Building new node cache using npm")
             runcmd('npm ci', cmd=True, env=env)
