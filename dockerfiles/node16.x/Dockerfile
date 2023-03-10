@@ -8,8 +8,8 @@ COPY dockerfiles/node16.x/nodesource.list /etc/apt/sources.list.d/nodesource.lis
 
 RUN apt-get update && apt-get install nodejs
 
-RUN corepack enable
-RUN corepack prepare yarn@stable --activate
+# Yarn 1.x for now
+RUN npm install --global yarn
 
 #USER cykube
 
