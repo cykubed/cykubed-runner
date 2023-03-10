@@ -66,7 +66,7 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
     os.chdir(builddir)
     lockhash = get_lock_hash(builddir)
 
-    logger.debug(f"Checking node_modules cache for {lockhash}")
+    logger.info(f"Checking node_modules cache for {lockhash}")
 
     rebuild = True
 

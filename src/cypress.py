@@ -243,7 +243,8 @@ def start(testrun_id: int):
             logger.debug("Ready to run")
             break
         else:
-            raise BuildFailedException(f"Test run is {testrun.status}: quitting")
+            logger.info(f"Test run is {testrun.status}: quitting")
+            return
 
     # fetch the distribution
     fetch(testrun, testrun.cache_key)
