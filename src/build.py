@@ -66,13 +66,14 @@ async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tup
     os.chdir(builddir)
     lockhash = get_lock_hash(builddir)
 
-    logger.info(f"Checking node_modules cache for {lockhash}")
+    logger.info(f"Checking node_modules cache for {lockhash}.tar.lz4")
 
     rebuild = True
-    if await fs.exists(lockhash):
+    fname = f'{lockhash}.tar.lz4'
+    if await fs.exists(fname):
         try:
             logger.info("Node cache hit: fetch and unpack")
-            await fs.download_and_untar(lockhash, builddir)
+            await fs.download_and_untar(fname, builddir)
             rebuild = False
         except FilestoreReadError:
             raise BuildFailedException('Failed to fetch distribution')
@@ -166,16 +167,20 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
 
 
 async def run(trid: int):
+    fs = AsyncFSClient()
     try:
-        await clone_and_build(trid)
+        await fs.connect()
+        await clone_and_build(trid, fs)
     except Exception:
         logger.exception("Build failed")
         await send_status_message(trid, 'failed')
         # sleep(3600)
         sys.exit(1)
+    finally:
+        await fs.close()
 
 
-async def clone_and_build(trid: int):
+async def clone_and_build(trid: int, fs: AsyncFSClient):
     """
     Clone and build. Using async just to reuse the libraries
     """
@@ -202,8 +207,6 @@ async def clone_and_build(trid: int):
                                               text=True).strip('\n')
 
     # install node packages first (or fetch from cache)
-    fs = AsyncFSClient()
-    await fs.connect()
     lockhash, upload = await create_node_environment(fs, testrun)
 
     # now we can determine the specs
@@ -216,9 +219,10 @@ async def clone_and_build(trid: int):
 
     logger.info(f"Found {len(specs)} spec files")
 
+    nodedist = f'{testrun.sha}.tar.lz4'
     logger.debug(f"Checking cache for distribution for SHA {testrun.sha}")
 
-    if await fs.exists(testrun.sha):
+    if await fs.exists(nodedist):
         logger.info(f"Cache hit")
     else:
         await build_app(fs, testrun)
@@ -236,4 +240,4 @@ async def clone_and_build(trid: int):
     await set_build_details(testrun, specs)
     t = time.time() - t
     logger.info(f"Distribution created in {t:.1f}s")
-
+    await fs.close()

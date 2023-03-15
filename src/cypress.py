@@ -142,31 +142,31 @@ async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
 
     tasks = []
     # upload them in parallel
-    async with httpx.AsyncClient(transport=transport) as client:
+    async with httpx.AsyncClient(transport=transport,
+                                 headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as client:
 
-        async def upload(sshot_file, mime_type):
+        async def upload(sshot_file, mime_type, test=None):
             fname = os.path.split(sshot_file)[-1]
             resp = await client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), mime_type)},
                                      headers={'filename': fname})
             if resp.status_code != 200:
                 raise BuildFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
-            return resp.text, mime_type
+            if test:
+                test.failure_screenshots[test.failure_screenshots.index(sshot_file)] = resp.text
+            else:
+                result.video = resp.text
 
         for test in result.tests:
             if test.failure_screenshots:
                 for sshot in test.failure_screenshots:
                     # this will be the full path - we'll upload the file but just use the filename
-                    tasks.append(asyncio.create_task(upload(sshot, 'image/png')))
+                    tasks.append(asyncio.create_task(upload(sshot, 'image/png', test)))
 
         if result.video:
             tasks.append(asyncio.create_task(upload(result.video, 'video/mp4')))
 
-        done, pending = await asyncio.wait(tasks)
-
-        test.failure_screenshots = [t.result()[0] for t in done if t.result()[1] == 'image/png']
-
-        if result.video:
-            result.video = [t.result()[0] for t in done if t.result()[1] == 'video/mp4']
+        if tasks:
+            await asyncio.gather(*tasks)
 
     # finally upload result to agent
     await send_spec_completed_message(testrun, spec, result)
@@ -206,8 +206,10 @@ async def run_tests(testrun: NewTestRun, port: int):
 
 
 async def run(testrun_id: int):
+    fs = AsyncFSClient()
     try:
         init_build_dirs()
+        await fs.connect()
 
         logger.init(testrun_id, source="runner")
 
@@ -228,11 +230,8 @@ async def run(testrun_id: int):
                 logger.info(f"Test run is {testrun.status}: quitting")
                 return
 
-        fs = AsyncFSClient()
-        await fs.connect()
-
-        await asyncio.gather(fs.download_and_untar(testrun.sha, settings.BUILD_DIR),
-                             fs.download_and_untar(testrun.cache_key, settings.BUILD_DIR))
+        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.BUILD_DIR),
+                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.BUILD_DIR))
 
         # start the server
         server = start_server()
@@ -249,5 +248,7 @@ async def run(testrun_id: int):
         logger.exception("Cypress run failed")
         await send_status_message(testrun_id, 'failed')
         sys.exit(1)
+    finally:
+        await fs.close()
 
 

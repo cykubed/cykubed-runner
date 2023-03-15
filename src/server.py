@@ -119,7 +119,7 @@ def start_server() -> ServerThread:
     :return:
     """
 
-    server = ServerThread(port=8000)
+    server = ServerThread()
     server.start()
 
     # wait until it's ready
