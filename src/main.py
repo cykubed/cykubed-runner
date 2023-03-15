@@ -10,7 +10,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 import build
 import cypress
-from common.db import redis
+from common.db import async_redis
 from logs import logger
 
 
@@ -39,7 +39,7 @@ def main():
     cmd = args.command
     # we'll need access to Redis
     try:
-        redis()
+        async_redis()
     except Exception as ex:
         logger.error(f"Failed to contact Redis ({ex}) - quitting")
         sys.exit(1)

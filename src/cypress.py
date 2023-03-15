@@ -188,7 +188,7 @@ async def run_tests(testrun: NewTestRun, port: int):
             """
             We can tell the agent that they should reassign the spec
             """
-            await spec_terminated(testrun.id, spec)
+            spec_terminated(testrun.id, spec)
             logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
             sys.exit(1)
 
@@ -229,6 +229,7 @@ async def run(testrun_id: int):
                 return
 
         fs = AsyncFSClient()
+        await fs.connect()
 
         await asyncio.gather(fs.download_and_untar(testrun.sha, settings.BUILD_DIR),
                              fs.download_and_untar(testrun.cache_key, settings.BUILD_DIR))

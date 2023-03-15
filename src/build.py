@@ -203,6 +203,7 @@ async def clone_and_build(trid: int):
 
     # install node packages first (or fetch from cache)
     fs = AsyncFSClient()
+    await fs.connect()
     lockhash, upload = await create_node_environment(fs, testrun)
 
     # now we can determine the specs
