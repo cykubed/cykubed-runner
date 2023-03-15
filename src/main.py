@@ -10,8 +10,7 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 
 import build
 import cypress
-from common.db import sync_redis, send_status_message
-from common.exceptions import BuildFailedException
+from common.db import redis
 from logs import logger
 
 
@@ -44,29 +43,15 @@ def main():
     else:
         # we'll need access to Redis
         try:
-            sync_redis()
+            redis()
         except Exception as ex:
             logger.error(f"Failed to contact Redis ({ex}) - quitting")
             sys.exit(1)
 
         if cmd == 'build':
-            try:
-                asyncio.run(build.clone_and_build(args.testrun_id))
-            except Exception:
-                logger.exception("Build failed")
-                send_status_message(args.testrun_id, 'failed')
-                # sleep(3600)
-                sys.exit(1)
+            asyncio.run(build.run(args.testrun_id))
         else:
-            try:
-                asyncio.run(cypress.start(args.testrun_id))
-            except BuildFailedException:
-                logger.exception("Cypress run failed")
-                send_status_message(args.testrun_id, 'failed')
-                sys.exit(1)
-            except Exception:
-                logger.exception("Cypress run crashed")
-                sleep(3600)
+            asyncio.run(cypress.run(args.testrun_id))
 
 
 if __name__ == '__main__':

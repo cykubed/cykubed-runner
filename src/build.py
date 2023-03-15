@@ -4,16 +4,16 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 
 from wcmatch import glob
 
 from common.db import get_testrun, send_status_message, set_build_details
-from common.exceptions import BuildFailedException
+from common.exceptions import BuildFailedException, FilestoreReadError
 from common.fsclient import AsyncFSClient
 from common.schemas import NewTestRun
 from common.settings import settings
-from cypress import fetch_from_cache
 from logs import logger
 from utils import runcmd
 
@@ -72,8 +72,10 @@ async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tup
     if await fs.exists(lockhash):
         try:
             logger.info("Node cache hit: fetch and unpack")
-            fetch_from_cache(lockhash)
+            await fs.download_and_untar(lockhash, builddir)
             rebuild = False
+        except FilestoreReadError:
+            raise BuildFailedException('Failed to fetch distribution')
         except BuildFailedException:
             # unpack
             logger.error('Failed to unpack cached distribution: rebuilding it')
@@ -163,6 +165,16 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
     logger.info("Distribution uploaded")
 
 
+async def run(trid: int):
+    try:
+        await clone_and_build(trid)
+    except Exception:
+        logger.exception("Build failed")
+        await send_status_message(trid, 'failed')
+        # sleep(3600)
+        sys.exit(1)
+
+
 async def clone_and_build(trid: int):
     """
     Clone and build. Using async just to reuse the libraries
@@ -180,7 +192,7 @@ async def clone_and_build(trid: int):
 
     t = time.time()
 
-    send_status_message(testrun.id, 'building')
+    await send_status_message(testrun.id, 'building')
 
     # clone
     wdir = settings.BUILD_DIR
@@ -198,7 +210,7 @@ async def clone_and_build(trid: int):
 
     if not specs:
         logger.info("No specs - nothing to test")
-        send_status_message(testrun.id, 'passed')
+        await send_status_message(testrun.id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files")
