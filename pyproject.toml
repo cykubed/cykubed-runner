@@ -21,6 +21,10 @@ wcmatch = "^8.4.1"
 loguru = "^0.6.0"
 sentry-sdk = {extras = ["httpx"], version = "^1.16.0"}
 motor = {extras = ["srv"], version = "^3.1.1"}
+aiofiles = "^23.1.0"
+aiohttp = "^3.8.4"
+aioshutil = "^1.3"
+redis = "^4.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"

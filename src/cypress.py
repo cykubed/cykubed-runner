@@ -11,7 +11,7 @@ from time import time, sleep
 
 import httpx
 
-import mongo
+from common.db import get_testrun
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun
@@ -39,28 +39,20 @@ def init_build_dirs():
 
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
-
-
-def fetch_from_cache(path: str):
-    with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
-        mongo.fetch_file(path, outfile)
-        # untar
-        runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
-
-    logger.debug(f'Unpacked {path}')
-
-
-def fetch(testrun: NewTestRun, cache_key: str):
-    """
-    Fetch the node cache and distribution from the cache server
-    """
-    # fetch the dist
-    t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
-    t2 = threading.Thread(target=fetch_from_cache, args=[testrun.sha])
-    t1.start()
-    t2.start()
-    t1.join(settings.BUILD_TIMEOUT)
-    t2.join(settings.BUILD_TIMEOUT)
+#
+#
+#
+# def fetch(testrun: NewTestRun, cache_key: str):
+#     """
+#     Fetch the node cache and distribution from the cache server
+#     """
+#     # fetch the dist
+#     t1 = threading.Thread(target=fetch_from_cache, args=[cache_key])
+#     t2 = threading.Thread(target=fetch_from_cache, args=[testrun.sha])
+#     t1.start()
+#     t2.start()
+#     t1.join(settings.BUILD_TIMEOUT)
+#     t2.join(settings.BUILD_TIMEOUT)
 
 
 def get_env():
@@ -224,7 +216,7 @@ def run_tests(testrun: NewTestRun, port: int):
             raise BuildFailedException("Exceeded run timeout")
 
 
-def start(testrun_id: int):
+async def start(testrun_id: int):
     init_build_dirs()
 
     logger.init(testrun_id, source="runner")
@@ -233,7 +225,7 @@ def start(testrun_id: int):
     testrun = None
 
     while time() - start_time < settings.BUILD_TIMEOUT:
-        testrun = mongo.get_testrun(testrun_id)
+        testrun = await get_testrun(testrun_id)
         if testrun.status in [TestRunStatus.started, TestRunStatus.building]:
             logger.debug("Still building...")
             sleep(10)
@@ -247,6 +239,14 @@ def start(testrun_id: int):
             return
 
     # fetch the distribution
+    async def fetch(path: str):
+        async with tempfile.NamedTemporaryFile(suffix='.tar.lz4', mode='wb') as outfile:
+            mongo.fetch_file(path, outfile)
+            # untar
+            runcmd(f'/bin/tar xf {outfile.name} -I lz4', cwd=settings.BUILD_DIR)
+
+        logger.debug(f'Unpacked {path}')
+
     fetch(testrun, testrun.cache_key)
     # start the server
     server = start_server()

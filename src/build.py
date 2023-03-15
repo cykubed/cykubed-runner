@@ -8,9 +8,9 @@ import time
 
 from wcmatch import glob
 
-import mongo
+from common.db import get_testrun, send_status_message, set_build_details
 from common.exceptions import BuildFailedException
-from mongo import get_testrun, update_status
+from common.fsclient import AsyncFSClient
 from common.schemas import NewTestRun
 from common.settings import settings
 from cypress import fetch_from_cache
@@ -54,7 +54,7 @@ def get_lock_hash(build_dir):
     return m.hexdigest()
 
 
-def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
+async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tuple[str, bool]:
     """
     Build the app. Uses a cache for node_modules
     Returns (cache_hash, was_rebuilt)
@@ -69,8 +69,7 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
     logger.info(f"Checking node_modules cache for {lockhash}")
 
     rebuild = True
-
-    if mongo.check_file_exists(lockhash):
+    if await fs.exists(lockhash):
         try:
             logger.info("Node cache hit: fetch and unpack")
             fetch_from_cache(lockhash)
@@ -97,6 +96,7 @@ def create_node_environment(testrun: NewTestRun) -> tuple[str, bool]:
         os.mkdir('cypress_cache')
         logger.info("Installing Cypress binary")
         runcmd('cypress install')
+    testrun.cache_key = lockhash
     return lockhash, rebuild
 
 
@@ -136,7 +136,7 @@ def get_specs(wdir):
     return specs
 
 
-def build_app(testrun: NewTestRun):
+async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
     logger.info('Building app')
     wdir = settings.BUILD_DIR
 
@@ -159,15 +159,16 @@ def build_app(testrun: NewTestRun):
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
     # upload to cache
-    mongo.store_file(filepath, testrun.sha)
+    await fs.upload(filepath)
     logger.info("Distribution uploaded")
 
 
-def clone_and_build(trid: int):
+async def clone_and_build(trid: int):
     """
-    Clone and build
+    Clone and build. Using async just to reuse the libraries
     """
-    testrun = get_testrun(trid)
+
+    testrun = await get_testrun(trid)
     if not testrun:
         raise BuildFailedException("No such testrun")
     if testrun.status != 'started':
@@ -179,7 +180,7 @@ def clone_and_build(trid: int):
 
     t = time.time()
 
-    update_status(testrun.id, 'building')
+    send_status_message(testrun.id, 'building')
 
     # clone
     wdir = settings.BUILD_DIR
@@ -189,24 +190,25 @@ def clone_and_build(trid: int):
                                               text=True).strip('\n')
 
     # install node packages first (or fetch from cache)
-    lockhash, upload = create_node_environment(testrun)
+    fs = AsyncFSClient()
+    lockhash, upload = await create_node_environment(fs, testrun)
 
     # now we can determine the specs
     specs = get_specs(wdir)
 
     if not specs:
         logger.info("No specs - nothing to test")
-        update_status(testrun.id, 'passed')
+        send_status_message(testrun.id, 'passed')
         return
 
     logger.info(f"Found {len(specs)} spec files")
 
     logger.debug(f"Checking cache for distribution for SHA {testrun.sha}")
 
-    if mongo.check_file_exists(testrun.sha):
+    if await fs.exists(testrun.sha):
         logger.info(f"Cache hit")
     else:
-        build_app(testrun)
+        await build_app(fs, testrun)
 
     if upload:
         cache_filename = f'{lockhash}.tar.lz4'
@@ -215,10 +217,10 @@ def clone_and_build(trid: int):
         logger.info(f'Uploading node_modules cache')
         runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
         # upload to cache
-        mongo.store_file(tarfile, lockhash)
+        await fs.upload(tarfile)
         logger.info(f'Cache uploaded')
 
-    mongo.set_build_details(testrun, specs, lockhash)
+    await set_build_details(testrun, specs)
     t = time.time() - t
     logger.info(f"Distribution created in {t:.1f}s")
 

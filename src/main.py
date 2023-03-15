@@ -1,7 +1,5 @@
 import argparse
-
-import common.utils
-import mongo
+import asyncio
 import os
 import sys
 from time import sleep
@@ -12,8 +10,8 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 
 import build
 import cypress
-import utils
-from common.exceptions import BuildFailedException, MongoConnectionException
+from common.db import sync_redis, send_status_message
+from common.exceptions import BuildFailedException
 from logs import logger
 
 
@@ -44,27 +42,27 @@ def main():
         sleep(3600*24)
         sys.exit(0)
     else:
-        # we'll need access to MongoDB
+        # we'll need access to Redis
         try:
-            common.utils.ensure_mongo_connection()
-        except MongoConnectionException:
-            logger.error("Failed to connect to MongoDB: bailing out")
+            sync_redis()
+        except Exception as ex:
+            logger.error(f"Failed to contact Redis ({ex}) - quitting")
             sys.exit(1)
 
         if cmd == 'build':
             try:
-                build.clone_and_build(args.testrun_id)
+                asyncio.run(build.clone_and_build(args.testrun_id))
             except Exception:
                 logger.exception("Build failed")
-                mongo.update_status(args.testrun_id, 'failed')
+                send_status_message(args.testrun_id, 'failed')
                 # sleep(3600)
                 sys.exit(1)
         else:
             try:
-                cypress.start(args.testrun_id)
+                asyncio.run(cypress.start(args.testrun_id))
             except BuildFailedException:
                 logger.exception("Cypress run failed")
-                mongo.update_status(args.testrun_id, 'failed')
+                send_status_message(args.testrun_id, 'failed')
                 sys.exit(1)
             except Exception:
                 logger.exception("Cypress run crashed")
