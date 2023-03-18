@@ -231,9 +231,10 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
         cache_filename = f'{lockhash}.tar.lz4'
         # tar up and store
         tarfile = f'/tmp/{cache_filename}'
-        logger.info(f'Uploading node_modules cache')
+        logger.info(f'Tarring node_modules cache')
         runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
         # upload to cache
+        logger.info(f'Uploading cache')
         await fs.upload(tarfile)
         logger.info(f'Cache uploaded')
 
