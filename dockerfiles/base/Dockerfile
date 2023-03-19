@@ -43,10 +43,10 @@ WORKDIR /usr/app
 
 RUN mkdir /build
 
-#RUN useradd -m cykube && chown cykube /usr/app
-#USER cykube
+RUN useradd -m cykube && chown cykube /usr/app
+USER cykube
 
-ENV PATH="/home/cykube/.local/bin:/build/node_modules/.bin:$PATH"
+ENV PATH="/home/cykube/.local/bin:/tmp/build/node_modules/.bin:$PATH"
 ENV CYPRESS_CACHE_FOLDER=/tmp/build/cypress_cache
 ENV BUILD_DIR=/tmp/build
 ENV RESULTS_FOLDER=/tmp/build/results
