@@ -43,7 +43,7 @@ WORKDIR /usr/app
 
 RUN mkdir /build
 
-RUN useradd -m cykube && chown cykube /usr/app
+RUN useradd -m cykube --uid 10000 && chown cykube /usr/app
 USER cykube
 
 ENV PATH="/home/cykube/.local/bin:/tmp/build/node_modules/.bin:$PATH"
