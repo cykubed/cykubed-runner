@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
     - name: shell
-      image: nickbrookck/cykube-runner:node16.x-5b56e6b
+      image: nickbrookck/cykube-runner:node16.x-a81f4b3
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
@@ -17,9 +17,14 @@ spec:
           cpu: 4
           memory: '500M'
           ephemeral-storage: "4Gi"
-#      envFrom:
-#        - configMapRef:
-#            name: cykube-agent-configmap
-#        - secretRef:
-#            name: cykube-agent-secrets
-
+      envFrom:
+        - configMapRef:
+            name: cykube-agent-configmap
+        - secretRef:
+            name: cykube-agent-secrets
+      env:
+      - name: REDIS_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: "cykube-redis"
+            key: "redis-password"
