@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
     - name: shell
-      image: nickbrookck/cykube-runner:node16.x-a81f4b3
+      image: nickbrookck/cykube-runner:node16.x-a230063
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
