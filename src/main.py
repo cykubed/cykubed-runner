@@ -11,6 +11,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import build
 import cypress
 from common.db import async_redis
+from common.settings import settings
 from logs import logger
 
 
@@ -28,12 +29,10 @@ def main():
 
     args = parser.parse_args()
 
-    if os.environ.get('SENTRY_DSN'):
-        sentry_sdk.init(integrations=[
-            RedisIntegration(),
-            HttpxIntegration(),
-            AsyncioIntegration(),
-        ], )
+    if settings.SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            integrations=[RedisIntegration(), AsyncioIntegration(), HttpxIntegration(),], )
 
     cmd = args.command
     # we'll need access to Redis
