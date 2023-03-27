@@ -145,14 +145,12 @@ async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
     async with httpx.AsyncClient(transport=transport,
                                  headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as client:
 
-        async def upload(sshot_file, mime_type, test=None):
-            fname = os.path.split(sshot_file)[-1]
-            resp = await client.post(upload_url, files={'file': (sshot, open(sshot, 'rb'), mime_type)},
-                                     headers={'filename': fname})
+        async def upload(sshot_file, mime_type, test_result=None):
+            resp = await client.post(upload_url, files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
             if resp.status_code != 200:
                 raise BuildFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
-            if test:
-                test.failure_screenshots[test.failure_screenshots.index(sshot_file)] = resp.text
+            if test_result:
+                test_result.failure_screenshots[test.failure_screenshots.index(sshot_file)] = resp.text
             else:
                 result.video = resp.text
 
