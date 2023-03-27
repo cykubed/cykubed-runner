@@ -15,4 +15,4 @@ USER cykube
 
 COPY src .
 
-ENTRYPOINT ["poetry", "run", "python", "main.py"]
+ENTRYPOINT ["python", "main.py"]
