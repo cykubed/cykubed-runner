@@ -132,39 +132,42 @@ def run_cypress(file: str, port: int):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
 
+async def upload(client, upload_url, sshot_file, mime_type, test_result):
+    resp = await client.post(upload_url, files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
+    if resp.status_code != 200:
+        raise BuildFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
+    if mime_type.endswith('png'):
+        test_result.failure_screenshots[test_result.failure_screenshots.index(sshot_file)] = resp.text
+    else:
+        test_result.video = resp.text
+
+
 async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
 
-    # For now upload images and videos directly to the main service rather than via the websocket
-    # This may change
+    # Upload images and videos directly to the main service rather than via the websocket
     upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload/{testrun.project.id}'
 
     transport = httpx.AsyncHTTPTransport(retries=settings.MAX_HTTP_RETRIES)
-
-    tasks = []
-    # upload them in parallel
     async with httpx.AsyncClient(transport=transport,
                                  headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as client:
 
-        async def upload(sshot_file, mime_type, test_result=None):
-            resp = await client.post(upload_url, files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
-            if resp.status_code != 200:
-                raise BuildFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
-            if test_result:
-                test_result.failure_screenshots[test.failure_screenshots.index(sshot_file)] = resp.text
-            else:
-                result.video = resp.text
-
         for test in result.tests:
             if test.failure_screenshots:
-                for sshot in test.failure_screenshots:
-                    # this will be the full path - we'll upload the file but just use the filename
-                    tasks.append(asyncio.create_task(upload(sshot, 'image/png', test)))
+                for i, sshot in enumerate(test.failure_screenshots):
+                    resp = await client.post(upload_url,
+                                             files={'file': (sshot, open(sshot, 'rb'), 'image/png')})
+                    if resp.status_code != 200:
+                        logger.error(f'Failed to upload screenshot to cykube: {resp.status_code}')
+                    else:
+                        test.failure_screenshots[i] = resp.text
 
         if result.video:
-            tasks.append(asyncio.create_task(upload(result.video, 'video/mp4')))
-
-        if tasks:
-            await asyncio.gather(*tasks)
+            resp = await client.post(upload_url,
+                                     files={'file': (result.video, open(result.video, 'rb'), 'image/png')})
+            if resp.status_code != 200:
+                logger.error(f'Failed to upload video to cykube: {resp.status_code}')
+            else:
+                result.video = resp.text
 
     # finally upload result to agent
     await send_spec_completed_message(testrun, spec, result)

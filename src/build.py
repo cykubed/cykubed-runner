@@ -206,12 +206,8 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
         testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
                                               text=True).strip('\n')
 
-    # install node packages first (or fetch from cache)
-    lockhash, upload = await create_node_environment(fs, testrun)
-
-    # now we can determine the specs
+    # determine the specs
     specs = get_specs(wdir)
-
     if not specs:
         logger.info("No specs - nothing to test")
         await send_status_message(testrun.id, 'passed')
@@ -219,15 +215,18 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
 
     logger.info(f"Found {len(specs)} spec files")
 
-    nodedist = f'{testrun.sha}.tar.lz4'
+    testrun_dist = f'{testrun.sha}.tar.lz4'
     logger.debug(f"Checking cache for distribution for SHA {testrun.sha}")
 
-    if await fs.exists(nodedist):
+    if await fs.exists(testrun_dist):
         logger.info(f"Cache hit")
+        testrun.cache_key = get_lock_hash(settings.BUILD_DIR)
     else:
+        logger.info(f"Cache miss - build app")
+        # install node environment (or fetch from cache)
+        lockhash, upload = await create_node_environment(fs, testrun)
+        # build the app
         await build_app(fs, testrun)
-
-    if upload:
         cache_filename = f'{lockhash}.tar.lz4'
         # tar up and store
         tarfile = f'/tmp/{cache_filename}'
@@ -237,8 +236,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
         logger.info(f'Uploading cache')
         await fs.upload(tarfile)
         logger.info(f'Cache uploaded')
+        t = time.time() - t
+        logger.info(f"Distribution created in {t:.1f}s")
 
     await set_build_details(testrun, specs)
-    t = time.time() - t
-    logger.info(f"Distribution created in {t:.1f}s")
-    await fs.close()
