@@ -89,6 +89,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
                                                    message=err['message'],
                                                    stack=err['stack'],
                                                    code_frame=CodeFrame(line=frame['line'],
+                                                                        file=fname['relativeFile'],
                                                                         column=frame['column'],
                                                                         language=frame['language'],
                                                                         frame=frame['frame']))

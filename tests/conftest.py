@@ -1,24 +1,9 @@
 import os
-import shutil
-from uuid import uuid4
 
 import pytest
-from loguru import logger
-from pymongo import MongoClient
 
 from common.enums import PlatformEnum
 from common.schemas import OrganisationSummary, Project, NewTestRun
-from common.settings import settings
-
-
-@pytest.fixture(autouse=True)
-def init():
-    settings.MONGO_DATABASE = 'unittest'
-    settings.TEST = True
-    logger.remove()
-    client = MongoClient()
-    client.drop_database('unittest')
-    yield
 
 
 @pytest.fixture
