@@ -20,12 +20,21 @@ steps:
     args: [ './scripts/push-docker.sh', $SHORT_SHA ]
 
   - name: gcr.io/cloud-builders/curl
+    id: Update main app
+    args: ['X', 'POST',
+           '-H', 'Content-type: application/json',
+           '-H', 'Authorization: Bearer $CYKUBE_API_TOKEN',
+           '--data',
+           '{"replace": true, "images": [{"tag": "node16.x-$SHORT_SHA", "node_version": "16.x"}]}']
+    secretEnv: ['CYKUBE_API_TOKEN']
+
+  - name: gcr.io/cloud-builders/curl
     id: Notify
     args: ['-X', 'POST', '-H', 'Content-type: application/json', '--data', '{"text":"Cykube Runner images $SHORT_SHA built "}', 'https://hooks.slack.com/services/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']
 
 availableSecrets:
   secretManager:
-#    - versionName: projects/1090211518452/secrets/docker-username/versions/1
-#      env: 'USERNAME'
+    - versionName: projects/1090211518452/secrets/cykube-api-token
+      env: 'CYKUBE_API_TOKEN'
     - versionName: projects/1090211518452/secrets/docker-hub-password/versions/1
       env: 'PASSWORD'
