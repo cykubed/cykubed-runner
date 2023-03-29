@@ -1,27 +1,26 @@
 timeout: 3600s
 steps:
-#  - name: 'gcr.io/cloud-builders/git'
-#    script: |
-#      git config -f .gitmodules submodule.src/common.url https://source.developers.google.com/p/iron-lodge-372417/r/github_cykube_cykube-common
-#      git submodule init
-#      git submodule update
-#
-#  - name: 'gcr.io/cloud-builders/docker'
-#    entrypoint: 'bash'
-#    args: ['-c', 'docker login --username=nickbrookck --password=$$PASSWORD']
-#    secretEnv: ['PASSWORD']
-#
-#  - name: 'gcr.io/cloud-builders/docker'
-#    entrypoint: 'bash'
-#    args: [ './scripts/build-docker.sh', $SHORT_SHA ]
-#
-#  - name: 'gcr.io/cloud-builders/docker'
-#    entrypoint: 'bash'
-#    args: [ './scripts/push-docker.sh', $SHORT_SHA ]
-#       > update.json
+  - name: 'gcr.io/cloud-builders/git'
+    script: |
+      git config -f .gitmodules submodule.src/common.url https://source.developers.google.com/p/iron-lodge-372417/r/github_cykube_cykube-common
+      git submodule init
+      git submodule update
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: ['-c', 'docker login --username=nickbrookck --password=$$PASSWORD']
+    secretEnv: ['PASSWORD']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [ './scripts/build-docker.sh', $SHORT_SHA ]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [ './scripts/push-docker.sh', $SHORT_SHA ]
 
   - name: alpine/httpie
-    id: Update main app
+    id: Update Cykube app with latest runner images
     entrypoint: sh
     args:
       - '-c'
@@ -29,13 +28,13 @@ steps:
        echo '{"replace": true, "images": [{"node_version": "16.x", "tag": "node16.x-$SHORT_SHA"}]}' |  http -A bearer -a $$CYKUBE_API_TOKEN POST https://api.cykube.net/admin/runner/image
     secretEnv: ['CYKUBE_API_TOKEN']
 
-#  - name: gcr.io/cloud-builders/curl
-#    id: Notify
-#    args: ['-X', 'POST', '-H', 'Content-type: application/json', '--data', '{"text":"Cykube Runner images $SHORT_SHA built "}', 'https://hooks.slack.com/services/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']
+  - name: gcr.io/cloud-builders/curl
+    id: Notify
+    args: ['-X', 'POST', '-H', 'Content-type: application/json', '--data', '{"text":"Cykube Runner images $SHORT_SHA built "}', 'https://hooks.slack.com/services/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']
 
 availableSecrets:
   secretManager:
     - versionName: projects/1090211518452/secrets/cykube-api-token/versions/1
       env: 'CYKUBE_API_TOKEN'
-#    - versionName: projects/1090211518452/secrets/docker-hub-password/versions/1
-#      env: 'PASSWORD'
+    - versionName: projects/1090211518452/secrets/docker-hub-password/versions/1
+      env: 'PASSWORD'
