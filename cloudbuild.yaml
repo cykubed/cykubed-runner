@@ -21,11 +21,12 @@ steps:
 
   - name: gcr.io/cloud-builders/curl
     id: Update main app
-    args: ['X', 'POST',
+    args: ['-X', 'POST',
            '-H', 'Content-type: application/json',
            '-H', 'Authorization: Bearer $$CYKUBE_API_TOKEN',
            '--data',
-           '{"replace": true, "images": [{"tag": "node16.x-$SHORT_SHA", "node_version": "16.x"}]}']
+           '{"replace": true, "images": [{"tag": "node16.x-$SHORT_SHA", "node_version": "16.x"}]}',
+           'https://api.cykube.net/admin/runner/image']
     secretEnv: ['CYKUBE_API_TOKEN']
 
   - name: gcr.io/cloud-builders/curl
