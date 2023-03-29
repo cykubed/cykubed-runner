@@ -146,7 +146,7 @@ async def upload(client, upload_url, sshot_file, mime_type, test_result):
 async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
 
     # Upload images and videos directly to the main service rather than via the websocket
-    upload_url = f'{settings.MAIN_API_URL}/agent/testrun/upload/{testrun.project.id}'
+    upload_url = f'{settings.MAIN_API_URL}/agent/artifact/upload/{testrun.project.id}'
 
     transport = httpx.AsyncHTTPTransport(retries=settings.MAX_HTTP_RETRIES)
     async with httpx.AsyncClient(transport=transport,
