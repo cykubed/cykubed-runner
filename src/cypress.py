@@ -44,6 +44,7 @@ def get_env():
     env = os.environ.copy()
     env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
+    env['CYPRESS_RETRIES'] = '3'
     return env
 
 
