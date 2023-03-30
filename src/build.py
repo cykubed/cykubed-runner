@@ -228,14 +228,16 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
         # build the app
         await build_app(fs, testrun)
         cache_filename = f'{lockhash}.tar.lz4'
-        # tar up and store
-        tarfile = f'/tmp/{cache_filename}'
-        logger.info(f'Tarring node_modules cache')
-        runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
-        # upload to cache
-        logger.info(f'Uploading cache')
-        await fs.upload(tarfile)
-        logger.info(f'Cache uploaded')
+        if upload:
+            # tar up and store
+            tarfile = f'/tmp/{cache_filename}'
+            logger.info(f'Tarring node_modules cache')
+            runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
+            # upload to cache
+            logger.info(f'Uploading cache')
+            await fs.upload(tarfile)
+            logger.info(f'Cache uploaded')
+
         t = time.time() - t
         logger.info(f"Distribution created in {t:.1f}s")
 
