@@ -125,7 +125,7 @@ def run_cypress(file: str, port: int):
                              f'--reporter={json_reporter}',
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
-                                   f'baseUrl={base_url},video=true,videosFolder={get_videos_folder()}'],
+                                   f'baseUrl={base_url},video=false,videosFolder={get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
 
     logger.debug(result.stdout.decode('utf8'))
