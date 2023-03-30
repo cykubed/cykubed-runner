@@ -25,7 +25,7 @@ steps:
     args:
       - '-c'
       - |-
-       echo '{"replace": true, "images": [{"node_version": "16.x", "tag": "node16.x-$SHORT_SHA"}]}' |  http -A bearer -a $$CYKUBE_API_TOKEN POST https://api.cykube.net/admin/runner/image
+       echo '{"replace": true, "images": [{"node_version": "16.x", "tag": "nickbrookck/cykube-runner:node16.x-$SHORT_SHA"}]}' |  http -A bearer -a $$CYKUBE_API_TOKEN POST https://api.cykube.net/admin/runner/image
     secretEnv: ['CYKUBE_API_TOKEN']
 
   - name: gcr.io/cloud-builders/curl
