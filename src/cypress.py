@@ -10,7 +10,8 @@ from time import time, sleep
 
 import httpx
 
-from common.db import get_testrun, next_spec, send_status_message, send_spec_completed_message, spec_terminated
+from common.db import get_testrun, next_spec, send_status_message, send_spec_completed_message, spec_terminated, \
+    send_runner_stopped_message
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
@@ -210,13 +211,13 @@ async def run_tests(testrun: NewTestRun, port: int):
 
 async def run(testrun_id: int):
     fs = AsyncFSClient()
+    start_time = time()
     try:
         init_build_dirs()
         await fs.connect()
 
         logger.init(testrun_id, source="runner")
 
-        start_time = time()
         testrun = None
 
         while time() - start_time < settings.BUILD_TIMEOUT:
@@ -246,10 +247,11 @@ async def run(testrun_id: int):
         finally:
             # kill the server
             server.stop()
-
-    except BuildFailedException:
+        await send_runner_stopped_message(testrun_id, time() - start_time)
+    except Exception:
         logger.exception("Cypress run failed")
         await send_status_message(testrun_id, 'failed')
+        await send_runner_stopped_message(testrun_id, time()-start_time, True)
         sys.exit(1)
     finally:
         await fs.close()

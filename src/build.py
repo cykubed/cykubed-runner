@@ -9,7 +9,7 @@ import time
 
 from wcmatch import glob
 
-from common.db import get_testrun, send_status_message, set_build_details
+from common.db import get_testrun, send_status_message, set_build_details, send_build_started_message
 from common.exceptions import BuildFailedException, FilestoreReadError
 from common.fsclient import AsyncFSClient
 from common.schemas import NewTestRun
@@ -167,7 +167,10 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
 
 
 async def run(trid: int):
+    await send_build_started_message(trid)
+
     fs = AsyncFSClient()
+
     try:
         await fs.connect()
         await clone_and_build(trid, fs)
