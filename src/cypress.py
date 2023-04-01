@@ -244,10 +244,10 @@ async def run(testrun_id: int):
             # now fetch specs until we're done or the build is cancelled
             logger.debug(f"Server running on port {server.port}")
             await run_tests(testrun, server.port)
+            await send_runner_stopped_message(testrun_id, time() - start_time)
         finally:
             # kill the server
             server.stop()
-        await send_runner_stopped_message(testrun_id, time() - start_time)
     except Exception:
         logger.exception("Cypress run failed")
         await send_status_message(testrun_id, 'failed')

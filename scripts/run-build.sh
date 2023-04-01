@@ -1,5 +1,4 @@
 export AGENT_URL=https://dev.cykube.net/test-agent
-export API_TOKEN=8de9c347-d8a4-46ca-879b-41673094f0d2
 export BUILD_DIR=/tmp/cykube/build
 export CACHE_URL=https://dev.cykube.net/test-cache
 export FILESTORE_SERVERS=https://dev.cykube.net/fs1
