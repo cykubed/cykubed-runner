@@ -4,9 +4,10 @@ metadata:
   name: runshell
   namespace: cykube
 spec:
+  serviceAccountName: "cykube"
   containers:
     - name: shell
-      image: nickbrookck/cykube-runner:node16.x-d041a46
+      image: nickbrookck/cykube-runner:node16.x-c8cf78e
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
