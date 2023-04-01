@@ -9,6 +9,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 import build
 import cypress
+from common.cloudlogging import configure_stackdriver_logging
 from common.db import async_redis
 from common.settings import settings
 from logs import logger
@@ -44,6 +45,7 @@ def main():
     if cmd == 'build':
         asyncio.run(build.run(args.testrun_id))
     else:
+        configure_stackdriver_logging('cykube-runner')
         asyncio.run(cypress.run(args.testrun_id))
 
 

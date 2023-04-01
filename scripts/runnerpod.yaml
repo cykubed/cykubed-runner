@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
     - name: shell
-      image: nickbrookck/cykube-runner:node16.x-a230063
+      image: nickbrookck/cykube-runner:node16.x-d041a46
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
@@ -14,7 +14,7 @@ spec:
           memory: '200M'
           ephemeral-storage: "4Gi"
         limits:
-          cpu: 4
+          cpu: 2
           memory: '500M'
           ephemeral-storage: "4Gi"
       envFrom:
