@@ -177,11 +177,11 @@ async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
 
 
 def default_sigterm_runner(signum, frame):
-        """
-        We can tell the agent that they should reassign the spec
-        """
-        logger.warning(f"SIGTERM/SIGINT caught: bailing out")
-        sys.exit(1)
+    """
+    Default behaviour is just to log and quit with error code
+    """
+    logger.warning(f"SIGTERM/SIGINT caught: bailing out")
+    sys.exit(1)
 
 
 async def run_tests(testrun: NewTestRun, port: int):
