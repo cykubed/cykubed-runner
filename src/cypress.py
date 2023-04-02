@@ -17,7 +17,7 @@ from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun
 from common.settings import settings
-from common.utils import utcnow
+from common.utils import utcnow, get_hostname
 from logs import logger
 from server import start_server
 
@@ -176,11 +176,22 @@ async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
     await send_spec_completed_message(testrun, spec, result)
 
 
+def default_sigterm_runner(signum, frame):
+        """
+        We can tell the agent that they should reassign the spec
+        """
+        logger.warning(f"SIGTERM/SIGINT caught: bailing out")
+        sys.exit(1)
+
+
 async def run_tests(testrun: NewTestRun, port: int):
 
+    signal.signal(signal.SIGTERM, default_sigterm_runner)
+    signal.signal(signal.SIGINT, default_sigterm_runner)
+
     while True:
-        with open('/etc/hostname') as f:
-            hostname = f.read().strip()
+
+        hostname = get_hostname()
 
         spec = await next_spec(testrun.id, hostname)
         if not spec:
@@ -193,7 +204,7 @@ async def run_tests(testrun: NewTestRun, port: int):
             We can tell the agent that they should reassign the spec
             """
             spec_terminated(testrun.id, spec)
-            logger.info(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+            logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
             sys.exit(1)
 
         signal.signal(signal.SIGTERM, handle_sigterm_runner)
@@ -210,6 +221,8 @@ async def run_tests(testrun: NewTestRun, port: int):
 
 
 async def run(testrun_id: int):
+    logger.info(f'Starting Cypress run for testrun {testrun_id}')
+
     fs = AsyncFSClient()
     start_time = time()
     try:

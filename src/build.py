@@ -167,6 +167,7 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
 
 
 async def run(trid: int):
+    logger.info(f'Starting build for testrun {trid}')
     await send_build_started_message(trid)
 
     fs = AsyncFSClient()
