@@ -186,9 +186,6 @@ def default_sigterm_runner(signum, frame):
 
 async def run_tests(testrun: NewTestRun, port: int):
 
-    signal.signal(signal.SIGTERM, default_sigterm_runner)
-    signal.signal(signal.SIGINT, default_sigterm_runner)
-
     while True:
 
         hostname = get_hostname()
@@ -222,6 +219,9 @@ async def run_tests(testrun: NewTestRun, port: int):
 
 async def run(testrun_id: int):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
+
+    signal.signal(signal.SIGTERM, default_sigterm_runner)
+    signal.signal(signal.SIGINT, default_sigterm_runner)
 
     fs = AsyncFSClient()
     start_time = time()
