@@ -34,7 +34,7 @@ steps:
 
 availableSecrets:
   secretManager:
-    - versionName: projects/1090211518452/secrets/cykube-api-token/versions/3
+    - versionName: projects/1090211518452/secrets/cykube-api-token/versions/4
       env: 'CYKUBE_API_TOKEN'
     - versionName: projects/1090211518452/secrets/docker-hub-password/versions/1
       env: 'PASSWORD'
