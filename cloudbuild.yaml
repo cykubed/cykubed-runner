@@ -17,11 +17,11 @@ steps:
 
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
-    args: [ './scripts/cloudbuild/build-docker.sh', $(cat /workspace/version.txt) ]
+    args: [ './scripts/cloudbuild/build-docker.sh']
 
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
-    args: [ './scripts/cloudbuild/push-docker.sh', $(cat /workspace/version.txt) ]
+    args: [ './scripts/cloudbuild/push-docker.sh']
 
   - name: alpine/httpie
     id: Update Cykube app with latest runner images and notify Slack
