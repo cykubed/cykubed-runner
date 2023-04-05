@@ -29,8 +29,8 @@ steps:
     args:
       - '-ce'
       - |-
-         $$CYKUBE_API_TOKEN  < /workspace/cykube-payload.json &&
-       http POST https://hooks.slack.com/services/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 < /workspace/slack-payload.json &&
+       http POST https://api.cykube.net/admin/runner/image -A bearer -a $$CYKUBE_API_TOKEN  < /workspace/cykube-payload.json &&
+       http POST POST https://hooks.slack.com/services/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 < /workspace/slack-payload.json &&
        http POST "https://api.cykube.net/admin/image/runner/current-version/$(cat /workspace/version.txt)" -A bearer -a $$CYKUBE_API_TOKEN
     secretEnv: ['CYKUBE_API_TOKEN']
 
