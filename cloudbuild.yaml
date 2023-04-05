@@ -10,7 +10,7 @@ steps:
     id: Get next version number
     entrypoint: sh
     args:
-      - '-c'
+      - '-ce'
       - |-
         http GET https://api.cykube.net/admin/image/runner/next-version/minor -A bearer -a $$CYKUBE_API_TOKEN -b > /workspace/version.txt && echo "Building version $(cat /workspace/version.txt)"
     secretEnv: ['CYKUBE_API_TOKEN']
@@ -27,10 +27,10 @@ steps:
     id: Update Cykube app with latest runner images and notify Slack
     entrypoint: sh
     args:
-      - '-c'
+      - '-ce'
       - |-
-       http -A bearer -a $$CYKUBE_API_TOKEN POST https://api.cykube.net/admin/runner/image < /workspace/cykube-payload.json &&
-       http POST https://hooks.slack.com/services/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 < /workspace/slack-payload.json &&
+         $$CYKUBE_API_TOKEN  < /workspace/cykube-payload.json &&
+       http POST https://hooks.slack.com/services/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 < /workspace/slack-payload.json &&
        http POST "https://api.cykube.net/admin/image/runner/current-version/$(cat /workspace/version.txt)" -A bearer -a $$CYKUBE_API_TOKEN
     secretEnv: ['CYKUBE_API_TOKEN']
 
