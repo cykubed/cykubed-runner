@@ -1,0 +1,6 @@
+{
+    "replace": true,
+    "images": [
+        {"node_version": "16.x", "tag": "europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:IMAGE_TAG"}
+    ]
+}

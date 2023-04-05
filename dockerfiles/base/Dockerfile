@@ -55,5 +55,5 @@ ENV RESULTS_FOLDER=/tmp/build/results
 RUN pip install poetry==1.3.1
 COPY pyproject.toml poetry.lock ./
 RUN poetry config installer.max-workers 10
-RUN poetry install --no-root --with=dev
+RUN poetry install --no-root --without=dev
 
