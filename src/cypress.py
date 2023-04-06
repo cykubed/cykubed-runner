@@ -10,7 +10,7 @@ from time import time, sleep
 
 from httpx import AsyncClient
 
-from common.db import get_testrun, next_spec, spec_terminated
+from common.db import get_testrun, async_redis, sync_redis
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
@@ -48,6 +48,13 @@ def get_env():
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     env['CYPRESS_RETRIES'] = '3'
     return env
+
+
+def spec_terminated(trid: int, spec: str):
+    """
+    Return the spec to the pool
+    """
+    sync_redis().sadd(f'testrun:{trid}:specs', spec)
 
 
 def parse_results(started_at: datetime.datetime) -> SpecResult:
@@ -189,7 +196,7 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
 
         hostname = get_hostname()
 
-        spec = await next_spec(testrun.id)
+        spec = await async_redis().spop(f'testrun:{testrun.id}:specs')
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
