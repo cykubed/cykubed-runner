@@ -13,7 +13,6 @@ import cypress
 from common.cloudlogging import configure_stackdriver_logging
 from common.db import async_redis
 from common.settings import settings
-from common.utils import get_agent_testrun_client
 from logs import logger
 
 
@@ -28,7 +27,11 @@ async def run(args):
     client = None
     try:
         trid = args.testrun_id
-        client = get_agent_testrun_client(trid)
+        transport = httpx.AsyncHTTPTransport(retries=settings.MAX_HTTP_RETRIES)
+        client = httpx.AsyncClient(transport=transport,
+                                   base_url=settings.MAIN_API_URL+f'/agent/testrun/{trid}',
+                                   headers={'Authorization': f'Bearer {settings.API_TOKEN}'})
+
         cmd = args.command
         if cmd == 'build':
             await build.run(trid, client)
