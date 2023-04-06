@@ -8,15 +8,14 @@ import subprocess
 import sys
 from time import time, sleep
 
-import httpx
 from httpx import AsyncClient
 
-from common.db import get_testrun, next_spec, send_spec_completed_message, spec_terminated
+from common.db import get_testrun, next_spec, spec_terminated
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentRunnerStopped, \
-    AgentSpecCompleted
+    AgentSpecCompleted, AgentSpecStarted
 from common.settings import settings
 from common.utils import utcnow, get_hostname
 from logs import logger
@@ -190,11 +189,17 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
 
         hostname = get_hostname()
 
-        spec = await next_spec(testrun.id, hostname)
+        spec = await next_spec(testrun.id)
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
             break
+
+        r = await httpclient.post('/spec-started', json=AgentSpecStarted(file=spec,
+                                                                         started=utcnow(),
+                                                                         pod_name=hostname).dict())
+        if r.status_code != 200:
+            raise BuildFailedException(f'Failed to update main server that spec has starter: {r.status_code}: {r.text}')
 
         def handle_sigterm_runner(signum, frame):
             """
