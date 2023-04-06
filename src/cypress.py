@@ -174,10 +174,10 @@ async def upload_results(spec: str, result: SpecResult, httpclient: AsyncClient)
             result.video = resp.text
 
     r = await httpclient.post('/spec-completed',
-                              json=AgentSpecCompleted(
+                              content=AgentSpecCompleted(
                                   result=result,
                                   file=spec,
-                                  finished=utcnow()).dict())
+                                  finished=utcnow()).json())
     if r.status_code != 200:
         raise BuildFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
@@ -202,9 +202,9 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
             logger.debug("No more tests - exiting")
             break
 
-        r = await httpclient.post('/spec-started', json=AgentSpecStarted(file=spec,
+        r = await httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
                                                                          started=utcnow(),
-                                                                         pod_name=hostname).dict())
+                                                                         pod_name=hostname).json())
         if r.status_code != 200:
             raise BuildFailedException(f'Failed to update main server that spec has starter: {r.status_code}: {r.text}')
 
@@ -230,9 +230,9 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
 
 
 async def runner_stopped(httpclient: AsyncClient, duration: int, terminated=False):
-    r = await httpclient.post('/runner-stopped', json=AgentRunnerStopped(
+    r = await httpclient.post('/runner-stopped', content=AgentRunnerStopped(
         duration=duration,
-        terminated=terminated).dict())
+        terminated=terminated).json())
     if r.status_code != 200:
         raise BuildFailedException(
             f"Failed to contact main server for closed runner: {r.status_code}: {r.text}")

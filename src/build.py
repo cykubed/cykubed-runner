@@ -173,8 +173,8 @@ async def run(trid: int, httpclient: AsyncClient):
     logger.info(f'Starting build for testrun {trid}')
 
     r = await httpclient.post('/build-started',
-                              json=AgentBuildStarted(type=AgentEventType.build_started,
-                                                     started=utcnow()).dict())
+                              content=AgentBuildStarted(type=AgentEventType.build_started,
+                                                        started=utcnow()).json())
     if not r.status_code == 200:
         raise BuildFailedException(f"Failed to contact main server: {r.status_code}: {r.text}")
 
