@@ -7,15 +7,18 @@ import subprocess
 import sys
 import time
 
+from httpx import AsyncClient
 from wcmatch import glob
 
-from common.db import get_testrun, send_status_message, set_build_details, send_build_started_message
+from common.db import get_testrun, set_build_details
+from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException, FilestoreReadError
 from common.fsclient import AsyncFSClient
-from common.schemas import NewTestRun
+from common.schemas import NewTestRun, AgentBuildStarted
 from common.settings import settings
+from common.utils import utcnow
 from logs import logger
-from utils import runcmd
+from utils import runcmd, set_status
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -166,25 +169,29 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
     logger.info("Distribution uploaded")
 
 
-async def run(trid: int):
+async def run(trid: int, httpclient: AsyncClient):
     logger.info(f'Starting build for testrun {trid}')
-    await send_build_started_message(trid)
+
+    r = await httpclient.post('/build-started',
+                              json=AgentBuildStarted(type=AgentEventType.build_started,
+                                                     started=utcnow()).dict())
+    if not r.status_code == 200:
+        raise BuildFailedException(f"Failed to contact main server: {r.status_code}: {r.text}")
 
     fs = AsyncFSClient()
 
     try:
         await fs.connect()
-        await clone_and_build(trid, fs)
+        await clone_and_build(trid, fs, httpclient)
     except Exception:
         logger.exception("Build failed")
-        await send_status_message(trid, 'failed')
-        # sleep(3600)
+        await set_status(httpclient, TestRunStatus.failed)
         sys.exit(1)
     finally:
         await fs.close()
 
 
-async def clone_and_build(trid: int, fs: AsyncFSClient):
+async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient):
     """
     Clone and build. Using async just to reuse the libraries
     """
@@ -201,7 +208,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
 
     t = time.time()
 
-    await send_status_message(testrun.id, 'building')
+    await set_status(httpclient, TestRunStatus.building)
 
     # clone
     wdir = settings.BUILD_DIR
@@ -214,7 +221,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient):
     specs = get_specs(wdir)
     if not specs:
         logger.info("No specs - nothing to test")
-        await send_status_message(testrun.id, 'passed')
+        await set_status(httpclient, TestRunStatus.passed)
         return
 
     logger.info(f"Found {len(specs)} spec files")

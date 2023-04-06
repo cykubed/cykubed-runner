@@ -2,8 +2,10 @@ import os
 import shlex
 import subprocess
 
+from httpx import AsyncClient
 from loguru import logger
 
+from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
 from common.settings import settings
 from logs import logger
@@ -41,4 +43,9 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
                 logger.error(f"Command failed: error code {proc.returncode}")
                 raise BuildFailedException()
 
+
+async def set_status(httpclient: AsyncClient, status: TestRunStatus):
+    r = await httpclient.post(f'/status/{status}')
+    if r.status_code != 200:
+        raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
 

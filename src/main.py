@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import sys
 
+import httpx
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
@@ -22,19 +23,36 @@ def handle_sigterm_builder(signum, frame):
     sys.exit(1)
 
 
+async def run(args):
+    client = None
+    try:
+        trid = args.testrun_id
+        transport = httpx.AsyncHTTPTransport(retries=settings.MAX_HTTP_RETRIES)
+        client = httpx.AsyncClient(transport=transport,
+                                   base_url=settings.MAIN_API_URL+f'/agent/testrun/{trid}',
+                                   headers={'Authorization': f'Bearer {settings.API_TOKEN}'})
+
+        cmd = args.command
+        if cmd == 'build':
+            await build.run(trid, client)
+        else:
+            configure_stackdriver_logging('cykube-runner')
+            await cypress.run(trid, client)
+    finally:
+        if client:
+            await client.aclose()
+
+
 def main():
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('command', choices=['build', 'run'], help='Command')
     parser.add_argument('testrun_id', type=int, help='Test run ID')
-
-    args = parser.parse_args()
 
     if settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             integrations=[RedisIntegration(), AsyncioIntegration(), HttpxIntegration(),], )
 
-    cmd = args.command
     # we'll need access to Redis
     try:
         async_redis()
@@ -42,11 +60,8 @@ def main():
         logger.error(f"Failed to contact Redis ({ex}) - quitting")
         sys.exit(1)
 
-    if cmd == 'build':
-        asyncio.run(build.run(args.testrun_id))
-    else:
-        configure_stackdriver_logging('cykube-runner')
-        asyncio.run(cypress.run(args.testrun_id))
+    args = parser.parse_args()
+    asyncio.run(run(args))
 
 
 if __name__ == '__main__':

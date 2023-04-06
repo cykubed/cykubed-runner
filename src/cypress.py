@@ -9,17 +9,19 @@ import sys
 from time import time, sleep
 
 import httpx
+from httpx import AsyncClient
 
-from common.db import get_testrun, next_spec, send_status_message, send_spec_completed_message, spec_terminated, \
-    send_runner_stopped_message
+from common.db import get_testrun, next_spec, send_spec_completed_message, spec_terminated
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentRunnerStopped, \
+    AgentSpecCompleted
 from common.settings import settings
 from common.utils import utcnow, get_hostname
 from logs import logger
 from server import start_server
+from utils import set_status
 
 
 def get_screenshots_folder():
@@ -145,35 +147,33 @@ async def upload(client, upload_url, sshot_file, mime_type, test_result):
         test_result.video = resp.text
 
 
-async def upload_results(testrun: NewTestRun, spec: str, result: SpecResult):
+async def upload_results(spec: str, result: SpecResult, httpclient: AsyncClient):
 
-    # Upload images and videos directly to the main service rather than via the websocket
-    upload_url = f'{settings.MAIN_API_URL}/agent/artifact/upload/{testrun.project.id}'
+    for test in result.tests:
+        if test.failure_screenshots:
+            for i, sshot in enumerate(test.failure_screenshots):
+                resp = await httpclient.post('/artifact/upload',
+                                         files={'file': (sshot, open(sshot, 'rb'), 'image/png')})
+                if resp.status_code != 200:
+                    logger.error(f'Failed to upload screenshot to cykube: {resp.status_code}')
+                else:
+                    test.failure_screenshots[i] = resp.text
 
-    transport = httpx.AsyncHTTPTransport(retries=settings.MAX_HTTP_RETRIES)
-    async with httpx.AsyncClient(transport=transport,
-                                 headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as client:
+    if result.video:
+        resp = await httpclient.post('/artifact/upload',
+                                 files={'file': (result.video, open(result.video, 'rb'), 'image/png')})
+        if resp.status_code != 200:
+            logger.error(f'Failed to upload video to cykube: {resp.status_code}')
+        else:
+            result.video = resp.text
 
-        for test in result.tests:
-            if test.failure_screenshots:
-                for i, sshot in enumerate(test.failure_screenshots):
-                    resp = await client.post(upload_url,
-                                             files={'file': (sshot, open(sshot, 'rb'), 'image/png')})
-                    if resp.status_code != 200:
-                        logger.error(f'Failed to upload screenshot to cykube: {resp.status_code}')
-                    else:
-                        test.failure_screenshots[i] = resp.text
-
-        if result.video:
-            resp = await client.post(upload_url,
-                                     files={'file': (result.video, open(result.video, 'rb'), 'image/png')})
-            if resp.status_code != 200:
-                logger.error(f'Failed to upload video to cykube: {resp.status_code}')
-            else:
-                result.video = resp.text
-
-    # finally upload result to agent
-    await send_spec_completed_message(testrun, spec, result)
+    r = await httpclient.post('/spec-completed',
+                              json=AgentSpecCompleted(
+                                  result=result,
+                                  file=spec,
+                                  finished=utcnow()).dict())
+    if r.status_code != 200:
+        raise BuildFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
 
 def default_sigterm_runner(signum, frame):
@@ -184,7 +184,7 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-async def run_tests(testrun: NewTestRun, port: int):
+async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
 
     while True:
 
@@ -209,7 +209,7 @@ async def run_tests(testrun: NewTestRun, port: int):
         try:
             run_cypress(spec, port)
             result = parse_results(utcnow())
-            await upload_results(testrun, spec, result)
+            await upload_results(spec, result, httpclient)
 
         except subprocess.CalledProcessError as ex:
             raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
@@ -217,7 +217,16 @@ async def run_tests(testrun: NewTestRun, port: int):
             raise BuildFailedException("Exceeded run timeout")
 
 
-async def run(testrun_id: int):
+async def runner_stopped(httpclient: AsyncClient, duration: int, terminated=False):
+    r = await httpclient.post('/runner-stopped', json=AgentRunnerStopped(
+        duration=duration,
+        terminated=terminated).dict())
+    if r.status_code != 200:
+        raise BuildFailedException(
+            f"Failed to contact main server for closed runner: {r.status_code}: {r.text}")
+
+
+async def run(testrun_id: int, httpclient: AsyncClient):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
 
     signal.signal(signal.SIGTERM, default_sigterm_runner)
@@ -256,15 +265,15 @@ async def run(testrun_id: int):
         try:
             # now fetch specs until we're done or the build is cancelled
             logger.debug(f"Server running on port {server.port}")
-            await run_tests(testrun, server.port)
-            await send_runner_stopped_message(testrun_id, time() - start_time)
+            await run_tests(testrun, server.port, httpclient)
+            await runner_stopped(httpclient, time() - start_time, False)
         finally:
             # kill the server
             server.stop()
     except Exception:
         logger.exception("Cypress run failed")
-        await send_status_message(testrun_id, 'failed')
-        await send_runner_stopped_message(testrun_id, time()-start_time, True)
+        await set_status(httpclient, TestRunStatus.failed)
+        await runner_stopped(httpclient, time() - start_time, True)
         sys.exit(1)
     finally:
         await fs.close()
