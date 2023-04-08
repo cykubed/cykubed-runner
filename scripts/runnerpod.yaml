@@ -5,9 +5,14 @@ metadata:
   namespace: cykube
 spec:
   serviceAccountName: "cykube"
+  securityContext:
+    runAsNonRoot: true
+    fsGroup: 10000
+    runAsUser: 10000
+    runAsGroup: 10000
   containers:
     - name: shell
-      image: nickbrookck/cykube-runner:node16.x-c8cf78e
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.6.0
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
