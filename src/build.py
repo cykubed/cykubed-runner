@@ -164,9 +164,7 @@ async def build_app(fs: AsyncFSClient, testrun: NewTestRun):
     filepath = os.path.join('/tmp', filename)
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
-    # upload to cache
-    await fs.upload(filepath)
-    logger.info("Distribution uploaded")
+    return filepath
 
 
 async def run(trid: int, httpclient: AsyncClient):
@@ -246,11 +244,11 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
     else:
         logger.info(f"Cache miss - build app")
         # install node environment (or fetch from cache)
-        lockhash, upload = await create_node_environment(fs, testrun)
+        lockhash, upload_node_env = await create_node_environment(fs, testrun)
         # build the app
-        await build_app(fs, testrun)
+        build_path = await build_app(fs, testrun)
         cache_filename = f'{lockhash}.tar.lz4'
-        if upload:
+        if upload_node_env:
             # tar up and store
             tarfile = f'/tmp/{cache_filename}'
             logger.info(f'Tarring node_modules cache')
@@ -259,6 +257,9 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
             logger.info(f'Uploading cache')
             await fs.upload(tarfile)
             logger.info(f'Cache uploaded')
+
+        await fs.upload(build_path)
+        logger.info("Distribution uploaded")
 
         t = time.time() - t
         logger.info(f"Distribution created in {t:.1f}s")
