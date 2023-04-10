@@ -10,10 +10,10 @@ from time import time, sleep
 
 from httpx import AsyncClient
 
-from common.db import get_testrun, async_redis, sync_redis
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.fsclient import AsyncFSClient
+from common.redisutils import sync_redis, async_redis, get_testrun
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentRunnerStopped, \
     AgentSpecCompleted, AgentSpecStarted
 from common.settings import settings

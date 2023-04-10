@@ -11,7 +11,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import build
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
-from common.db import async_redis
+from common.redisutils import async_redis
 from common.settings import settings
 from logs import logger
 

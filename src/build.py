@@ -10,10 +10,10 @@ import time
 from httpx import AsyncClient
 from wcmatch import glob
 
-from common.db import get_testrun, send_message, async_redis
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException, FilestoreReadError
 from common.fsclient import AsyncFSClient
+from common.redisutils import async_redis, get_testrun
 from common.schemas import NewTestRun, AgentBuildStarted, AgentCompletedBuildMessage
 from common.settings import settings
 from common.utils import utcnow
@@ -194,10 +194,10 @@ async def set_build_details(testrun: NewTestRun, specs: list[str]) -> NewTestRun
     testrun.status = TestRunStatus.running
     await r.set(f'testrun:{testrun.id}', testrun.json())
     # tell the agent so it can inform the main server and then start the runner job
-    await send_message(AgentCompletedBuildMessage(type=AgentEventType.build_completed,
-                                                  testrun_id=testrun.id,
-                                                  finished=utcnow(),
-                                                  sha=testrun.sha, specs=specs))
+    await r.rpush('messages', AgentCompletedBuildMessage(type=AgentEventType.build_completed,
+                                                         testrun_id=testrun.id,
+                                                         finished=utcnow(),
+                                                         sha=testrun.sha, specs=specs).json())
 
 
 async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient):

@@ -4,8 +4,8 @@ from datetime import datetime
 import loguru
 
 from common import schemas
-from common.db import send_message, send_message_sync
 from common.enums import LogLevel, loglevelToInt, AgentEventType
+from common.redisutils import sync_redis
 from common.schemas import AppLogMessage
 
 
@@ -15,6 +15,7 @@ class TestRunLogger:
         self.source = None
         self.step = 0
         self.level = loglevelToInt[LogLevel.info]
+        self.redis_client = sync_redis()
 
     def init(self, testrun_id: int, source: str, level: LogLevel = LogLevel.info):
         self.testrun_id = testrun_id
@@ -44,7 +45,7 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            send_message_sync(event)
+            self.redis_client.rpush('messages', event.json())
 
     def cmd(self, msg: str):
         self.step += 1
