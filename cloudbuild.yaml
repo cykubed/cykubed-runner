@@ -36,5 +36,5 @@ steps:
 
 availableSecrets:
   secretManager:
-    - versionName: projects/489847359241/secrets/cykube-api-token/versions/1
+    - versionName: projects/489847359241/secrets/cykube-api-token/versions/2
       env: 'CYKUBE_API_TOKEN'
