@@ -214,7 +214,7 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
             """
             spec_terminated(testrun.id, spec)
             logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-            sys.exit(1)
+            sys.exit(0)
 
         signal.signal(signal.SIGTERM, handle_sigterm_runner)
         signal.signal(signal.SIGINT, handle_sigterm_runner)
