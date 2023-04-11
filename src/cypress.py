@@ -200,6 +200,9 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
+            # cleanup
+            await async_redis().delete(f'testrun:{testrun.id}:specs')
+            await async_redis().delete(f'testrun:{testrun.id}')
             break
 
         r = await httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
