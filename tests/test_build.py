@@ -14,7 +14,7 @@
 #     runcmd = mocker.patch('build.runcmd')
 #     mocker.patch('os.remove')
 #     mocker.patch('os.mkdir')
-#     settings.BUILD_DIR = os.path.join(fixturedir, 'project')
+#     settings.build_dir = os.path.join(fixturedir, 'project')
 #     respx_mock.head(
 #         'http://127.0.0.1:5001/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4').mock(
 #         return_value=httpx.Response(404))
@@ -30,7 +30,7 @@
 #         'http://127.0.0.1:5001/c286ee67fcc0b00334cb1d1fcaa1940fa97a9a641d2396e20f06e7d67166d47b.tar.lz4').mock(
 #         return_value=httpx.Response(404))
 #     runcmd = mocker.patch('build.runcmd')
-#     settings.BUILD_DIR = os.path.join(fixturedir, 'project-yarn')
+#     settings.build_dir = os.path.join(fixturedir, 'project-yarn')
 #     create_node_environment(tr)
 #
 #     cmds = [x[0][0] for x in runcmd.call_args_list]
@@ -41,7 +41,7 @@
 # def test_create_node_environment_cache_hit(respx_mock, mocker, testrun, fixturedir):
 #     mocker.patch('build.logger')
 #     fetch_from_cache = mocker.patch('build.fetch_from_cache')
-#     settings.BUILD_DIR = os.path.join(fixturedir, 'project')
+#     settings.build_dir = os.path.join(fixturedir, 'project')
 #     respx_mock.head(
 #         'http://127.0.0.1:5001/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4').mock(
 #         return_value=httpx.Response(200))
@@ -57,7 +57,7 @@
 #
 #     mocker.patch('build.logger')
 #     mocker.patch('build.clone_repos')
-#     settings.BUILD_DIR = fixturedir+'/project'
+#     settings.build_dir = fixturedir+'/project'
 #     mocker.patch('build.create_node_environment',
 #                  return_value=('74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2', True))
 #

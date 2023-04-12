@@ -33,10 +33,10 @@ def get_videos_folder():
 
 def init_build_dirs():
 
-    if os.path.exists(settings.BUILD_DIR):
+    if os.path.exists(settings.build_dir):
         # probably running as developer
-        shutil.rmtree(settings.BUILD_DIR, ignore_errors=True)
-        os.makedirs(settings.BUILD_DIR, exist_ok=True)
+        shutil.rmtree(settings.build_dir, ignore_errors=True)
+        os.makedirs(settings.build_dir, exist_ok=True)
 
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
@@ -44,7 +44,7 @@ def init_build_dirs():
 
 def get_env():
     env = os.environ.copy()
-    env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
+    env['PATH'] = f'{settings.build_dir}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     env['CYPRESS_RETRIES'] = '3'
     return env
@@ -136,7 +136,7 @@ def run_cypress(file: str, port: int):
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=false,videosFolder={get_videos_folder()}'],
-                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.BUILD_DIR)
+                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.build_dir)
 
     logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
@@ -271,8 +271,8 @@ async def run(testrun_id: int, httpclient: AsyncClient):
                 logger.info(f"Test run is {testrun.status}: quitting")
                 return
 
-        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.BUILD_DIR),
-                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.BUILD_DIR))
+        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.build_dir),
+                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.build_dir))
 
         # start the server
         server = start_server()

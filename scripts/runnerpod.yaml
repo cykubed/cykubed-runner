@@ -14,18 +14,19 @@ spec:
             storageClassName: "premium-rwo"
             resources:
               requests:
-                storage: "4Gi"
+                storage: "10Gi"
   containers:
     - name: shell
-      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.1.0
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.2.0
       volumeMounts:
       - mountPath: "/build"
         name: scratch-volume
       command: ["/bin/sleep", "3600"]
+      imagePullPolicy: Always
       resources:
         requests:
-          cpu: 1
-          memory: '200M'
+          cpu: 4
+          memory: '500M'
       envFrom:
         - configMapRef:
             name: cykube-agent-configmap
