@@ -26,11 +26,11 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
-    builddir = settings.build_dir
+    builddir = settings.get_build_dir()
     if os.path.exists(builddir):
         # this is just for when we're running locally during development
         shutil.rmtree(builddir)
-    os.makedirs(settings.build_dir)
+    os.makedirs(settings.get_build_dir())
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
@@ -62,7 +62,7 @@ async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tup
     Build the app. Uses a cache for node_modules
     Returns (cache_hash, was_rebuilt)
     """
-    builddir = settings.build_dir
+    builddir = settings.get_build_dir()
     branch = testrun.branch
 
     logger.info(f"Creating build distribution for branch \"{branch}\" in dir {builddir}")
@@ -220,7 +220,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
     await set_status(httpclient, TestRunStatus.building)
 
     # clone
-    wdir = settings.build_dir
+    wdir = settings.get_build_dir()
     clone_repos(testrun)
     if not testrun.sha:
         testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
@@ -240,7 +240,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
 
     if await fs.exists(testrun_dist):
         logger.info(f"Cache hit")
-        testrun.cache_key = get_lock_hash(settings.build_dir)
+        testrun.cache_key = get_lock_hash(settings.get_build_dir())
     else:
         logger.info(f"Cache miss - build app")
         # install node environment (or fetch from cache)

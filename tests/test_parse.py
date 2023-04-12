@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 
 from common.enums import TestResultStatus
-from common.settings import settings
 from cypress import parse_results
 
 
-def test_parse_fail(fixturedir):
-    settings.RESULTS_FOLDER = os.path.join(fixturedir, 'two-fails-with-retries')
+def test_parse_fail(mocker, fixturedir):
+    mocker.patch('common.settings.AppSettings.get_results_dir',
+                 return_value=os.path.join(fixturedir, 'two-fails-with-retries'))
 
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0))
     # these will be the full paths

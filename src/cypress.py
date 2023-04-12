@@ -24,19 +24,19 @@ from utils import set_status
 
 
 def get_screenshots_folder():
-    return os.path.join(settings.RESULTS_FOLDER, 'screenshots')
+    return os.path.join(settings.get_results_dir(), 'screenshots')
 
 
 def get_videos_folder():
-    return os.path.join(settings.RESULTS_FOLDER, 'videos')
+    return os.path.join(settings.get_results_dir(), 'videos')
 
 
 def init_build_dirs():
 
-    if os.path.exists(settings.build_dir):
+    if os.path.exists(settings.get_build_dir()):
         # probably running as developer
-        shutil.rmtree(settings.build_dir, ignore_errors=True)
-        os.makedirs(settings.build_dir, exist_ok=True)
+        shutil.rmtree(settings.get_build_dir(), ignore_errors=True)
+        os.makedirs(settings.get_build_dir(), exist_ok=True)
 
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
@@ -44,7 +44,7 @@ def init_build_dirs():
 
 def get_env():
     env = os.environ.copy()
-    env['PATH'] = f'{settings.build_dir}/node_modules/.bin:{env["PATH"]}'
+    env['PATH'] = f'{settings.get_build_dir()}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     env['CYPRESS_RETRIES'] = '3'
     return env
@@ -60,7 +60,7 @@ def spec_terminated(trid: int, spec: str):
 def parse_results(started_at: datetime.datetime) -> SpecResult:
     tests = []
     failures = 0
-    with open(os.path.join(settings.RESULTS_FOLDER, 'out.json')) as f:
+    with open(os.path.join(settings.get_results_dir(), 'out.json')) as f:
         rawjson = json.loads(f.read())
 
         sshot_fnames = []
@@ -128,7 +128,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
 
 def run_cypress(file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
-    results_file = f'{settings.RESULTS_FOLDER}/out.json'
+    results_file = f'{settings.results_dir}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
@@ -136,7 +136,7 @@ def run_cypress(file: str, port: int):
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=false,videosFolder={get_videos_folder()}'],
-                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.build_dir)
+                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.get_build_dir())
 
     logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
@@ -271,8 +271,8 @@ async def run(testrun_id: int, httpclient: AsyncClient):
                 logger.info(f"Test run is {testrun.status}: quitting")
                 return
 
-        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.build_dir),
-                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.build_dir))
+        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.get_build_dir()),
+                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.get_build_dir()))
 
         # start the server
         server = start_server()
