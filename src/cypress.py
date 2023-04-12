@@ -36,8 +36,9 @@ def init_build_dirs():
     if os.path.exists(settings.get_build_dir()):
         # probably running as developer
         shutil.rmtree(settings.get_build_dir(), ignore_errors=True)
-        os.makedirs(settings.get_build_dir(), exist_ok=True)
 
+    os.makedirs(settings.get_build_dir(), exist_ok=True)
+    os.makedirs(settings.get_temp_dir(), exist_ok=True)
     os.makedirs(get_videos_folder(), exist_ok=True)
     os.makedirs(get_screenshots_folder(), exist_ok=True)
 
@@ -128,7 +129,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
 
 def run_cypress(file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
-    results_file = f'{settings.results_dir}/out.json'
+    results_file = f'{settings.get_results_dir()}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
