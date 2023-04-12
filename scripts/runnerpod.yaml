@@ -5,24 +5,27 @@ metadata:
   namespace: cykube
 spec:
   serviceAccountName: "cykube"
-  securityContext:
-    runAsNonRoot: true
-    fsGroup: 10000
-    runAsUser: 10000
-    runAsGroup: 10000
+  volumes:
+    - name: scratch-volume
+      ephemeral:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            storageClassName: "premium-rwo"
+            resources:
+              requests:
+                storage: "4Gi"
   containers:
     - name: shell
-      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.6.0
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.1.0
+      volumeMounts:
+      - mountPath: "/build"
+        name: scratch-volume
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
           cpu: 1
           memory: '200M'
-          ephemeral-storage: "4Gi"
-        limits:
-          cpu: 2
-          memory: '500M'
-          ephemeral-storage: "4Gi"
       envFrom:
         - configMapRef:
             name: cykube-agent-configmap
