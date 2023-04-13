@@ -94,7 +94,7 @@ async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tup
             env['PATH'] = settings.NODE_PATH+':'+os.environ['PATH']
         if os.path.exists('yarn.lock'):
             logger.info("Building new node cache using yarn")
-            runcmd('yarn install --pure-lockfile', cmd=True, env=env)
+            runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}', cmd=True, env=env)
         else:
             logger.info("Building new node cache using npm")
             runcmd('npm ci', cmd=True, env=env)
