@@ -44,7 +44,7 @@ WORKDIR /usr/app
 RUN mkdir /build
 
 RUN useradd -m cykube --uid 10000 && chown cykube /usr/app
-#USER cykube
+USER cykube
 
 ENV PATH="/usr/app/.venv/bin:/home/cykube/.local/bin:/tmp/build/node_modules/.bin:$PATH"
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
