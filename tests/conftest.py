@@ -17,8 +17,9 @@ from common.settings import settings
 def redis(mocker):
     r = Redis(host=settings.REDIS_HOST, db=1, decode_responses=True)
     r.flushdb()
-    mocker.patch('utils.async_redis', return_value=AsyncRedis(host=settings.REDIS_HOST,
-                                                              db=1, decode_responses=True))
+    aredis = AsyncRedis(host=settings.REDIS_HOST, db=1, decode_responses=True)
+    mocker.patch('utils.async_redis', return_value=aredis)
+    mocker.patch('build.async_redis', return_value=aredis)
     return r
 
 
