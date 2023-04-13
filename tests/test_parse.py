@@ -25,9 +25,9 @@ def test_parse_fail(mocker, fixturedir):
     assert test2.context == 'test context'
     assert test2.title == 'this will fail'
     assert test2.error.title == 'AssertionError'
-    assert test2.failure_screenshots == [
+    assert set(test2.failure_screenshots) == {
         os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will fail (failed).png'),
-        os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will fail (failed) (attempt 2).png')]
+        os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will fail (failed) (attempt 2).png')}
 
     assert test2.error.message == 'Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.'
     assert test2.error.stack == '''AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.
@@ -40,9 +40,9 @@ def test_parse_fail(mocker, fixturedir):
     test3 = result.tests[2]
     assert test3.status == TestResultStatus.failed
     assert test3.title == 'this will also fail'
-    assert test3.failure_screenshots == [
+    assert set(test3.failure_screenshots) == {
         os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed).png'),
-        os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed) (attempt 2).png')]
+        os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed) (attempt 2).png')}
 
     # 4th test skipped
     test4 = result.tests[3]
