@@ -7,8 +7,15 @@ from loguru import logger
 
 from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
+from common.redisutils import async_redis
+from common.schemas import NewTestRun
 from common.settings import settings
 from logs import logger
+
+
+def get_git_sha(testrun: NewTestRun):
+    return subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=settings.get_build_dir(),
+                                              text=True).strip('\n')
 
 
 def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
@@ -49,3 +56,14 @@ async def set_status(httpclient: AsyncClient, status: TestRunStatus):
     if r.status_code != 200:
         raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
 
+
+async def get_testrun(id: int) -> NewTestRun | None:
+    """
+    Used by agents and runners to return a deserialised NewTestRun
+    :param id:
+    :return:
+    """
+    d = await async_redis().get(f'testrun:{id}')
+    if d:
+        return NewTestRun.parse_raw(d)
+    return None

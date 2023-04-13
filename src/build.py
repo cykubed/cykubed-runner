@@ -13,12 +13,12 @@ from wcmatch import glob
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException, FilestoreReadError
 from common.fsclient import AsyncFSClient
-from common.redisutils import async_redis, get_testrun
+from common.redisutils import async_redis
 from common.schemas import NewTestRun, AgentBuildStarted, AgentCompletedBuildMessage
 from common.settings import settings
 from common.utils import utcnow
 from logs import logger
-from utils import runcmd, set_status
+from utils import runcmd, set_status, get_testrun, get_git_sha
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -30,7 +30,7 @@ def clone_repos(testrun: NewTestRun):
     if os.path.exists(builddir):
         # this is just for when we're running locally during development
         shutil.rmtree(builddir)
-    os.makedirs(settings.get_build_dir())
+    os.makedirs(settings.get_build_dir(), exist_ok=True)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
@@ -223,8 +223,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
     wdir = settings.get_build_dir()
     clone_repos(testrun)
     if not testrun.sha:
-        testrun.sha = subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=wdir,
-                                              text=True).strip('\n')
+        testrun.sha = get_git_sha(testrun)
 
     # determine the specs
     specs = get_specs(wdir)
