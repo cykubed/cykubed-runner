@@ -1,4 +1,4 @@
-disabled.github
+.github
 .pytest_cache
 scripts
 tests
