@@ -62,6 +62,8 @@ def main():
         logger.error(f"Failed to contact Redis ({ex}) - quitting")
         sys.exit(1)
 
+    settings.init_build_dirs()
+
     try:
         args = parser.parse_args()
         asyncio.run(run(args))

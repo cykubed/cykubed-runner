@@ -23,26 +23,6 @@ from server import start_server
 from utils import set_status, get_testrun
 
 
-def get_screenshots_folder():
-    return os.path.join(settings.get_results_dir(), 'screenshots')
-
-
-def get_videos_folder():
-    return os.path.join(settings.get_results_dir(), 'videos')
-
-
-def init_build_dirs():
-
-    if os.path.exists(settings.get_build_dir()):
-        # probably running as developer
-        shutil.rmtree(settings.get_build_dir(), ignore_errors=True)
-
-    os.makedirs(settings.get_build_dir(), exist_ok=True)
-    os.makedirs(settings.get_temp_dir(), exist_ok=True)
-    os.makedirs(get_videos_folder(), exist_ok=True)
-    os.makedirs(get_screenshots_folder(), exist_ok=True)
-
-
 def get_env():
     env = os.environ.copy()
     env['PATH'] = f'{settings.get_build_dir()}/node_modules/.bin:{env["PATH"]}'
@@ -251,7 +231,6 @@ async def run(testrun_id: int, httpclient: AsyncClient):
     fs = AsyncFSClient()
     start_time = time()
     try:
-        init_build_dirs()
         await fs.connect()
 
         logger.init(testrun_id, source="runner")
