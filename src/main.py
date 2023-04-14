@@ -10,7 +10,9 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 import build
 import cypress
+import logs
 from common.cloudlogging import configure_stackdriver_logging
+from common.exceptions import BuildFailedException
 from common.redisutils import async_redis
 from common.settings import settings
 from logs import logger
@@ -60,8 +62,12 @@ def main():
         logger.error(f"Failed to contact Redis ({ex}) - quitting")
         sys.exit(1)
 
-    args = parser.parse_args()
-    asyncio.run(run(args))
+    try:
+        args = parser.parse_args()
+        asyncio.run(run(args))
+    except BuildFailedException as ex:
+        logs.logger.error(str(ex))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
