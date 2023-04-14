@@ -45,7 +45,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
         rawjson = json.loads(f.read())
 
         sshot_fnames = []
-        for root, dirs, files in os.walk(get_screenshots_folder()):
+        for root, dirs, files in os.walk(settings.get_screenshots_folder()):
             sshot_fnames += [os.path.join(root, f) for f in files]
 
         for test in rawjson['tests']:
@@ -99,7 +99,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
     # we should have a single video - but only add it if we have failures
     if failures:
         video_fnames = []
-        for root, dirs, files in os.walk(get_videos_folder()):
+        for root, dirs, files in os.walk(settings.get_videos_folder()):
             video_fnames += [os.path.join(root, f) for f in files]
 
         if video_fnames:
@@ -115,8 +115,8 @@ def run_cypress(file: str, port: int):
     result = subprocess.run(['cypress', 'run', '-s', file, '-q',
                              f'--reporter={json_reporter}',
                              '-o', f'output={results_file}',
-                             '-c', f'screenshotsFolder={get_screenshots_folder()},screenshotOnRunFailure=true,'
-                                   f'baseUrl={base_url},video=false,videosFolder={get_videos_folder()}'],
+                             '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
+                                   f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.get_build_dir())
 
     logger.debug(result.stdout.decode('utf8'))
