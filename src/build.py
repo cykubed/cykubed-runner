@@ -249,7 +249,7 @@ async def clone_and_build(trid: int, fs: AsyncFSClient, httpclient: AsyncClient)
         cache_filename = f'{lockhash}.tar.lz4'
         if upload_node_env:
             # tar up and store
-            tarfile = f'/tmp/{cache_filename}'
+            tarfile = os.path.join(settings.get_temp_dir(), cache_filename)
             logger.info(f'Tarring node_modules cache')
             runcmd(f'tar cf {tarfile} -I lz4 node_modules cypress_cache')
             # upload to cache
