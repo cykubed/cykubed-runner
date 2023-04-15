@@ -79,12 +79,6 @@ async def create_node_environment(fs: AsyncFSClient, testrun: NewTestRun) -> tup
             await fs.download_and_untar(fname, builddir)
             rebuild = False
         except FilestoreReadError:
-            raise BuildFailedException('Failed to fetch distribution')
-        except BuildFailedException:
-            # unpack
-            logger.error('Failed to unpack cached distribution: rebuilding it')
-            shutil.rmtree('node_modules')
-            shutil.rmtree('cypress_cache')
             rebuild = True
 
     if rebuild:
