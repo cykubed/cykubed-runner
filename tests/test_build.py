@@ -35,8 +35,8 @@ async def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestR
         'npm ci',
         'cypress install',
         'ng build --output-path=dist',
-        'tar cf /tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
-        'tar cf /tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
+        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
+        f'tar cf {settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
                     ' -I lz4 node_modules cypress_cache'
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
@@ -46,8 +46,8 @@ async def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestR
     mock_fsclient.upload.assert_called()
     assert len(mock_fsclient.upload.call_args_list) == 2
     args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
-    assert args == {'/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
-                    '/tmp/deadbeef0101.tar.lz4'}
+    assert args == {f'{settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
+                    f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
 
 
 @respx.mock
@@ -76,7 +76,7 @@ async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTe
         r'git clone --recursive git@github.org/dummy.git /tmp/(.+)/build',
         'git reset --hard deadbeef0101',
         'ng build --output-path=dist',
-        'tar cf /tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
+        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
     ]
 
     for i, cmd in enumerate(runcmd.call_args_list):
@@ -85,7 +85,7 @@ async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTe
     mock_fsclient.exists.assert_called()
     mock_fsclient.upload.assert_called_once()
     args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
-    assert args == {'/tmp/deadbeef0101.tar.lz4'}
+    assert args == {f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
 
 
 @respx.mock
