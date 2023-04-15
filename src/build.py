@@ -161,7 +161,7 @@ async def build_app(testrun: NewTestRun):
     # tar it up
     logger.info("Upload distribution")
     filename = f'{testrun.sha}.tar.lz4'
-    filepath = os.path.join('/tmp', filename)
+    filepath = os.path.join(settings.get_temp_dir(), filename)
     # tarball everything bar the cached stuff
     runcmd(f'tar cf {filepath} --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4', cwd=wdir)
     return filepath
