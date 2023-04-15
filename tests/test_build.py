@@ -30,17 +30,18 @@ async def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestR
     assert status_route.called
 
     expected_commands = [
-        r'git clone --recursive git@github.org/dummy.git /tmp/(.+)/build',
+        f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
         'git reset --hard deadbeef0101',
         'npm ci',
         'cypress install',
         'ng build --output-path=dist',
-        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
+        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" '
+                                                    f'--exclude=".git" . -I lz4',
         f'tar cf {settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
                     ' -I lz4 node_modules cypress_cache'
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
-        assert re.match(expected_commands[i], cmd.args[0]) is not None
+        assert expected_commands[i] == cmd.args[0]
 
     mock_fsclient.exists.assert_called()
     mock_fsclient.upload.assert_called()
@@ -73,14 +74,15 @@ async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTe
     assert status_route.called
 
     expected_commands = [
-        r'git clone --recursive git@github.org/dummy.git /tmp/(.+)/build',
+        f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
         'git reset --hard deadbeef0101',
         'ng build --output-path=dist',
-        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" --exclude=".git" . -I lz4',
+        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" '
+                                                f'--exclude=".git" . -I lz4',
     ]
 
     for i, cmd in enumerate(runcmd.call_args_list):
-        assert re.match(expected_commands[i], cmd.args[0]) is not None
+        assert expected_commands[i] == cmd.args[0]
 
     mock_fsclient.exists.assert_called()
     mock_fsclient.upload.assert_called_once()
