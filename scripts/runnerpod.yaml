@@ -15,9 +15,14 @@ spec:
             resources:
               requests:
                 storage: "10Gi"
+  securityContext:
+    runAsNonRoot: true
+    fsGroup: 10000
+    runAsUser: 10000
+    runAsGroup: 10000
   containers:
     - name: shell
-      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.2.0
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.6.0
       volumeMounts:
       - mountPath: "/build"
         name: scratch-volume

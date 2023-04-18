@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import json
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -23,11 +22,12 @@ from server import start_server
 from utils import set_status, get_testrun
 
 
-def get_env():
+def get_env(testrun: NewTestRun):
     env = os.environ.copy()
     env['PATH'] = f'{settings.get_build_dir()}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
-    env['CYPRESS_RETRIES'] = '3'
+    if testrun.project.cypress_retries:
+        env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
     return env
 
 
@@ -107,7 +107,7 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
     return result
 
 
-def run_cypress(file: str, port: int):
+def run_cypress(testrun: NewTestRun, file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
     results_file = f'{settings.get_results_dir()}/out.json'
     base_url = f'http://localhost:{port}'
@@ -117,7 +117,8 @@ def run_cypress(file: str, port: int):
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
-                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True, env=get_env(), cwd=settings.get_build_dir())
+                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
+                            env=get_env(testrun), cwd=settings.get_build_dir())
 
     logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
@@ -203,7 +204,7 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
         signal.signal(signal.SIGTERM, handle_sigterm_runner)
         signal.signal(signal.SIGINT, handle_sigterm_runner)
         try:
-            run_cypress(spec, port)
+            run_cypress(testrun, spec, port)
             result = parse_results(utcnow())
             await upload_results(spec, result, httpclient)
 

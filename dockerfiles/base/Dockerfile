@@ -48,9 +48,6 @@ USER cykube
 
 ENV PATH="/usr/app/.venv/bin:/home/cykube/.local/bin:/tmp/build/node_modules/.bin:$PATH"
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
-ENV CYPRESS_CACHE_FOLDER=/tmp/build/cypress_cache
-ENV BUILD_DIR=/tmp/build
-ENV RESULTS_FOLDER=/tmp/build/results
 
 RUN pip install poetry==1.3.1
 COPY pyproject.toml poetry.lock ./
