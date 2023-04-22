@@ -12,10 +12,12 @@ import build
 import cypress
 import logs
 from common.cloudlogging import configure_stackdriver_logging
+from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import async_redis
 from common.settings import settings
 from logs import logger
+from utils import set_status
 
 
 def handle_sigterm_builder(signum, frame):
@@ -40,6 +42,11 @@ async def run(args):
         else:
             configure_stackdriver_logging('cykube-runner')
             await cypress.run(trid, client)
+    except BuildFailedException as ex:
+        logger.error(str(ex))
+        await set_status(client, TestRunStatus.failed)
+        sys.exit(1)
+
     finally:
         if client:
             await client.aclose()
@@ -64,12 +71,8 @@ def main():
 
     settings.init_build_dirs()
 
-    try:
-        args = parser.parse_args()
-        asyncio.run(run(args))
-    except BuildFailedException as ex:
-        logs.logger.error(str(ex))
-        sys.exit(1)
+    args = parser.parse_args()
+    asyncio.run(run(args))
 
 
 if __name__ == '__main__':

@@ -32,7 +32,7 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
             logger.debug(args)
         if result.returncode:
             logger.error(f"Command failed: {result.returncode}: {result.stderr}")
-            raise BuildFailedException()
+            raise BuildFailedException(msg=f'Command failed: {result.stderr}', status_code=result.returncode)
     else:
         logger.cmd(args)
         with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,
@@ -48,7 +48,7 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
 
             if proc.returncode:
                 logger.error(f"Command failed: error code {proc.returncode}")
-                raise BuildFailedException()
+                raise BuildFailedException(msg='Command failed', status_code=proc.returncode)
 
 
 async def set_status(httpclient: AsyncClient, status: TestRunStatus):

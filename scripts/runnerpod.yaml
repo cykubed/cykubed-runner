@@ -11,10 +11,11 @@ spec:
         volumeClaimTemplate:
           spec:
             accessModes: [ "ReadWriteOnce" ]
-            storageClassName: "premium-rwo"
             resources:
               requests:
-                storage: "10Gi"
+                storage: "1Gi"
+              limits:
+                storage: "1Gi"
   securityContext:
     runAsNonRoot: true
     fsGroup: 10000
@@ -22,12 +23,12 @@ spec:
     runAsGroup: 10000
   containers:
     - name: shell
-      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.6.0
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.0
       volumeMounts:
       - mountPath: "/build"
         name: scratch-volume
       command: ["/bin/sleep", "3600"]
-      imagePullPolicy: Always
+      imagePullPolicy: IfNotPresent
       resources:
         requests:
           cpu: 4

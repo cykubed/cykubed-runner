@@ -174,10 +174,6 @@ async def run(trid: int, httpclient: AsyncClient):
     try:
         await fs.connect()
         await clone_and_build(trid, fs, httpclient)
-    except Exception:
-        logger.exception("Build failed")
-        await set_status(httpclient, TestRunStatus.failed)
-        sys.exit(1)
     finally:
         await fs.close()
 
