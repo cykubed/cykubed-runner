@@ -44,7 +44,10 @@ async def run(args):
             await cypress.run(trid, client)
     except BuildFailedException as ex:
         logger.error(str(ex))
-        await set_status(client, TestRunStatus.failed)
+        r = await client.post('/build-failed', json={'msg': ex.msg,
+                                                     'status_code': ex.status_code})
+        if r.status_code != 200:
+            logger.error("Failed to contact cykubed servers to update status")
         sys.exit(1)
 
     finally:

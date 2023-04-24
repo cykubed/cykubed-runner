@@ -43,10 +43,10 @@ WORKDIR /usr/app
 
 RUN mkdir /build
 
-RUN useradd -m cykube --uid 10000 && chown cykube /usr/app
-USER cykube
+RUN useradd -m cykubed --uid 10000 && chown cykubed /usr/app
+USER cykubed
 
-ENV PATH="/usr/app/.venv/bin:/home/cykube/.local/bin:/tmp/build/node_modules/.bin:$PATH"
+ENV PATH="/usr/app/.venv/bin:/home/cykubed/.local/bin:/tmp/build/node_modules/.bin:$PATH"
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
 
 RUN pip install poetry==1.3.1

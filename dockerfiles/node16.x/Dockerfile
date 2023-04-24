@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install nodejs
 # Yarn 1.x for now
 RUN npm install --global yarn
 
-USER cykube
+USER 10000
 
 COPY src .
 
