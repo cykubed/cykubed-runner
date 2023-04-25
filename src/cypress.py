@@ -1,20 +1,18 @@
-import asyncio
 import datetime
 import json
 import os
 import signal
 import subprocess
 import sys
-from time import time, sleep
+from time import time
 
-from httpx import AsyncClient
+from httpx import AsyncClient, Client
 
 from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import BuildFailedException
-from common.fsclient import AsyncFSClient
-from common.redisutils import sync_redis, async_redis
+from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentRunnerStopped, \
-    AgentSpecCompleted, AgentSpecStarted
+    AgentSpecCompleted, AgentSpecStarted, AgentTestRun
 from common.settings import settings
 from common.utils import utcnow, get_hostname
 from logs import logger
@@ -24,7 +22,7 @@ from utils import set_status, get_testrun
 
 def get_env(testrun: NewTestRun):
     env = os.environ.copy()
-    env['PATH'] = f'{settings.get_build_dir()}/node_modules/.bin:{env["PATH"]}'
+    env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
     env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
     if testrun.project.cypress_retries:
         env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
@@ -118,7 +116,7 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
                              '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
-                            env=get_env(testrun), cwd=settings.get_build_dir())
+                            env=get_env(testrun), cwd=settings.BUILD_DIR)
 
     logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
@@ -135,12 +133,12 @@ async def upload(client, upload_url, sshot_file, mime_type, test_result):
         test_result.video = resp.text
 
 
-async def upload_results(spec: str, result: SpecResult, httpclient: AsyncClient):
+def upload_results(spec: str, result: SpecResult, httpclient: Client):
 
     for test in result.tests:
         if test.failure_screenshots:
             for i, sshot in enumerate(test.failure_screenshots):
-                resp = await httpclient.post('/artifact/upload',
+                resp = httpclient.post('/artifact/upload',
                                          files={'file': (sshot, open(sshot, 'rb'), 'image/png')})
                 if resp.status_code != 200:
                     logger.error(f'Failed to upload screenshot to cykube: {resp.status_code}')
@@ -148,14 +146,14 @@ async def upload_results(spec: str, result: SpecResult, httpclient: AsyncClient)
                     test.failure_screenshots[i] = resp.text
 
     if result.video:
-        resp = await httpclient.post('/artifact/upload',
+        resp = httpclient.post('/artifact/upload',
                                  files={'file': (result.video, open(result.video, 'rb'), 'image/png')})
         if resp.status_code != 200:
             logger.error(f'Failed to upload video to cykube: {resp.status_code}')
         else:
             result.video = resp.text
 
-    r = await httpclient.post('/spec-completed',
+    r = httpclient.post('/spec-completed',
                               content=AgentSpecCompleted(
                                   result=result,
                                   file=spec,
@@ -172,24 +170,25 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
+def run_tests(testrun: AgentTestRun, port: int, httpclient: Client):
 
     while True:
 
         hostname = get_hostname()
 
-        spec = await async_redis().spop(f'testrun:{testrun.id}:specs')
+        redis = sync_redis()
+        spec = redis.spop(f'testrun:{testrun.id}:specs')
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
             # cleanup
-            await async_redis().delete(f'testrun:{testrun.id}:specs')
-            await async_redis().delete(f'testrun:{testrun.id}')
-            break
+            redis.delete(f'testrun:{testrun.id}:specs')
+            redis.delete(f'testrun:{testrun.id}')
+            return
 
-        r = await httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
-                                                                         started=utcnow(),
-                                                                         pod_name=hostname).json())
+        r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
+                                                                      started=utcnow(),
+                                                                      pod_name=hostname).json())
         if r.status_code != 200:
             raise BuildFailedException(f'Failed to update main server that spec has starter: {r.status_code}: {r.text}')
 
@@ -206,7 +205,7 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
         try:
             run_cypress(testrun, spec, port)
             result = parse_results(utcnow())
-            await upload_results(spec, result, httpclient)
+            upload_results(spec, result, httpclient)
 
         except subprocess.CalledProcessError as ex:
             raise BuildFailedException(f'Cypress run failed with return code {ex.returncode}')
@@ -214,8 +213,8 @@ async def run_tests(testrun: NewTestRun, port: int, httpclient: AsyncClient):
             raise BuildFailedException("Exceeded run timeout")
 
 
-async def runner_stopped(httpclient: AsyncClient, duration: int, terminated=False):
-    r = await httpclient.post('/runner-stopped', content=AgentRunnerStopped(
+def runner_stopped(httpclient: Client, duration: int, terminated=False):
+    r = httpclient.post('/runner-stopped', content=AgentRunnerStopped(
         duration=duration,
         terminated=terminated).json())
     if r.status_code != 200:
@@ -223,37 +222,24 @@ async def runner_stopped(httpclient: AsyncClient, duration: int, terminated=Fals
             f"Failed to contact main server for closed runner: {r.status_code}: {r.text}")
 
 
-async def run(testrun_id: int, httpclient: AsyncClient):
+def run(testrun_id: int, httpclient: AsyncClient):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
 
     signal.signal(signal.SIGTERM, default_sigterm_runner)
     signal.signal(signal.SIGINT, default_sigterm_runner)
 
-    fs = AsyncFSClient()
     start_time = time()
     try:
-        await fs.connect()
-
         logger.init(testrun_id, source="runner")
 
-        testrun = None
+        testrun = get_testrun(testrun_id)
+        if not testrun:
+            logger.info(f"Missing test run: quitting")
+            return
 
-        while time() - start_time < settings.BUILD_TIMEOUT:
-            testrun = await get_testrun(testrun_id)
-            if testrun.status in [TestRunStatus.started, TestRunStatus.building]:
-                logger.debug("Still building...")
-                sleep(10)
-            elif testrun.status == TestRunStatus.running:
-                if not testrun.cache_key:
-                    raise BuildFailedException("Missing cache key: quitting")
-                logger.debug("Ready to run")
-                break
-            else:
-                logger.info(f"Test run is {testrun.status}: quitting")
-                return
-
-        await asyncio.gather(fs.download_and_untar(f'{testrun.sha}.tar.lz4', settings.get_build_dir()),
-                             fs.download_and_untar(f'{testrun.cache_key}.tar.lz4', settings.get_build_dir()))
+        if testrun.status != TestRunStatus.running:
+            logger.info(f"Test run is {testrun.status}: quitting")
+            return
 
         # start the server
         server = start_server()
@@ -261,17 +247,16 @@ async def run(testrun_id: int, httpclient: AsyncClient):
         try:
             # now fetch specs until we're done or the build is cancelled
             logger.debug(f"Server running on port {server.port}")
-            await run_tests(testrun, server.port, httpclient)
-            await runner_stopped(httpclient, time() - start_time, False)
+            run_tests(testrun, server.port, httpclient)
+            runner_stopped(httpclient, time() - start_time, False)
         finally:
             # kill the server
             server.stop()
     except Exception:
         logger.exception("Cypress run failed")
-        await set_status(httpclient, TestRunStatus.failed)
-        await runner_stopped(httpclient, time() - start_time, True)
+        set_status(httpclient, TestRunStatus.failed)
+        runner_stopped(httpclient, time() - start_time, True)
         sys.exit(1)
-    finally:
-        await fs.close()
+
 
 

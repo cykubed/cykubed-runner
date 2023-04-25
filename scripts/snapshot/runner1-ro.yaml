@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: build-ro-1
+  namespace: cykubed
+spec:
+  storageClassName: "premium-rwo"
+  accessModes:
+    - ReadOnlyMany
+  dataSource:
+    apiGroup: snapshot.storage.k8s.io
+    kind: VolumeSnapshot
+    name: build-1
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: runshell
+  namespace: cykubed
+spec:
+  serviceAccountName: "cykubed"
+  volumes:
+    - name: scratch-volume
+      persistentVolumeClaim:
+        readOnly: true
+        claimName: build-ro-1
+  securityContext:
+    runAsNonRoot: true
+    fsGroup: 10000
+    runAsUser: 10000
+    runAsGroup: 10000
+  containers:
+    - name: shell
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.2.0
+      volumeMounts:
+      - mountPath: "/build"
+        name: scratch-volume
+      command: ["/bin/sleep", "3600"]
+      imagePullPolicy: Always
+      resources:
+        requests:
+          cpu: 1
+          memory: '500M'

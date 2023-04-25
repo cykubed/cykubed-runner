@@ -6,7 +6,7 @@ import httpx
 import respx
 from redis import Redis
 
-from build import clone_and_build
+from builder import clone_and_build
 from common.schemas import NewTestRun
 from common.settings import settings
 
@@ -24,7 +24,7 @@ async def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestR
     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
     runcmd = mocker.patch('build.runcmd')
 
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.get_build_dir())
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
     await clone_and_build(testrun.id, mock_fsclient, httpclient)
 
     assert status_route.called
@@ -68,7 +68,7 @@ async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTe
     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
     runcmd = mocker.patch('build.runcmd')
 
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.get_build_dir())
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
     await clone_and_build(testrun.id, mock_fsclient, httpclient)
 
     assert status_route.called
@@ -103,7 +103,7 @@ async def test_clone_and_build_all_cache_hits(mocker, respx_mock, testrun: NewTe
     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
     runcmd = mocker.patch('build.runcmd')
 
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.get_build_dir())
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
     await clone_and_build(testrun.id, mock_fsclient, httpclient)
 
     assert status_route.called

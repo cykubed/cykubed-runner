@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: build-pvc
+  namespace: cykubed
+spec:
+  storageClassName: "premium-rwo"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: build-pod
+  namespace: cykubed
+spec:
+  volumes:
+    - name: build-volume
+      persistentVolumeClaim:
+        claimName: build-pvc
+    - name: scratch
+      ephemeral:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            storageClassName: "premium-rwo"
+            resources:
+              requests:
+                storage: "10Gi"
+
+  securityContext:
+    runAsNonRoot: true
+    fsGroup: 10000
+    runAsUser: 10000
+    runAsGroup: 10000
+  containers:
+    - name: shell
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.2.0
+      volumeMounts:
+      - mountPath: "/build"
+        name: build-volume
+      - mountPath: "/scratch"
+        name: scratch
+      command: ["/bin/sleep", "3600"]
+      resources:
+        requests:
+          cpu: "3"
+          memory: 2Gi
+
+

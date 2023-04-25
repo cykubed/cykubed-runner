@@ -2,26 +2,26 @@ import os
 import shlex
 import subprocess
 
-from httpx import AsyncClient
+from httpx import AsyncClient, Client
 from loguru import logger
 
 from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
-from common.redisutils import async_redis
-from common.schemas import NewTestRun
+from common.redisutils import async_redis, sync_redis
+from common.schemas import NewTestRun, AgentTestRun
 from common.settings import settings
 from logs import logger
 
 
 def get_git_sha(testrun: NewTestRun):
-    return subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=settings.get_build_dir(),
+    return subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=settings.BUILD_DIR,
                                               text=True).strip('\n')
 
 
 def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     cmdenv = os.environ.copy()
-    cmdenv['PATH'] = './node_modules/.bin:' + cmdenv['PATH']
-    cmdenv['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
+    cmdenv['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:' + cmdenv['PATH']
+    cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.NODE_CACHE_DIR}/cypress_cache'
     if env:
         cmdenv.update(env)
 
@@ -51,19 +51,19 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
                 raise BuildFailedException(msg='Command failed', status_code=proc.returncode)
 
 
-async def set_status(httpclient: AsyncClient, status: TestRunStatus):
-    r = await httpclient.post(f'/status/{status}')
+def set_status(httpclient: Client, status: TestRunStatus):
+    r = httpclient.post(f'/status/{status}')
     if r.status_code != 200:
         raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
 
 
-async def get_testrun(id: int) -> NewTestRun | None:
+def get_testrun(id: int) -> AgentTestRun | None:
     """
     Used by agents and runners to return a deserialised NewTestRun
     :param id:
     :return:
     """
-    d = await async_redis().get(f'testrun:{id}')
+    d = sync_redis().get(f'testrun:{id}')
     if d:
         return NewTestRun.parse_raw(d)
     return None

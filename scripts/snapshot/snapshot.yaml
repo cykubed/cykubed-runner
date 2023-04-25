@@ -1,0 +1,19 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: snapshotclass
+  namespace: cykubed
+driver: pd.csi.storage.gke.io
+deletionPolicy: Delete
+---
+
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: build-1
+  namespace: cykubed
+spec:
+  volumeSnapshotClassName: snapshotclass
+  source:
+    persistentVolumeClaimName: build-pvc
+
