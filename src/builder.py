@@ -3,22 +3,19 @@ import json
 import os
 import re
 import shutil
-import subprocess
-import sys
 import time
 
-from httpx import AsyncClient, Client
 from wcmatch import glob
 
 from common.enums import AgentEventType, TestRunStatus
-from common.exceptions import BuildFailedException, FilestoreReadError
-from common.fsclient import AsyncFSClient
-from common.redisutils import async_redis, sync_redis
-from common.schemas import NewTestRun, AgentBuildStarted, AgentCompletedBuildMessage, AgentTestRun
-from common.settings import settings
+from common.exceptions import BuildFailedException
+from common.redisutils import sync_redis
+from common.schemas import NewTestRun, BuildCompletedAgentMessage, AgentTestRun, \
+    CloneCompletedAgentMessage
 from common.utils import utcnow
 from logs import logger
-from utils import runcmd, set_status, get_testrun, get_git_sha
+from settings import settings
+from utils import runcmd, get_testrun, get_git_sha
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -141,7 +138,7 @@ def clone(trid: int):
         testrun.status = TestRunStatus.running
         r.set(f'testrun:{testrun.id}', atr.json())
     # tell the agent
-    r.rpush('messages', AgentCompletedBuildMessage(type=AgentEventType.build_completed,
+    r.rpush('messages', CloneCompletedAgentMessage(type=AgentEventType.clone_completed,
                                                    testrun_id=testrun.id,
                                                    finished=utcnow(),
                                                    sha=testrun.sha, specs=specs).json())
@@ -171,7 +168,7 @@ def build(trid: int):
     build_app(testrun)
 
     # tell the agent so it can inform the main server and then start the runner job
-    sync_redis().rpush('messages', AgentCompletedBuildMessage(type=AgentEventType.build_completed,
+    sync_redis().rpush('messages', BuildCompletedAgentMessage(type=AgentEventType.build_completed,
                                                               testrun_id=testrun.id,
                                                               finished=utcnow(),
                                                               sha=testrun.sha,
