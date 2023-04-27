@@ -35,6 +35,7 @@ pytest-asyncio = "^0.20.2"
 ipython = "^8.7.0"
 pytest-mock = "^3.10.0"
 pytest-github-report = "^0.0.1"
+freezegun = "^1.2.2"
 
 [build-system]
 requires = ["poetry-core"]

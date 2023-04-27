@@ -1,33 +1,32 @@
 import os
 import shutil
-
 import tempfile
+
 import pytest
 from loguru import logger
-from redis.asyncio import Redis as AsyncRedis
-
-from common.enums import PlatformEnum
-from common.schemas import OrganisationSummary, Project, NewTestRun
 from redis import Redis
 
-from common.settings import settings
+from common.enums import PlatformEnum
+from common.schemas import OrganisationSummary, Project, NewTestRun, AgentTestRun
+from settings import settings
 
 
 @pytest.fixture()
 def redis(mocker):
-    r = Redis(host=settings.REDIS_HOST, db=1, decode_responses=True)
+    r = Redis(db=1, decode_responses=True)
     r.flushdb()
-    aredis = AsyncRedis(host=settings.REDIS_HOST, db=1, decode_responses=True)
-    mocker.patch('utils.async_redis', return_value=aredis)
-    mocker.patch('build.async_redis', return_value=aredis)
+    mocker.patch('builder.sync_redis', return_value=r)
+    mocker.patch('cypress.sync_redis', return_value=r)
+    mocker.patch('utils.sync_redis', return_value=r)
     return r
 
 
 @pytest.fixture(autouse=True)
-async def initdb(redis):
+def initdb(redis):
     settings.TEST = True
-    settings.REDIS_DB = 1
     settings.SCRATCH_DIR = tempfile.mkdtemp()
+    settings.BUILD_DIR = os.path.join(settings.SCRATCH_DIR, 'build')
+    settings.NODE_CACHE_DIR = os.path.join(settings.SCRATCH_DIR, 'node')
     logger.remove()
     yield
     shutil.rmtree(settings.SCRATCH_DIR)
@@ -62,3 +61,17 @@ def testrun(project: Project, redis: Redis) -> NewTestRun:
                     branch='master')
     redis.set(f'testrun:{tr.id}', tr.json())
     return tr
+
+
+@pytest.fixture()
+def cloned_testrun(redis, testrun: NewTestRun) -> AgentTestRun:
+    specs = {'cypress/e2e/nonsense/test4.spec.ts',
+             'cypress/e2e/nonsense/another-test.spec.ts',
+             'cypress/e2e/stuff/test1.spec.ts',
+             'cypress/e2e/stuff/test2.spec.ts',
+             'cypress/e2e/stuff/test3.spec.ts'}
+    testrun.status = 'building'
+    atr = AgentTestRun(specs=specs, cache_key='74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2',
+                       **testrun.dict())
+    redis.set(f'testrun:{atr.id}', atr.json())
+    return atr

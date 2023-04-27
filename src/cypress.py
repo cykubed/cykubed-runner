@@ -13,10 +13,10 @@ from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentRunnerStopped, \
     AgentSpecCompleted, AgentSpecStarted, AgentTestRun
-from common.settings import settings
 from common.utils import utcnow, get_hostname
 from logs import logger
 from server import start_server
+from settings import settings
 from utils import set_status, get_testrun
 
 

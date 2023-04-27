@@ -6,7 +6,7 @@ from cypress import parse_results
 
 
 def test_parse_fail(mocker, fixturedir):
-    mocker.patch('common.settings.AppSettings.get_results_dir',
+    mocker.patch('settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'two-fails-with-retries'))
 
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0))

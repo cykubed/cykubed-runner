@@ -4,7 +4,7 @@ import shutil
 from pydantic import BaseSettings
 
 
-class AppSettings(BaseSettings):
+class RunnerSettings(BaseSettings):
     API_TOKEN: str = 'cykubeauth'
 
     K8: bool = True
@@ -24,19 +24,13 @@ class AppSettings(BaseSettings):
     AGENT_URL: str = 'http://127.0.0.1:5000'
     MAIN_API_URL: str = 'https://app.cykube.net/api'
 
-    BUILD_DIR: str
-    NODE_CACHE_DIR: str
-
     SENTRY_DSN: str = None
 
-    HOSTNAME: str = None  # for testin
+    HOSTNAME: str = None  # for testing
 
-    REDIS_HOST = 'localhost'
-    REDIS_DB: int = 0
-    REDIS_NODES: int = 3
-    REDIS_PASSWORD = ''
-    REDIS_SENTINEL_PREFIX: str = ''
-    SCRATCH_DIR = '/tmp'
+    SCRATCH_DIR = '/tmp/cykubed/scratch'
+    BUILD_DIR = '/tmp/cykubed/build'
+    NODE_CACHE_DIR = '/tmp/cykubed/nodecache'
 
     def get_yarn_cache_dir(self):
         return os.path.join(self.NODE_CACHE_DIR, '.yarn_cache')
@@ -65,4 +59,4 @@ class AppSettings(BaseSettings):
         os.makedirs(self.get_screenshots_folder(), exist_ok=True)
 
 
-settings = AppSettings()
+settings = RunnerSettings()

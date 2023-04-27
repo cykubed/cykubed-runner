@@ -4,7 +4,6 @@ import os
 import socketserver
 import threading
 import time
-import urllib.parse
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
@@ -14,7 +13,7 @@ from httpx import RemoteProtocolError
 from loguru import logger
 
 from common.exceptions import BuildFailedException
-from common.settings import settings
+from settings import settings
 
 
 class SPAHandler(SimpleHTTPRequestHandler):

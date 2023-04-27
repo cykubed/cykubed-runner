@@ -2,15 +2,15 @@ import os
 import shlex
 import subprocess
 
-from httpx import AsyncClient, Client
+from httpx import Client
 from loguru import logger
 
 from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
-from common.redisutils import async_redis, sync_redis
+from common.redisutils import sync_redis
 from common.schemas import NewTestRun, AgentTestRun
-from common.settings import settings
 from logs import logger
+from settings import settings
 
 
 def get_git_sha(testrun: NewTestRun):

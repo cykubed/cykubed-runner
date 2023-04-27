@@ -1,121 +1,142 @@
 import os
-import re
+import os
 import shutil
 
-import httpx
-import respx
+from freezegun import freeze_time
 from redis import Redis
 
-from builder import clone_and_build
-from common.schemas import NewTestRun
-from common.settings import settings
+import builder
+from common.schemas import AgentTestRun
+from settings import settings
 
 
-@respx.mock
-async def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
-                                            fixturedir):
-
-    mock_fsclient = mocker.AsyncMock()
-    mock_fsclient.exists = mocker.AsyncMock(return_value=False)
-    mock_fsclient.upload = mocker.AsyncMock()
-    mocker.patch('build.shutil.rmtree')
-
-    httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
-    status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
-    runcmd = mocker.patch('build.runcmd')
-
+@freeze_time('2022-04-03 14:10:00Z')
+def test_build_no_node_cache(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
+                             fixturedir):
+    runcmd = mocker.patch('builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
-    await clone_and_build(testrun.id, mock_fsclient, httpclient)
 
-    assert status_route.called
+    builder.build(cloned_testrun.id)
 
     expected_commands = [
-        f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
-        'git reset --hard deadbeef0101',
         'npm ci',
         'cypress install',
-        'ng build --output-path=dist',
-        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" '
-                                                    f'--exclude=".git" . -I lz4',
-        f'tar cf {settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
-                    ' -I lz4 node_modules cypress_cache'
+        'ng build --output-path=dist'
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert expected_commands[i] == cmd.args[0]
 
-    mock_fsclient.exists.assert_called()
-    mock_fsclient.upload.assert_called()
-    assert len(mock_fsclient.upload.call_args_list) == 2
-    args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
-    assert args == {f'{settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
-                    f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
-
-
-@respx.mock
-async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
-                                            fixturedir):
-
-    mock_fsclient = mocker.AsyncMock()
-
-    def exists_fn(x):
-        return x == '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
-
-    mock_fsclient.exists = mocker.AsyncMock(side_effect=exists_fn)
-    mock_fsclient.upload = mocker.AsyncMock()
-    mocker.patch('build.shutil.rmtree')
-
-    httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
-    status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
-    runcmd = mocker.patch('build.runcmd')
-
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
-    await clone_and_build(testrun.id, mock_fsclient, httpclient)
-
-    assert status_route.called
-
-    expected_commands = [
-        f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
-        'git reset --hard deadbeef0101',
-        'ng build --output-path=dist',
-        f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" '
-                                                f'--exclude=".git" . -I lz4',
-    ]
-
-    for i, cmd in enumerate(runcmd.call_args_list):
-        assert expected_commands[i] == cmd.args[0]
-
-    mock_fsclient.exists.assert_called()
-    mock_fsclient.upload.assert_called_once()
-    args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
-    assert args == {f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
-
-
-@respx.mock
-async def test_clone_and_build_all_cache_hits(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
-                                              fixturedir):
-
-    mock_fsclient = mocker.AsyncMock()
-    mock_fsclient.exists = mocker.AsyncMock(return_value=True)
-    mock_fsclient.upload = mocker.AsyncMock()
-    mocker.patch('build.shutil.rmtree')
-
-    httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
-    status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
-    runcmd = mocker.patch('build.runcmd')
-
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
-    await clone_and_build(testrun.id, mock_fsclient, httpclient)
-
-    assert status_route.called
-
-    expected_commands = [
-        r'git clone --recursive git@github.org/dummy.git /tmp/(.+)/build',
-        'git reset --hard deadbeef0101'
-     ]
-
-    for i, cmd in enumerate(runcmd.call_args_list):
-        assert re.match(expected_commands[i], cmd.args[0]) is not None
-
-    mock_fsclient.exists.assert_called()
-    mock_fsclient.upload.assert_not_called()
-
+# import os
+# import re
+# import shutil
+#
+# import httpx
+# import respx
+# from redis import Redis
+#
+# from builder import clone_and_build
+# from common.schemas import NewTestRun
+# from common.settings import settings
+#
+#
+# @respx.mock
+# def test_clone_and_build_no_node_env(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+#                                             fixturedir):
+#
+#     mock_fsclient = mocker.AsyncMock()
+#     mock_fsclient.exists = mocker.AsyncMock(return_value=False)
+#     mock_fsclient.upload = mocker.AsyncMock()
+#     mocker.patch('build.shutil.rmtree')
+#
+#     httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
+#     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
+#     runcmd = mocker.patch('build.runcmd')
+#
+#     shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
+#     await clone_and_build(testrun.id, mock_fsclient, httpclient)
+#
+#     assert status_route.called
+#
+#     expected_commands = [
+#         f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
+#         'git reset --hard deadbeef0101',
+#     ]
+#     for i, cmd in enumerate(runcmd.call_args_list):
+#         assert expected_commands[i] == cmd.args[0]
+#
+#     mock_fsclient.exists.assert_called()
+#     mock_fsclient.upload.assert_called()
+#     assert len(mock_fsclient.upload.call_args_list) == 2
+#     args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
+#     assert args == {f'{settings.SCRATCH_DIR}/tmp/74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4',
+#                     f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
+#
+#
+# @respx.mock
+# async def test_clone_and_build_node_cache_hit(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+#                                             fixturedir):
+#
+#     mock_fsclient = mocker.AsyncMock()
+#
+#     def exists_fn(x):
+#         return x == '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2.tar.lz4'
+#
+#     mock_fsclient.exists = mocker.AsyncMock(side_effect=exists_fn)
+#     mock_fsclient.upload = mocker.AsyncMock()
+#     mocker.patch('build.shutil.rmtree')
+#
+#     httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
+#     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
+#     runcmd = mocker.patch('build.runcmd')
+#
+#     shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
+#     await clone_and_build(testrun.id, mock_fsclient, httpclient)
+#
+#     assert status_route.called
+#
+#     expected_commands = [
+#         f'git clone --recursive git@github.org/dummy.git {settings.SCRATCH_DIR}/build',
+#         'git reset --hard deadbeef0101',
+#         'ng build --output-path=dist',
+#         f'tar cf {settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4 --exclude="node_modules" --exclude="cypress_cache" '
+#                                                 f'--exclude=".git" . -I lz4',
+#     ]
+#
+#     for i, cmd in enumerate(runcmd.call_args_list):
+#         assert expected_commands[i] == cmd.args[0]
+#
+#     mock_fsclient.exists.assert_called()
+#     mock_fsclient.upload.assert_called_once()
+#     args = {x.args[0] for x in mock_fsclient.upload.call_args_list}
+#     assert args == {f'{settings.SCRATCH_DIR}/tmp/deadbeef0101.tar.lz4'}
+#
+#
+# @respx.mock
+# async def test_clone_and_build_all_cache_hits(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+#                                               fixturedir):
+#
+#     mock_fsclient = mocker.AsyncMock()
+#     mock_fsclient.exists = mocker.AsyncMock(return_value=True)
+#     mock_fsclient.upload = mocker.AsyncMock()
+#     mocker.patch('build.shutil.rmtree')
+#
+#     httpclient = httpx.AsyncClient(base_url='https://dummy.cykubed.com/agent/testrun/20')
+#     status_route = respx_mock.post('https://dummy.cykubed.com/agent/testrun/20/status/building')
+#     runcmd = mocker.patch('build.runcmd')
+#
+#     shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
+#     await clone_and_build(testrun.id, mock_fsclient, httpclient)
+#
+#     assert status_route.called
+#
+#     expected_commands = [
+#         r'git clone --recursive git@github.org/dummy.git /tmp/(.+)/build',
+#         'git reset --hard deadbeef0101'
+#      ]
+#
+#     for i, cmd in enumerate(runcmd.call_args_list):
+#         assert re.match(expected_commands[i], cmd.args[0]) is not None
+#
+#     mock_fsclient.exists.assert_called()
+#     mock_fsclient.upload.assert_not_called()
+#

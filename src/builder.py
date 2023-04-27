@@ -2,7 +2,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import time
 
 from wcmatch import glob
@@ -12,7 +11,6 @@ from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
 from common.schemas import NewTestRun, BuildCompletedAgentMessage, AgentTestRun, \
     CloneCompletedAgentMessage
-from common.utils import utcnow
 from logs import logger
 from settings import settings
 from utils import runcmd, get_testrun, get_git_sha
@@ -24,10 +22,6 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
-    if os.path.exists(builddir):
-        # this is just for when we're running locally during development
-        shutil.rmtree(builddir)
-    os.makedirs(settings.BUILD_DIR, exist_ok=True)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
@@ -71,6 +65,7 @@ def create_node_environment():
         logger.info("Building new node cache using npm")
         runcmd('npm ci', cmd=True, env=env, cwd=settings.NODE_CACHE_DIR)
     # install Cypress binary
+    os.chdir(settings.BUILD_DIR)
     os.mkdir('cypress_cache')
     logger.info("Installing Cypress binary")
     runcmd('cypress install')
@@ -115,6 +110,7 @@ def get_specs(wdir):
 
 
 def clone(trid: int):
+    tstart = time.time()
     testrun = get_testrun(trid)
     if not testrun:
         raise BuildFailedException("No such testrun")
@@ -140,18 +136,19 @@ def clone(trid: int):
     # tell the agent
     r.rpush('messages', CloneCompletedAgentMessage(type=AgentEventType.clone_completed,
                                                    testrun_id=testrun.id,
-                                                   finished=utcnow(),
-                                                   sha=testrun.sha, specs=specs).json())
+                                                   duration=time.time() - tstart).json())
 
 
 def build(trid: int):
     """
     Build the distribution
     """
+    tstart = time.time()
+
     testrun = get_testrun(trid)
     if not testrun:
         raise BuildFailedException("No such testrun")
-    if testrun.status != 'started':
+    if testrun.status != 'building':
         raise BuildFailedException(f"Testrun is in {testrun.status} state")
 
     logger.init(testrun.id, source="builder")
@@ -170,9 +167,7 @@ def build(trid: int):
     # tell the agent so it can inform the main server and then start the runner job
     sync_redis().rpush('messages', BuildCompletedAgentMessage(type=AgentEventType.build_completed,
                                                               testrun_id=testrun.id,
-                                                              finished=utcnow(),
-                                                              sha=testrun.sha,
-                                                              specs=testrun.specs).json())
+                                                              duration=time.time()-tstart).json())
 
 
 def build_app(testrun: AgentTestRun):

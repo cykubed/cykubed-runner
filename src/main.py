@@ -1,5 +1,6 @@
 import argparse
 import sys
+import time
 
 import httpx
 import sentry_sdk
@@ -9,12 +10,11 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import builder
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
-from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.settings import settings
+from common.schemas import BuildFailureReport
 from logs import logger
-from utils import set_status
+from settings import settings
 
 
 def handle_sigterm_builder(signum, frame):
@@ -45,6 +45,7 @@ def main():
     settings.init_build_dirs()
 
     client = None
+    tstart = time.time()
     try:
         trid = args.testrun_id
         transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
@@ -55,7 +56,6 @@ def main():
         cmd = args.command
         configure_stackdriver_logging(f'cykube-{cmd}')
         if cmd == 'clone':
-            set_status(client, TestRunStatus.building)
             builder.clone(trid)
         elif cmd == 'build':
             builder.build(trid)
@@ -63,8 +63,10 @@ def main():
             cypress.run(trid, client)
     except BuildFailedException as ex:
         logger.error(str(ex))
-        r = client.post('/build-failed', json={'msg': ex.msg,
-                                               'status_code': ex.status_code})
+        duration = time.time() - tstart
+        r = client.post('/build-failed', json=BuildFailureReport(msg=ex.msg,
+                                                                 status_code=ex.status_code,
+                                                                 duration=duration).dict())
         if r.status_code != 200:
             logger.error("Failed to contact cykubed servers to update status")
         sys.exit(1)
