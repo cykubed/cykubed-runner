@@ -13,11 +13,10 @@ from settings import settings
 
 @pytest.fixture()
 def redis(mocker):
+    os.environ['REDIS_DB'] = '1'
     r = Redis(db=1, decode_responses=True)
     r.flushdb()
-    mocker.patch('builder.sync_redis', return_value=r)
-    mocker.patch('cypress.sync_redis', return_value=r)
-    mocker.patch('utils.sync_redis', return_value=r)
+    mocker.patch('common.redisutils.get_redis', return_value=r)
     return r
 
 

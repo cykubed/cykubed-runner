@@ -9,11 +9,11 @@ from wcmatch import glob
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.schemas import NewTestRun, BuildCompletedAgentMessage, AgentTestRun, \
-    CloneCompletedAgentMessage
+from common.schemas import NewTestRun, AgentTestRun, \
+    AgentEvent
 from logs import logger
 from settings import settings
-from utils import runcmd, get_testrun, get_git_sha
+from utils import runcmd, get_testrun, get_git_sha, send_agent_event
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -134,9 +134,9 @@ def clone(trid: int):
         testrun.status = TestRunStatus.running
         r.set(f'testrun:{testrun.id}', atr.json())
     # tell the agent
-    r.rpush('messages', CloneCompletedAgentMessage(type=AgentEventType.clone_completed,
-                                                   testrun_id=testrun.id,
-                                                   duration=time.time() - tstart).json())
+    send_agent_event(AgentEvent(type=AgentEventType.clone_completed,
+                                testrun_id=testrun.id,
+                                duration=time.time() - tstart))
 
 
 def build(trid: int):
@@ -165,9 +165,9 @@ def build(trid: int):
     build_app(testrun)
 
     # tell the agent so it can inform the main server and then start the runner job
-    sync_redis().rpush('messages', BuildCompletedAgentMessage(type=AgentEventType.build_completed,
-                                                              testrun_id=testrun.id,
-                                                              duration=time.time()-tstart).json())
+    sync_redis().rpush('messages', AgentEvent(type=AgentEventType.build_completed,
+                                              testrun_id=testrun.id,
+                                              duration=time.time()-tstart).json())
 
 
 def build_app(testrun: AgentTestRun):

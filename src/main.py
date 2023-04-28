@@ -10,7 +10,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import builder
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
-from common.exceptions import BuildFailedException
+from common.exceptions import BuildFailedException, RunFailedException
 from common.redisutils import sync_redis
 from common.schemas import BuildFailureReport
 from logs import logger
@@ -61,6 +61,10 @@ def main():
             builder.build(trid)
         else:
             cypress.run(trid, client)
+    except RunFailedException as ex:
+        logger.error(str(ex))
+        sys.exit(1)
+
     except BuildFailedException as ex:
         logger.error(str(ex))
         duration = time.time() - tstart
@@ -70,7 +74,6 @@ def main():
         if r.status_code != 200:
             logger.error("Failed to contact cykubed servers to update status")
         sys.exit(1)
-
     finally:
         if client:
             client.close()

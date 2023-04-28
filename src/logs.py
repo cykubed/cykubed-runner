@@ -2,6 +2,7 @@ import traceback
 from datetime import datetime
 
 import loguru
+from redis import Redis
 
 from common import schemas
 from common.enums import LogLevel, loglevelToInt, AgentEventType
@@ -15,12 +16,15 @@ class TestRunLogger:
         self.source = None
         self.step = 0
         self.level = loglevelToInt[LogLevel.info]
-        self.redis_client = sync_redis()
 
     def init(self, testrun_id: int, source: str, level: LogLevel = LogLevel.info):
         self.testrun_id = testrun_id
         self.source = source
         self.level = loglevelToInt[level]
+
+    @property
+    def redis_client(self) -> Redis:
+        return sync_redis()
 
     def log(self, msg: str, level: LogLevel):
         if level == LogLevel.cmd:

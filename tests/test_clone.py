@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from redis import Redis
 
 import builder
-from common.schemas import NewTestRun, AgentTestRun, CloneCompletedAgentMessage
+from common.schemas import NewTestRun, AgentTestRun, AgentEvent
 from settings import settings
 
 
@@ -33,8 +33,8 @@ def test_clone(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     atr = AgentTestRun.parse_raw(redis.get('testrun:20'))
     assert atr.cache_key == '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2'
 
-    assert redis.llen('messages') == 1
+    assert redis.llen('messages') == 4
 
-    msg = CloneCompletedAgentMessage.parse_raw(redis.lpop('messages'))
+    msg = AgentEvent.parse_raw(redis.lrange('messages', 0, -1)[-1])
     assert msg.testrun_id == 20
     assert msg.duration is not None

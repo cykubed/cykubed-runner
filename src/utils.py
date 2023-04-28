@@ -8,7 +8,7 @@ from loguru import logger
 from common.enums import TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.schemas import NewTestRun, AgentTestRun
+from common.schemas import NewTestRun, AgentTestRun, AgentEvent
 from logs import logger
 from settings import settings
 
@@ -67,3 +67,7 @@ def get_testrun(id: int) -> AgentTestRun | None:
     if d:
         return NewTestRun.parse_raw(d)
     return None
+
+
+def send_agent_event(event: AgentEvent):
+    sync_redis().rpush('messages', event.json())
