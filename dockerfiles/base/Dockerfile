@@ -41,9 +41,9 @@ RUN apt-get update && \
 
 WORKDIR /usr/app
 
-RUN mkdir /build
+RUN mkdir /node /build
 
-RUN useradd -m cykubed --uid 10000 && chown cykubed /usr/app
+RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
 USER cykubed
 
 ENV PATH="/usr/app/.venv/bin:/home/cykubed/.local/bin:$PATH"

@@ -54,6 +54,7 @@ class RunnerSettings(BaseSettings):
             shutil.rmtree(self.BUILD_DIR, ignore_errors=True)
 
         os.makedirs(self.BUILD_DIR, exist_ok=True)
+        os.makedirs(self.NODE_CACHE_DIR, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)
         os.makedirs(self.get_videos_folder(), exist_ok=True)
         os.makedirs(self.get_screenshots_folder(), exist_ok=True)

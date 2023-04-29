@@ -10,11 +10,13 @@ from sentry_sdk.integrations.redis import RedisIntegration
 import builder
 import cypress
 from common.cloudlogging import configure_stackdriver_logging
+from common.enums import AgentEventType
 from common.exceptions import BuildFailedException, RunFailedException
 from common.redisutils import sync_redis
-from common.schemas import BuildFailureReport
+from common.schemas import BuildFailureReport, AgentEvent
 from logs import logger
 from settings import settings
+from utils import send_agent_event
 
 
 def handle_sigterm_builder(signum, frame):
@@ -46,8 +48,8 @@ def main():
 
     client = None
     tstart = time.time()
+    trid = args.testrun_id
     try:
-        trid = args.testrun_id
         transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
         client = httpx.Client(transport=transport,
                               base_url=settings.MAIN_API_URL + f'/agent/testrun/{trid}',
@@ -73,6 +75,10 @@ def main():
                                                                  duration=duration).dict())
         if r.status_code != 200:
             logger.error("Failed to contact cykubed servers to update status")
+        # tell the agent
+        send_agent_event(AgentEvent(type=AgentEventType.run_completed,
+                                    testrun_id=trid))
+
         sys.exit(1)
     finally:
         if client:

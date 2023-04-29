@@ -26,6 +26,8 @@ def initdb(redis):
     settings.SCRATCH_DIR = tempfile.mkdtemp()
     settings.BUILD_DIR = os.path.join(settings.SCRATCH_DIR, 'build')
     settings.NODE_CACHE_DIR = os.path.join(settings.SCRATCH_DIR, 'node')
+    os.mkdir(settings.BUILD_DIR)
+    os.mkdir(settings.NODE_CACHE_DIR)
     logger.remove()
     yield
     shutil.rmtree(settings.SCRATCH_DIR)

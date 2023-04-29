@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import time
 
 from wcmatch import glob
@@ -22,6 +23,8 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
+    runcmd(f'rm -fr {builddir}/*')
+    runcmd(f'git config --global --add safe.directory {builddir}')
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
                log=True)
@@ -56,8 +59,16 @@ def create_node_environment():
     logger.info(f"Creating node distribution")
 
     t = time.time()
-    env = dict(CYPRESS_INSTALL_BINARY='0')
-    if os.path.exists('yarn.lock'):
+    yarn = False
+    for file in ['.npmrc', 'package.json', 'yarn.lock', 'package-lock.json']:
+        if os.path.exists(f'{settings.BUILD_DIR}/{file}'):
+            shutil.copy(f'{settings.BUILD_DIR}/{file}', settings.NODE_CACHE_DIR)
+            if file == 'yarn.lock':
+                yarn = True
+
+    cypress_cache_folder = f'{settings.NODE_CACHE_DIR}/cypress_cache'
+    env = dict(CYPRESS_INSTALL_BINARY='0', CYPRESS_CACHE_FOLDER=cypress_cache_folder)
+    if yarn:
         logger.info("Building new node cache using yarn")
         runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}',
                cmd=True, env=env, cwd=settings.NODE_CACHE_DIR)
@@ -65,10 +76,10 @@ def create_node_environment():
         logger.info("Building new node cache using npm")
         runcmd('npm ci', cmd=True, env=env, cwd=settings.NODE_CACHE_DIR)
     # install Cypress binary
-    os.chdir(settings.BUILD_DIR)
-    os.mkdir('cypress_cache')
+    os.makedirs(cypress_cache_folder, exist_ok=True)
     logger.info("Installing Cypress binary")
     runcmd('cypress install')
+    runcmd(f'ln -s {settings.NODE_CACHE_DIR}/node_modules {settings.BUILD_DIR}/node_modules')
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
@@ -158,6 +169,7 @@ def build(trid: int):
     node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
     if os.path.exists(node_modules):
         logger.info('Using cached node environment')
+        runcmd(f'ln -s {settings.NODE_CACHE_DIR}/node_modules {settings.BUILD_DIR}/node_modules')
     else:
         create_node_environment()
 

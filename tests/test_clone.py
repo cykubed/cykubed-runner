@@ -13,11 +13,14 @@ from settings import settings
 def test_clone(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                fixturedir):
     runcmd = mocker.patch('builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR)
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR, dirs_exist_ok=True)
 
     builder.clone(testrun.id)
 
     expected_commands = [
+        f'rm -fr {settings.BUILD_DIR}/*',
+        # this is to avoid git complaining about the root ownership of the folder (even though the group is correct)
+        f'git config --global --add safe.directory {settings.BUILD_DIR}',
         f'git clone --recursive git@github.org/dummy.git {settings.BUILD_DIR}',
         'git reset --hard deadbeef0101'
     ]

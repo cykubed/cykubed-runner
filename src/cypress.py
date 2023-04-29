@@ -8,16 +8,16 @@ from time import time
 
 from httpx import Client
 
-from common.enums import TestResultStatus, TestRunStatus
+from common.enums import TestResultStatus, TestRunStatus, AgentEventType
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentSpecCompleted, \
-    AgentSpecStarted, AgentTestRun
+    AgentSpecStarted, AgentTestRun, AgentEvent
 from common.utils import utcnow, get_hostname
 from logs import logger
 from server import start_server
 from settings import settings
-from utils import set_status, get_testrun, runcmd
+from utils import set_status, get_testrun, runcmd, send_agent_event
 
 
 def get_env(testrun: NewTestRun):
@@ -182,9 +182,10 @@ def run_tests(testrun: AgentTestRun, port: int, httpclient: Client):
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
-            # cleanup
-            redis.delete(f'testrun:{testrun.id}:specs')
+            # cleanup and tell the agent
             redis.delete(f'testrun:{testrun.id}')
+            send_agent_event(AgentEvent(type=AgentEventType.run_completed,
+                                        testrun_id=testrun.id))
             return
 
         r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
