@@ -14,19 +14,9 @@ from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentSpecCompleted, \
     AgentSpecStarted, AgentTestRun, AgentEvent
 from common.utils import utcnow, get_hostname
-from logs import logger
 from server import start_server
 from settings import settings
-from utils import set_status, get_testrun, runcmd, send_agent_event
-
-
-def get_env(testrun: NewTestRun):
-    env = os.environ.copy()
-    env['PATH'] = f'{settings.dist_dir}/node_modules/.bin:{env["PATH"]}'
-    env['CYPRESS_CACHE_FOLDER'] = f'{settings.NODE_CACHE_DIR}/cypress_cache'
-    if testrun.project.cypress_retries:
-        env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
-    return env
+from utils import set_status, get_testrun, runcmd, send_agent_event, logger
 
 
 def spec_terminated(trid: int, spec: str):
@@ -110,17 +100,18 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
     results_file = f'{settings.get_results_dir()}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
-    result = runcmd(['cypress', 'run', '-s', file, '-q',
-                     f'--reporter={json_reporter}',
-                     '-o', f'output={results_file}',
-                     '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
-                           f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
-                    timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
-                    env=get_env(testrun), cwd=settings.dist_dir)
 
-    logger.debug(result.stdout.decode('utf8'))
-    if result.returncode and result.stderr and not os.path.exists(results_file):
-        logger.error('Cypress run failed: ' + result.stderr.decode())
+    env = None
+    if testrun.project.cypress_retries:
+        env = dict(CYPRESS_RETRIES=str(testrun.project.cypress_retries))
+
+    runcmd(['cypress', 'run', '-s', file, '-q',
+            f'--reporter={json_reporter}',
+            '-o', f'output={results_file}',
+            '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
+                  f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
+           timeout=settings.CYPRESS_RUN_TIMEOUT,
+           env=env, cwd=settings.dist_dir)
 
 
 async def upload(client, upload_url, sshot_file, mime_type, test_result):
@@ -182,8 +173,7 @@ def run_tests(testrun: AgentTestRun, port: int, httpclient: Client):
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
-            # cleanup and tell the agent
-            redis.delete(f'testrun:{testrun.id}')
+            # tell the agent
             send_agent_event(AgentEvent(type=AgentEventType.run_completed,
                                         testrun_id=testrun.id))
             return
@@ -258,7 +248,7 @@ def run(testrun_id: int, httpclient: Client):
         set_status(httpclient, TestRunStatus.failed)
         sys.exit(1)
     finally:
-        runner_stopped(testrun_id, time() - start_time)
+        runner_stopped(testrun_id, int(time() - start_time))
 
 
 

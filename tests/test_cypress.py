@@ -12,6 +12,7 @@ from redis import Redis
 from common.enums import TestResultStatus
 from common.schemas import AgentTestRun, SpecResult, TestResult
 from cypress import run_tests, runner_stopped
+from settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
@@ -48,8 +49,15 @@ def test_cypress(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
 
     runcmd_mock.assert_called_once()
     cmd = ' '.join(runcmd_mock.call_args_list[0].args[0])
-    assert cmd.startswith('cypress run -s cypress/e2e/nonsense/test4.spec.ts -q '
-                          '--reporter=/home/nick/myprojects/cykube-runner/src/json-reporter.js -o')
+
+    results_dir = settings.get_results_dir()
+    json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/json-reporter.js'))
+    expected=f'cypress run -s cypress/e2e/nonsense/test4.spec.ts -q --reporter={json_reporter}' \
+             f' -o output={results_dir}/out.json' \
+             f' -c screenshotsFolder={results_dir}/screenshots,screenshotOnRunFailure=true,' \
+             f'baseUrl=http://localhost:8192,video=false,videosFolder={results_dir}/videos'
+
+    assert cmd == expected
     parse_results_mock.assert_called_once()
     assert upload_mock.call_count == 2
 

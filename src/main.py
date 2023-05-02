@@ -14,9 +14,8 @@ from common.enums import AgentEventType
 from common.exceptions import BuildFailedException, RunFailedException
 from common.redisutils import sync_redis
 from common.schemas import BuildFailureReport, AgentEvent
-from logs import logger
 from settings import settings
-from utils import send_agent_event
+from utils import send_agent_event, logger
 
 
 def handle_sigterm_builder(signum, frame):
