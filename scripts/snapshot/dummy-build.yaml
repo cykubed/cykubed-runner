@@ -1,0 +1,54 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: cykubed-build-test
+  namespace: cykubed
+spec:
+  volumes:
+    - name: node-volume
+      persistentVolumeClaim:
+        claimName: node-pvc-f89c8d177eaeb904a7f2ef6cb4db5310885005a8223df7d860b1e3b11981d395
+    - name: build-volume
+      persistentVolumeClaim:
+        claimName: build-pvc-1e23ecb783e7b0061bcced50379fe5b09a484fdb
+  containers:
+    - name: cykubed-builder
+      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:3.5
+      command: ['sleep', '3600']
+      envFrom:
+        - configMapRef:
+            name: cykubed-agent-configmap
+        - secretRef:
+            name: cykubed-agent-secrets
+      env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cykubed-redis
+              key: redis-password
+        - name: BUILD_DIR
+          value: /build
+        - name: NODE_CACHE_DIR
+          value: /node
+      resources:
+        limits:
+          cpu: '2'
+          memory: 3G
+        requests:
+          cpu: '2'
+          memory: 3G
+      volumeMounts:
+        - name: node-volume
+          mountPath: /node
+        - name: build-volume
+          mountPath: /build
+      imagePullPolicy: IfNotPresent
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 30
+  serviceAccountName: cykubed
+  securityContext:
+    runAsUser: 10000
+    runAsGroup: 10000
+    runAsNonRoot: true
+    fsGroup: 10000
+

@@ -23,17 +23,17 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
-    runcmd(f'rm -fr {builddir}/*')
+    runcmd(f'rm -fr {builddir}/dist')
     runcmd(f'git config --global --add safe.directory {builddir}')
     if not testrun.sha:
-        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {builddir}',
+        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {settings.dist_dir}',
                log=True)
     else:
-        runcmd(f'git clone --recursive {testrun.url} {builddir}', log=True)
+        runcmd(f'git clone --recursive {testrun.url} {settings.dist_dir}', log=True)
 
     logger.info(f"Cloned branch {testrun.branch}")
     if testrun.sha:
-        runcmd(f'git reset --hard {testrun.sha}', cwd=builddir)
+        runcmd(f'git reset --hard {testrun.sha}', cwd=settings.dist_dir)
 
 
 def get_lock_hash(build_dir):
@@ -61,8 +61,8 @@ def create_node_environment():
     t = time.time()
     yarn = False
     for file in ['.npmrc', 'package.json', 'yarn.lock', 'package-lock.json']:
-        if os.path.exists(f'{settings.BUILD_DIR}/{file}'):
-            shutil.copy(f'{settings.BUILD_DIR}/{file}', settings.NODE_CACHE_DIR)
+        if os.path.exists(f'{settings.dist_dir}/{file}'):
+            shutil.copy(f'{settings.dist_dir}/{file}', settings.NODE_CACHE_DIR)
             if file == 'yarn.lock':
                 yarn = True
 
@@ -79,7 +79,6 @@ def create_node_environment():
     os.makedirs(cypress_cache_folder, exist_ok=True)
     logger.info("Installing Cypress binary")
     runcmd('cypress install')
-    runcmd(f'ln -s {settings.NODE_CACHE_DIR}/node_modules {settings.BUILD_DIR}/node_modules')
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
@@ -136,11 +135,13 @@ def clone(trid: int):
         testrun.sha = get_git_sha(testrun)
 
     # determine the specs
-    specs = get_specs(settings.BUILD_DIR)
+    specs = get_specs(settings.dist_dir)
     r = sync_redis()
     if specs:
         logger.info(f"Found {len(specs)} spec files")
-        atr = AgentTestRun(specs=specs, cache_key=get_lock_hash(settings.BUILD_DIR), **testrun.dict())
+        atr = AgentTestRun(**testrun.dict())
+        atr.specs=specs
+        atr.cache_key=get_lock_hash(settings.dist_dir)
         r.sadd(f'testrun:{testrun.id}:specs', *specs)
         testrun.status = TestRunStatus.running
         r.set(f'testrun:{testrun.id}', atr.json())
@@ -169,7 +170,6 @@ def build(trid: int):
     node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
     if os.path.exists(node_modules):
         logger.info('Using cached node environment')
-        runcmd(f'ln -s {settings.NODE_CACHE_DIR}/node_modules {settings.BUILD_DIR}/node_modules')
     else:
         create_node_environment()
 
@@ -185,9 +185,11 @@ def build(trid: int):
 def build_app(testrun: AgentTestRun):
     logger.info('Building app')
 
-    wdir = settings.BUILD_DIR
+    wdir = settings.dist_dir
 
-    os.symlink(f'{settings.NODE_CACHE_DIR}/node_modules', f'{wdir}/node_modules')
+    if not os.path.exists(f'{wdir}/node_modules'):
+        os.symlink(f'{settings.NODE_CACHE_DIR}/node_modules', f'{wdir}/node_modules')
+
     # build the app
     runcmd(testrun.project.build_cmd, cmd=True, cwd=wdir)
 

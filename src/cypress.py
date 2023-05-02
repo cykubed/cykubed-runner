@@ -22,8 +22,8 @@ from utils import set_status, get_testrun, runcmd, send_agent_event
 
 def get_env(testrun: NewTestRun):
     env = os.environ.copy()
-    env['PATH'] = f'{settings.BUILD_DIR}/node_modules/.bin:{env["PATH"]}'
-    env['CYPRESS_CACHE_FOLDER'] = 'cypress_cache'
+    env['PATH'] = f'{settings.dist_dir}/node_modules/.bin:{env["PATH"]}'
+    env['CYPRESS_CACHE_FOLDER'] = f'{settings.NODE_CACHE_DIR}/cypress_cache'
     if testrun.project.cypress_retries:
         env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
     return env
@@ -116,7 +116,7 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
                      '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
                            f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
                     timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
-                    env=get_env(testrun), cwd=settings.BUILD_DIR)
+                    env=get_env(testrun), cwd=settings.dist_dir)
 
     logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):

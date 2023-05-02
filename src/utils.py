@@ -14,7 +14,7 @@ from settings import settings
 
 
 def get_git_sha(testrun: NewTestRun):
-    return subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=settings.BUILD_DIR,
+    return subprocess.check_output(['git', 'rev-parse', testrun.branch], cwd=settings.dist_dir,
                                               text=True).strip('\n')
 
 
@@ -65,9 +65,10 @@ def get_testrun(id: int) -> AgentTestRun | None:
     """
     d = sync_redis().get(f'testrun:{id}')
     if d:
-        return NewTestRun.parse_raw(d)
+        return AgentTestRun.parse_raw(d)
     return None
 
 
 def send_agent_event(event: AgentEvent):
     sync_redis().rpush('messages', event.json())
+    sync_redis().publish('msgavail', '1')

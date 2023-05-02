@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from pydantic import BaseSettings
 
@@ -32,6 +31,10 @@ class RunnerSettings(BaseSettings):
     BUILD_DIR = '/tmp/cykubed/build'
     NODE_CACHE_DIR = '/tmp/cykubed/nodecache'
 
+    @property
+    def dist_dir(self):
+        return os.path.join(self.BUILD_DIR, 'dist')
+
     def get_yarn_cache_dir(self):
         return os.path.join(self.NODE_CACHE_DIR, '.yarn_cache')
 
@@ -48,11 +51,6 @@ class RunnerSettings(BaseSettings):
         return os.path.join(self.get_results_dir(), 'videos')
 
     def init_build_dirs(self):
-
-        if os.path.exists(self.BUILD_DIR):
-            # probably running as developer
-            shutil.rmtree(self.BUILD_DIR, ignore_errors=True)
-
         os.makedirs(self.BUILD_DIR, exist_ok=True)
         os.makedirs(self.NODE_CACHE_DIR, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)

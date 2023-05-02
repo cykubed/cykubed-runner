@@ -1,0 +1,9 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: "node-snap-f89c8d177eaeb904a7f2ef6cb4db5310885005a8223df7d860b1e3b11981d395"
+  namespace: "cykubed"
+spec:
+  volumeSnapshotClassName: cykubed-snapshotclass
+  source:
+    persistentVolumeClaimName: "node-pvc-f89c8d177eaeb904a7f2ef6cb4db5310885005a8223df7d860b1e3b11981d395"

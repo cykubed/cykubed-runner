@@ -28,9 +28,14 @@ def handle_sigterm_builder(signum, frame):
 
 def main():
     parser = argparse.ArgumentParser('CykubeRunner')
-    parser.add_argument('command', choices=['clone', 'build', 'run'], help='Command')
+    parser.add_argument('command', choices=['dummy', 'clone', 'build', 'run'], help='Command')
     parser.add_argument('testrun_id', type=int, help='Test run ID')
     args = parser.parse_args()
+
+    if args.command == 'dummy':
+        with open('/build/test.txt', 'w') as f:
+            f.write('fish!')
+        return
 
     if settings.SENTRY_DSN:
         sentry_sdk.init(
@@ -68,7 +73,8 @@ def main():
         sys.exit(1)
 
     except BuildFailedException as ex:
-        logger.error(str(ex))
+        logger.error(f'Build failed: {ex}')
+        time.sleep(3600)
         duration = time.time() - tstart
         r = client.post('/build-failed', json=BuildFailureReport(msg=ex.msg,
                                                                  status_code=ex.status_code,
@@ -78,7 +84,10 @@ def main():
         # tell the agent
         send_agent_event(AgentEvent(type=AgentEventType.run_completed,
                                     testrun_id=trid))
-
+        sys.exit(0)
+    except Exception as ex:
+        logger.exception(f'Build failed: {ex}')
+        time.sleep(3600)
         sys.exit(1)
     finally:
         if client:

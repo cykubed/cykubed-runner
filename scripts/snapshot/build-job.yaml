@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    cykubed-job: "build"
+  name: "cykubed-build"
+  namespace: "cykubed"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: build-volume
+          persistentVolumeClaim:
+            claimName: build-pvc
+        - name: scratch
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: "cykubed-storageclass"
+                resources:
+                  requests:
+                    storage: "10Gi"
+
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 10000
+        runAsUser: 10000
+        runAsGroup: 10000
+      containers:
+        - name: shell
+          image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:3.1
+          volumeMounts:
+          - mountPath: "/build"
+            name: build-volume
+          - mountPath: "/scratch"
+            name: scratch
+          command: ["/bin/sleep", "3600"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+
+
