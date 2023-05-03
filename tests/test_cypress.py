@@ -10,23 +10,23 @@ from pytz import utc
 from redis import Redis
 
 from common.enums import TestResultStatus
-from common.schemas import AgentTestRun, SpecResult, TestResult
+from common.schemas import NewTestRun, SpecResult, TestResult
 from cypress import run_tests, runner_stopped
 from settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
 @pytest.mark.respx(base_url="https://api.cykubed.com/agent/testrun/20")
-def test_cypress(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
+def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                  fixturedir):
-    redis.sadd(f'testrun:{cloned_testrun.id}:specs', 'cypress/e2e/nonsense/test4.spec.ts')
+    redis.sadd(f'testrun:{testrun.id}:specs', 'cypress/e2e/nonsense/test4.spec.ts')
 
     img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
     spec_started_mock = respx_mock.post('/spec-started')
     spec_completed_mock = respx_mock.post('/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
-    runcmd_mock = mocker.patch('cypress.runcmd', return_value=cmdresult)
+    runcmd_mock = mocker.patch('cypress.subprocess.run', return_value=cmdresult)
     runner_stopped(20, 120)
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     spec_result = SpecResult(
@@ -43,7 +43,7 @@ def test_cypress(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
     upload_mock = respx_mock.post('/artifact/upload').mock(
         return_value=Response(200, text='https://dummy-upload.cykubed.com/artifacts/blah.png'))
     httpclient = httpx.Client(base_url='https://api.cykubed.com/agent/testrun/20')
-    run_tests(cloned_testrun, 8192, httpclient)
+    run_tests(testrun, 8192, httpclient)
 
     assert spec_started_mock.call_count == 1
 
@@ -52,10 +52,12 @@ def test_cypress(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
 
     results_dir = settings.get_results_dir()
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/json-reporter.js'))
-    expected=f'cypress run -s cypress/e2e/nonsense/test4.spec.ts -q --reporter={json_reporter}' \
-             f' -o output={results_dir}/out.json' \
-             f' -c screenshotsFolder={results_dir}/screenshots,screenshotOnRunFailure=true,' \
-             f'baseUrl=http://localhost:8192,video=false,videosFolder={results_dir}/videos'
+    expected = ['cypress', 'run',
+                '-q',
+                '-s', 'cypress/e2e/nonsense/test4.spec.ts',
+                '--reporter', json_reporter,
+                '-o', f'output={results_dir}/out.json',
+                '-c', f'screenshotsFolder={results_dir}/screenshots,screenshotOnRunFailure=true,baseUrl=http://localhost:8192,video=false,videosFolder={results_dir}/videos']
 
     assert cmd == expected
     parse_results_mock.assert_called_once()

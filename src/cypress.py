@@ -12,8 +12,8 @@ from httpx import Client
 from common.enums import TestResultStatus, TestRunStatus, AgentEventType
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, NewTestRun, AgentSpecCompleted, \
-    AgentSpecStarted, AgentTestRun, AgentEvent
+from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
+    AgentSpecStarted, NewTestRun, AgentEvent
 from common.utils import utcnow, get_hostname
 from server import start_server
 from settings import settings
@@ -99,7 +99,8 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
 def run_cypress(testrun: NewTestRun, file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
     results_dir = settings.get_results_dir()
-    shutil.rmtree(results_dir)
+    if os.path.exists(results_dir):
+        shutil.rmtree(results_dir)
     os.makedirs(results_dir)
     results_file = f'{results_dir}/out.json'
     base_url = f'http://localhost:{port}'
@@ -109,11 +110,14 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
     env['CYPRESS_CACHE_FOLDER'] = f'{settings.RW_BUILD_DIR}/cypress_cache'
     if testrun.project.cypress_retries:
         env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
+        env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
     env['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:{env["PATH"]}'
 
     dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
-    result = subprocess.run(['cypress', 'run', '-s', file, '-q',
-                             f'--reporter={json_reporter}',
+    result = subprocess.run(['cypress', 'run',
+                             '-q',
+                             '-s', file,
+                             '--reporter', json_reporter,
                              '-o', f'output={results_file}',
                              '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
                                    f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
@@ -177,7 +181,7 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-def run_tests(testrun: AgentTestRun, port: int, httpclient: Client):
+def run_tests(testrun: NewTestRun, port: int, httpclient: Client):
 
     while True:
 

@@ -5,7 +5,7 @@ from freezegun import freeze_time
 from redis import Redis
 
 import builder
-from common.schemas import NewTestRun, AgentTestRun, AgentEvent
+from common.schemas import NewTestRun, AgentEvent
 from settings import settings
 
 
@@ -33,8 +33,6 @@ def test_clone(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
              'cypress/e2e/stuff/test2.spec.ts',
              'cypress/e2e/stuff/test3.spec.ts'}
     assert redis.smembers('testrun:20:specs') == specs
-    atr = AgentTestRun.parse_raw(redis.get('testrun:20'))
-    assert atr.cache_key == '74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2'
 
     assert redis.llen('messages') == 4
 

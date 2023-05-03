@@ -7,7 +7,7 @@ from loguru import logger
 from redis import Redis
 
 from common.enums import PlatformEnum
-from common.schemas import OrganisationSummary, Project, NewTestRun, AgentTestRun
+from common.schemas import OrganisationSummary, Project, NewTestRun
 from settings import settings
 
 
@@ -62,17 +62,3 @@ def testrun(project: Project, redis: Redis) -> NewTestRun:
                     branch='master')
     redis.set(f'testrun:{tr.id}', tr.json())
     return tr
-
-
-@pytest.fixture()
-def cloned_testrun(redis, testrun: NewTestRun) -> AgentTestRun:
-    specs = {'cypress/e2e/nonsense/test4.spec.ts',
-             'cypress/e2e/nonsense/another-test.spec.ts',
-             'cypress/e2e/stuff/test1.spec.ts',
-             'cypress/e2e/stuff/test2.spec.ts',
-             'cypress/e2e/stuff/test3.spec.ts'}
-    testrun.status = 'building'
-    atr = AgentTestRun(specs=specs, cache_key='74be0866a9e180f69bc38c737d112e4b744211c55a4028e8ccb45600118c0cd2',
-                       **testrun.dict())
-    redis.set(f'testrun:{atr.id}', atr.json())
-    return atr

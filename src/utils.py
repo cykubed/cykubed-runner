@@ -12,7 +12,7 @@ from common import schemas
 from common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.schemas import NewTestRun, AgentTestRun, AgentEvent, AppLogMessage
+from common.schemas import NewTestRun, AgentEvent, AppLogMessage
 from settings import settings
 
 
@@ -63,7 +63,7 @@ def set_status(httpclient: Client, status: TestRunStatus):
         raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
 
 
-def get_testrun(id: int) -> AgentTestRun | None:
+def get_testrun(id: int) -> NewTestRun | None:
     """
     Used by agents and runners to return a deserialised NewTestRun
     :param id:
@@ -71,7 +71,7 @@ def get_testrun(id: int) -> AgentTestRun | None:
     """
     d = sync_redis().get(f'testrun:{id}')
     if d:
-        return AgentTestRun.parse_raw(d)
+        return NewTestRun.parse_raw(d)
     return None
 
 

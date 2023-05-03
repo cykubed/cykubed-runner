@@ -7,19 +7,19 @@ from redis import Redis
 
 import builder
 from common.enums import AgentEventType
-from common.schemas import AgentTestRun, AgentEvent
+from common.schemas import NewTestRun, AgentEvent
 from settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
-def test_build_no_node_cache(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
+def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                              fixturedir):
     msgs = redis.lrange('messages', 0, -1)
     assert not msgs
     runcmd = mocker.patch('builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.dist_dir, dirs_exist_ok=True)
 
-    builder.build(cloned_testrun.id)
+    builder.build(testrun.id)
 
     expected_commands = [
         'npm ci',
@@ -45,14 +45,14 @@ def test_build_no_node_cache(mocker, respx_mock, cloned_testrun: AgentTestRun, r
 
 
 @freeze_time('2022-04-03 14:10:00Z')
-def test_build_with_node_cache(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
-                              fixturedir):
+def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+                               fixturedir):
     runcmd = mocker.patch('builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.dist_dir, dirs_exist_ok=True)
     # fake an empty node_modules
     os.makedirs(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'))
 
-    builder.build(cloned_testrun.id)
+    builder.build(testrun.id)
 
     expected_commands = [
         'ng build --output-path=dist'

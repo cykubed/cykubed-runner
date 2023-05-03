@@ -10,7 +10,7 @@ from wcmatch import glob
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.schemas import NewTestRun, AgentTestRun, \
+from common.schemas import NewTestRun, \
     AgentEvent, AgentCloneCompletedEvent
 from settings import settings
 from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger
@@ -156,8 +156,6 @@ def build(trid: int):
     testrun = get_testrun(trid)
     if not testrun:
         raise BuildFailedException("No such testrun")
-    if testrun.status != 'building':
-        raise BuildFailedException(f"Testrun is in {testrun.status} state")
 
     logger.init(testrun.id, source="builder")
 
@@ -178,7 +176,7 @@ def build(trid: int):
                                 duration=time.time() - tstart))
 
 
-def build_app(testrun: AgentTestRun):
+def build_app(testrun: NewTestRun):
     logger.info('Building app')
 
     wdir = settings.dist_dir
