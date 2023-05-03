@@ -143,7 +143,7 @@ def clone(trid: int):
     send_agent_event(AgentCloneCompletedEvent(type=AgentEventType.clone_completed,
                                               cache_key=get_lock_hash(settings.dist_dir),
                                               testrun_id=testrun.id,
-                                              num_specs=len(specs),
+                                              specs=specs,
                                               duration=time.time() - tstart))
 
 

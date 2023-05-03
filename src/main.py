@@ -69,12 +69,10 @@ def main():
             cypress.run(trid, client)
     except RunFailedException as ex:
         logger.error(str(ex))
-        time.sleep(3600)
         sys.exit(1)
 
     except BuildFailedException as ex:
         logger.error(f'Build failed: {ex}')
-        time.sleep(3600)
         duration = time.time() - tstart
         r = client.post('/build-failed', json=BuildFailureReport(msg=ex.msg,
                                                                  status_code=ex.status_code,
