@@ -31,6 +31,8 @@ class RunnerSettings(BaseSettings):
     BUILD_DIR = '/tmp/cykubed/build'
     NODE_CACHE_DIR = '/tmp/cykubed/nodecache'
 
+    RW_BUILD_DIR = '/tmp/cykubed/build'
+
     @property
     def dist_dir(self):
         return os.path.join(self.BUILD_DIR, 'dist')

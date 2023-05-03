@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -16,7 +17,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, N
 from common.utils import utcnow, get_hostname
 from server import start_server
 from settings import settings
-from utils import set_status, get_testrun, runcmd, send_agent_event, logger
+from utils import set_status, get_testrun, send_agent_event, logger
 
 
 def spec_terminated(trid: int, spec: str):
@@ -97,21 +98,35 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
 
 def run_cypress(testrun: NewTestRun, file: str, port: int):
     logger.debug(f'Run Cypress for {file}')
-    results_file = f'{settings.get_results_dir()}/out.json'
+    results_dir = settings.get_results_dir()
+    shutil.rmtree(results_dir)
+    os.makedirs(results_dir)
+    results_file = f'{results_dir}/out.json'
     base_url = f'http://localhost:{port}'
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
 
-    env = None
+    env = os.environ.copy()
+    env['CYPRESS_CACHE_FOLDER'] = f'{settings.RW_BUILD_DIR}/cypress_cache'
     if testrun.project.cypress_retries:
-        env = dict(CYPRESS_RETRIES=str(testrun.project.cypress_retries))
+        env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
+    env['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:{env["PATH"]}'
 
-    runcmd(['cypress', 'run', '-s', file, '-q',
-            f'--reporter={json_reporter}',
-            '-o', f'output={results_file}',
-            '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
-                  f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
-           timeout=settings.CYPRESS_RUN_TIMEOUT,
-           env=env, cwd=settings.dist_dir)
+    dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
+    result = subprocess.run(['cypress', 'run', '-s', file, '-q',
+                             f'--reporter={json_reporter}',
+                             '-o', f'output={results_file}',
+                             '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
+                                   f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
+                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
+                            env=env, cwd=dist_dir)
+
+    logger.debug(result.stdout.decode('utf8'))
+    if result.returncode and result.stderr and not os.path.exists(results_file):
+        logger.error('Cypress run failed: ' + result.stderr.decode())
+
+    # runcmd(f'cypress run -s {file} -q --reporter={json_reporter} -o output={results_file} -c screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}',
+    #        timeout=settings.CYPRESS_RUN_TIMEOUT,
+    #        env=env, cwd=dist_dir, log=True)
 
 
 async def upload(client, upload_url, sshot_file, mime_type, test_result):
@@ -229,9 +244,14 @@ def run(testrun_id: int, httpclient: Client):
             logger.info(f"Missing test run: quitting")
             return
 
-        if testrun.status != TestRunStatus.running:
-            logger.info(f"Test run is {testrun.status}: quitting")
-            return
+        # need to copy the build dist to a RW folder
+        shutil.copytree(settings.BUILD_DIR, settings.RW_BUILD_DIR, ignore_dangling_symlinks=True,
+                        ignore=shutil.ignore_patterns('node_modules'))
+        os.symlink(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'),
+                   os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules'))
+        # ditto for the Cypress folder cache
+        shutil.copytree(os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache'),
+                        os.path.join(settings.RW_BUILD_DIR, 'cypress_cache'))
 
         # start the server
         server = start_server()

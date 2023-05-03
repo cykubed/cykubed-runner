@@ -23,8 +23,10 @@ def get_git_sha(testrun: NewTestRun):
 
 def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     cmdenv = os.environ.copy()
-    cmdenv['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:' + cmdenv['PATH']
-    cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.NODE_CACHE_DIR}/cypress_cache'
+    if 'path' in kwargs:
+        cmdenv['PATH'] = kwargs['path']+':'+cmdenv['PATH']
+    else:
+        cmdenv['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:' + cmdenv['PATH']
     if env:
         cmdenv.update(env)
 

@@ -69,6 +69,7 @@ def main():
             cypress.run(trid, client)
     except RunFailedException as ex:
         logger.error(str(ex))
+        time.sleep(3600)
         sys.exit(1)
 
     except BuildFailedException as ex:

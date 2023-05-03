@@ -48,7 +48,7 @@ def test_cypress(mocker, respx_mock, cloned_testrun: AgentTestRun, redis: Redis,
     assert spec_started_mock.call_count == 1
 
     runcmd_mock.assert_called_once()
-    cmd = ' '.join(runcmd_mock.call_args_list[0].args[0])
+    cmd = runcmd_mock.call_args_list[0].args[0]
 
     results_dir = settings.get_results_dir()
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/json-reporter.js'))

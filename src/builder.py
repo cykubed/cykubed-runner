@@ -11,7 +11,7 @@ from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
 from common.schemas import NewTestRun, AgentTestRun, \
-    AgentEvent
+    AgentEvent, AgentCloneCompletedEvent
 from settings import settings
 from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger
 
@@ -22,8 +22,8 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
-    runcmd(f'rm -fr {builddir}/dist')
-    runcmd(f'git config --global --add safe.directory {builddir}')
+    runcmd(f'rm -fr {builddir}/dist', log=True)
+    runcmd(f'git config --global --add safe.directory {builddir}', log=True)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {settings.dist_dir}',
                log=True)
@@ -138,16 +138,12 @@ def clone(trid: int):
     r = sync_redis()
     if specs:
         logger.info(f"Found {len(specs)} spec files")
-        atr = AgentTestRun(**testrun.dict())
-        atr.specs=specs
-        atr.cache_key=get_lock_hash(settings.dist_dir)
         r.sadd(f'testrun:{testrun.id}:specs', *specs)
-        testrun.status = TestRunStatus.running
-        r.set(f'testrun:{testrun.id}', atr.json())
     # tell the agent
-    send_agent_event(AgentEvent(type=AgentEventType.clone_completed,
-                                testrun_id=testrun.id,
-                                duration=time.time() - tstart))
+    send_agent_event(AgentCloneCompletedEvent(type=AgentEventType.clone_completed,
+                                              cache_key=get_lock_hash(settings.dist_dir),
+                                              testrun_id=testrun.id,
+                                              duration=time.time() - tstart))
 
 
 def build(trid: int):
