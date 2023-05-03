@@ -5,7 +5,7 @@ import shutil
 import signal
 import subprocess
 import sys
-from time import time
+from time import time, sleep
 
 from httpx import Client
 
@@ -251,10 +251,17 @@ def run(testrun_id: int, httpclient: Client):
         # need to copy the build dist to a RW folder
         shutil.copytree(settings.BUILD_DIR, settings.RW_BUILD_DIR, ignore_dangling_symlinks=True,
                         ignore=shutil.ignore_patterns('node_modules'))
-        os.symlink(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'),
-                   os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules'))
+
+        srcnode = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
+        if not os.path.exists(srcnode):
+            raise RunFailedException("Missing node_modules")
+        os.symlink(srcnode, os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules'))
+
         # ditto for the Cypress folder cache
-        shutil.copytree(os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache'),
+        srccypress = os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache')
+        if not os.path.exists(srccypress):
+            raise RunFailedException("Missing cypress cache folder")
+        shutil.copytree(srccypress,
                         os.path.join(settings.RW_BUILD_DIR, 'cypress_cache'))
 
         # start the server
@@ -267,9 +274,10 @@ def run(testrun_id: int, httpclient: Client):
         finally:
             # kill the server
             server.stop()
-    except Exception:
+    except RunFailedException:
         logger.exception("Cypress run failed")
         set_status(httpclient, TestRunStatus.failed)
+        sleep(3600)
         sys.exit(1)
     finally:
         runner_stopped(testrun_id, int(time() - start_time))

@@ -77,7 +77,8 @@ def create_node_environment():
     # install Cypress binary
     os.makedirs(cypress_cache_folder, exist_ok=True)
     logger.info("Installing Cypress binary")
-    runcmd('cypress install')
+    del env['CYPRESS_INSTALL_BINARY']
+    runcmd('cypress install', cmd=False, env=env, cwd=settings.NODE_CACHE_DIR)
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 

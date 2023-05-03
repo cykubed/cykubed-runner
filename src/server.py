@@ -122,8 +122,11 @@ def start_server() -> ServerThread:
 
     # wait until it's ready
     endtime = time() + settings.SERVER_START_TIMEOUT
-    logger.debug("Waiting for server to be ready...")
-    sleep(2)
+    sleep(1)
+    while server.port == 0:
+        logger.debug('Wait for server to be ready')
+        sleep(2)
+    logger.debug(f"Waiting for server to be ready on port {server.port}...")
     while True:
         ready = False
         try:
