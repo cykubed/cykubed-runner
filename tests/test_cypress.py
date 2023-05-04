@@ -54,6 +54,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/json-reporter.js'))
     expected = ['cypress', 'run',
                 '-q',
+                '--browser', 'chrome',
                 '-s', 'cypress/e2e/nonsense/test4.spec.ts',
                 '--reporter', json_reporter,
                 '-o', f'output={results_dir}/out.json',
