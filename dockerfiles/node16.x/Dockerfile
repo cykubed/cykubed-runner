@@ -8,6 +8,12 @@ COPY dockerfiles/node16.x/nodesource.list /etc/apt/sources.list.d/nodesource.lis
 
 RUN apt-get update && apt-get install nodejs
 
+# install Chrome browser
+RUN wget --no-verbose -O /usr/src/google-chrome-stable_current_amd64.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && \
+  dpkg -i /usr/src/google-chrome-stable_current_amd64.deb ; \
+  apt-get install -f -y && \
+  rm -f /usr/src/google-chrome-stable_current_amd64.deb
+
 # Yarn 1.x for now
 RUN npm install --global yarn
 
