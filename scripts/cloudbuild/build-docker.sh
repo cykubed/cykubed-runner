@@ -12,5 +12,5 @@ docker build . -f dockerfiles/node16.x/Dockerfile \
                 --build-arg TAG="$VERSION"
 
 sed "s/IMAGE_TAG/$VERSION/g" scripts/cloudbuild/payload.json > /workspace/cykube-payload.json
-echo "{\"text\":\"Cykube runner $VERSION published\"}" > /workspace/slack-payload.json
+echo "{\"text\":\"Cykubed runner $VERSION published\"}" > /workspace/slack-payload.json
 

@@ -1,5 +1,5 @@
 ARG TAG=1.0
-FROM europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-base:$TAG
+FROM europe-docker.pkg.dev/cykubeapp/cykubed/runner-base:$TAG
 
 USER root
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
