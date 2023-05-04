@@ -7,10 +7,10 @@ steps:
       git submodule update
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'pull',  'europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-base:latest']
+    args: [ 'pull',  'europe-docker.pkg.dev/cykubeapp/cykubed/runner-base:latest']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'pull',  'europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:latest']
+    args: [ 'pull',  'europe-docker.pkg.dev/cykubeapp/cykubed/runner-node16.x:latest']
 
   - name: alpine/httpie
     id: Get next version number
