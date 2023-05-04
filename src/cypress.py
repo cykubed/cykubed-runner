@@ -116,6 +116,7 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
     dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
     result = subprocess.run(['cypress', 'run',
                              '-q',
+                             '--browser', testrun.project.browser,
                              '-s', file,
                              '--reporter', json_reporter,
                              '-o', f'output={results_file}',
