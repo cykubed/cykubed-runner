@@ -20,7 +20,6 @@ class RunnerSettings(BaseSettings):
     MAX_HTTP_RETRIES = 10
     MAX_HTTP_BACKOFF = 60
 
-    AGENT_URL: str = 'http://127.0.0.1:5000'
     MAIN_API_URL: str = 'https://app.cykube.net/api'
 
     SENTRY_DSN: str = None

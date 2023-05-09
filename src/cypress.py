@@ -114,16 +114,21 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
     env['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:{env["PATH"]}'
 
     dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
-    result = subprocess.run(['cypress', 'run',
-                             '-q',
-                             '--browser', testrun.project.browser or 'electron',
-                             '-s', file,
-                             '--reporter', json_reporter,
-                             '-o', f'output={results_file}',
-                             '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
-                                   f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}'],
+    args = ['cypress', 'run',
+            '-q',
+            '--browser', testrun.project.browser or 'electron',
+            '-s', file,
+            '--reporter', json_reporter,
+            '-o', f'output={results_file}',
+            '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
+                  f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}']
+    fullcmd = ' '.join(args)
+    logger.debug(f'Calling cypress with args: "{fullcmd}"')
+    result = subprocess.run(args,
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
                             env=env, cwd=dist_dir)
+
+    # sleep(3600)
 
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
@@ -255,7 +260,6 @@ def run(testrun_id: int, httpclient: Client):
         srcnode = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
         if not os.path.exists(srcnode):
             raise RunFailedException("Missing node_modules")
-        os.symlink(srcnode, os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules'))
 
         # ditto for the Cypress folder cache
         srccypress = os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache')
@@ -263,6 +267,8 @@ def run(testrun_id: int, httpclient: Client):
             raise RunFailedException("Missing cypress cache folder")
         shutil.copytree(srccypress,
                         os.path.join(settings.RW_BUILD_DIR, 'cypress_cache'))
+
+        os.symlink(srcnode, os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules'))
 
         # start the server
         server = start_server()

@@ -45,6 +45,7 @@ def project() -> Project:
                    name='project',
                    default_branch='master',
                    agent_id=1,
+                   browser='chrome',
                    platform=PlatformEnum.GITHUB,
                    url='git@github.org/dummy.git',
                    start_runners_first=False,

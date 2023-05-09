@@ -9,7 +9,6 @@ from wcmatch import glob
 
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException
-from common.redisutils import sync_redis
 from common.schemas import NewTestRun, \
     AgentEvent, AgentCloneCompletedEvent
 from settings import settings
@@ -136,10 +135,6 @@ def clone(trid: int):
 
     # determine the specs
     specs = get_specs(settings.dist_dir)
-    r = sync_redis()
-    if specs:
-        logger.info(f"Found {len(specs)} spec files")
-        r.sadd(f'testrun:{testrun.id}:specs', *specs)
     # tell the agent
     send_agent_event(AgentCloneCompletedEvent(type=AgentEventType.clone_completed,
                                               cache_key=get_lock_hash(settings.dist_dir),
