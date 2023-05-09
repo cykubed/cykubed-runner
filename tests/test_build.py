@@ -23,23 +23,22 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
 
     expected_commands = [
         'npm ci',
-        'cypress install',
         'ng build --output-path=dist',
+        f'cp -fr {settings.dist_dir}/node_modules {settings.NODE_CACHE_DIR}/node_modules',
+        f'rm -fr {settings.dist_dir}/node_modules',
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert expected_commands[i] == cmd.args[0]
 
     msgs = redis.lrange('messages', 0, -1)
-    # first 6 messages are log messages
-    assert len(msgs) == 7
     msg_dicts = [json.loads(m) for m in msgs]
 
     log_msgs = [x['msg']['msg'] for x in msg_dicts if x['type'] == 'log']
     assert log_msgs == ['Build distribution for test run 1', 'Creating node distribution',
-                        'Building new node cache using npm', 'Installing Cypress binary',
+                        'Building new node cache using npm',
                         'Created node environment in 0.0s', 'Building app']
 
-    event = AgentEvent.parse_raw(msgs[6])
+    event = AgentEvent.parse_raw(msgs[-1])
     assert event.type == AgentEventType.build_completed
     assert event.testrun_id == 20
 
@@ -55,7 +54,9 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
     builder.build(testrun.id)
 
     expected_commands = [
-        'ng build --output-path=dist'
+        f'cp -fr {settings.NODE_CACHE_DIR}/node_modules {settings.dist_dir}/node_modules',
+        'ng build --output-path=dist',
+        f'rm -fr {settings.dist_dir}/node_modules',
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert cmd.args[0] == expected_commands[i]

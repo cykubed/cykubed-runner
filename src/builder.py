@@ -2,7 +2,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import time
 
 from wcmatch import glob
@@ -57,27 +56,15 @@ def create_node_environment():
     logger.info(f"Creating node distribution")
 
     t = time.time()
-    yarn = False
-    for file in ['.npmrc', 'package.json', 'yarn.lock', 'package-lock.json']:
-        if os.path.exists(f'{settings.dist_dir}/{file}'):
-            shutil.copy(f'{settings.dist_dir}/{file}', settings.NODE_CACHE_DIR)
-            if file == 'yarn.lock':
-                yarn = True
-
     cypress_cache_folder = f'{settings.NODE_CACHE_DIR}/cypress_cache'
-    env = dict(CYPRESS_INSTALL_BINARY='0', CYPRESS_CACHE_FOLDER=cypress_cache_folder)
-    if yarn:
+    env = dict(CYPRESS_CACHE_FOLDER=cypress_cache_folder)
+    if os.path.exists(os.path.join(settings.dist_dir, 'yarn.lock')):
         logger.info("Building new node cache using yarn")
         runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}',
-               cmd=True, env=env, cwd=settings.NODE_CACHE_DIR)
+               cmd=True, env=env, cwd=settings.dist_dir)
     else:
         logger.info("Building new node cache using npm")
-        runcmd('npm ci', cmd=True, env=env, cwd=settings.NODE_CACHE_DIR)
-    # install Cypress binary
-    os.makedirs(cypress_cache_folder, exist_ok=True)
-    logger.info("Installing Cypress binary")
-    del env['CYPRESS_INSTALL_BINARY']
-    runcmd('cypress install', cmd=False, env=env, cwd=settings.NODE_CACHE_DIR)
+        runcmd('npm ci', cmd=True, env=env, cwd=settings.dist_dir)
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
@@ -157,14 +144,24 @@ def build(trid: int):
 
     logger.info(f'Build distribution for test run {testrun.local_id}')
 
-    node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
-    if os.path.exists(node_modules):
+    cached_node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
+    dist_node_modules = os.path.join(settings.dist_dir, 'node_modules')
+    if os.path.exists(cached_node_modules):
         logger.info('Using cached node environment')
+        runcmd(f'cp -fr {cached_node_modules} {dist_node_modules}')
+        using_cache = True
     else:
         create_node_environment()
+        using_cache = False
 
     # build the app
     build_app(testrun)
+
+    # copy to snapshot dir
+    if not using_cache:
+        runcmd(f'cp -fr {dist_node_modules} {cached_node_modules}')
+
+    runcmd(f'rm -fr {dist_node_modules}')
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentEvent(type=AgentEventType.build_completed,
@@ -177,9 +174,6 @@ def build_app(testrun: NewTestRun):
 
     wdir = settings.dist_dir
 
-    if not os.path.exists(f'{wdir}/node_modules'):
-        os.symlink(f'{settings.NODE_CACHE_DIR}/node_modules', f'{wdir}/node_modules')
-
     # build the app
     runcmd(testrun.project.build_cmd, cmd=True, cwd=wdir)
 
@@ -191,3 +185,4 @@ def build_app(testrun: NewTestRun):
 
     if not os.path.exists(os.path.join(distdir, 'index.html')):
         raise BuildFailedException("Could not find index.html file in dist directory")
+

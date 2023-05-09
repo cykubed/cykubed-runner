@@ -26,7 +26,7 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     if 'path' in kwargs:
         cmdenv['PATH'] = kwargs['path']+':'+cmdenv['PATH']
     else:
-        cmdenv['PATH'] = f'{settings.NODE_CACHE_DIR}/node_modules/.bin:' + cmdenv['PATH']
+        cmdenv['PATH'] = f'node_modules/.bin:' + cmdenv['PATH']
     if env:
         cmdenv.update(env)
 
