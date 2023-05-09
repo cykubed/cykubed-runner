@@ -116,7 +116,7 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
     dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
     result = subprocess.run(['cypress', 'run',
                              '-q',
-                             '--browser', testrun.project.browser,
+                             '--browser', testrun.project.browser or 'electron',
                              '-s', file,
                              '--reporter', json_reporter,
                              '-o', f'output={results_file}',
@@ -125,7 +125,6 @@ def run_cypress(testrun: NewTestRun, file: str, port: int):
                             timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
                             env=env, cwd=dist_dir)
 
-    logger.debug(result.stdout.decode('utf8'))
     if result.returncode and result.stderr and not os.path.exists(results_file):
         logger.error('Cypress run failed: ' + result.stderr.decode())
 
