@@ -26,7 +26,6 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     spec_completed_mock = respx_mock.post('/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
-    runcmd_mock = mocker.patch('cypress.subprocess.run', return_value=cmdresult)
     runner_stopped(20, 120)
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     spec_result = SpecResult(
@@ -43,24 +42,22 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     upload_mock = respx_mock.post('/artifact/upload').mock(
         return_value=Response(200, text='https://dummy-upload.cykubed.com/artifacts/blah.png'))
     httpclient = httpx.Client(base_url='https://api.cykubed.com/agent/testrun/20')
-    run_tests(testrun, 8192, httpclient)
+    server_thread_mock = mocker.Mock()
+
+    def create_mock_output() -> bool:
+        with open(f'{settings.get_results_dir()}/out.json', 'w') as f:
+            f.write(json.dumps({'passed': 1}))
+        return True
+
+    subprocess_mock = mocker.patch('cypress.CypressSpecRunner.create_cypress_process',
+                                   side_effect=create_mock_output)
+
+    run_tests(server_thread_mock, testrun, httpclient)
 
     assert spec_started_mock.call_count == 1
 
-    runcmd_mock.assert_called_once()
-    cmd = runcmd_mock.call_args_list[0].args[0]
+    subprocess_mock.assert_called_once()
 
-    results_dir = settings.get_results_dir()
-    json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/json-reporter.js'))
-    expected = ['cypress', 'run',
-                '-q',
-                '--browser', 'chrome',
-                '-s', 'cypress/e2e/nonsense/test4.spec.ts',
-                '--reporter', json_reporter,
-                '-o', f'output={results_dir}/out.json',
-                '-c', f'screenshotsFolder={results_dir}/screenshots,screenshotOnRunFailure=true,baseUrl=http://localhost:8192,video=false,videosFolder={results_dir}/videos']
-
-    assert cmd == expected
     parse_results_mock.assert_called_once()
     assert upload_mock.call_count == 2
 

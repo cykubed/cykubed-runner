@@ -139,11 +139,19 @@ class CypressSpecRunner(object):
         self.file = file
         self.httpclient = httpclient
         self.dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
-        self.results_file = f'{settings.get_results_dir()}/out.json'
         self.results_dir = settings.get_results_dir()
+        self.results_file = f'{self.results_dir}/out.json'
         if os.path.exists(self.results_dir):
             shutil.rmtree(self.results_dir)
         os.makedirs(self.results_dir)
+        if self.testrun.project.cypress_debug_enabled:
+            self.logpipe = RedisLogPipe(self.testrun.id, self.file)
+            self.stdout = self.logpipe
+        else:
+            self.logpipe = None
+            self.stdout = subprocess.DEVNULL
+        self.hang_deadline = self.testrun.project.spec_hang_deadline
+        self.started = None
 
     def get_args(self):
         base_url = f'http://localhost:{self.server.port}'
@@ -170,68 +178,60 @@ class CypressSpecRunner(object):
         return env
 
     def run(self):
-        started = utcnow()
+        self.started = utcnow()
         logger.debug(f'Run Cypress for {self.file}')
-
-        env = self.get_env()
-        args = self.get_args()
-        hang_deadline = self.testrun.project.spec_hang_deadline
-        completed = False
-
         # Cypress still occasionally hangs for no obvious reason. The best way to detect this is if there is
         # no server access for a period of time. In that happens we kill the process and retry up to the deadline
         # for the spec
-
-        fullcmd = ' '.join(args)
-        if self.testrun.project.cypress_debug_enabled:
-            logpipe = RedisLogPipe(self.testrun.id, self.file)
-            stdout = logpipe
-        else:
-            logpipe = None
-            stdout = subprocess.DEVNULL
-
-        while not completed and (utcnow() - started).seconds < self.testrun.project.spec_deadline:
-            logger.debug(f'Calling cypress with args: "{fullcmd}"')
-            with subprocess.Popen(args, env=env, encoding=settings.ENCODING,
-                                  text=True, cwd=self.dist_dir,
-                                  stdout=stdout, stderr=stdout) as proc:
-                while (utcnow() - started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
-                    initial_lines = logpipe.lines if logpipe else 0
-                    try:
-                        retcode = proc.wait(hang_deadline)
-                        logger.debug(f'Finished with code {retcode}')
-                        completed = True
-                        break
-                    except KeyboardInterrupt:
-                        proc.kill()
-                        break
-                    except subprocess.TimeoutExpired:
-                        kill = False
-                        if self.testrun.project.cypress_debug_enabled and logpipe.lines == initial_lines:
-                            logger.info(f'No log output in {hang_deadline} for file {self.file}: assume process is hung')
-                            kill = True
-                        elif not self.server.last_access or (utcnow() - self.server.last_access).seconds >= hang_deadline:
-                            logger.info(f'No server access in {hang_deadline} seconds for file {self.file} - assume hung')
-                            kill = True
-
-                        if kill:
-                            logger.info(f'Killing process {proc.pid} and retrying')
-                            proc.kill()
-                            break
-            if not completed:
-                # check that we're not cancelled
-                if not sync_redis().exists(f'testrun:{self.testrun.id}'):
-                    logger.info('Test run has been cancelled: quit')
-                    return
-                else:
-                    logger.info("Retrying...")
+        while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline:
+            if self.create_cypress_process():
+                break
+            # check that we're not cancelled
+            if not sync_redis().exists(f'testrun:{self.testrun.id}'):
+                logger.info('Test run has been cancelled: quit')
+                return
+            else:
+                logger.info("Retrying...")
 
         if not os.path.exists(self.results_file):
             raise RunFailedException(f'Missing results file')
 
         # parse and upload the results
-        result = parse_results(started)
+        result = parse_results(self.started)
         upload_results(self.testrun.id, self.file, result, self.httpclient)
+
+    def create_cypress_process(self) -> bool:
+        args = self.get_args()
+        fullcmd = ' '.join(args)
+        logger.debug(f'Calling cypress with args: "{fullcmd}"')
+        deadline = self.hang_deadline
+        with subprocess.Popen(args,
+                              env=self.get_env(),
+                              encoding=settings.ENCODING,
+                              text=True, cwd=self.dist_dir,
+                              stdout=self.stdout, stderr=self.stdout) as proc:
+            while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
+                initial_lines = self.logpipe.lines if self.logpipe else 0
+                try:
+                    retcode = proc.wait(deadline)
+                    logger.debug(f'Finished with code {retcode}')
+                    return True
+                except KeyboardInterrupt:
+                    proc.kill()
+                    return False
+                except subprocess.TimeoutExpired:
+                    kill = False
+                    if self.testrun.project.cypress_debug_enabled and self.logpipe.lines == initial_lines:
+                        logger.info(f'No log output in {deadline} for file {self.file}: assume process is hung')
+                        kill = True
+                    elif not self.server.last_access or (utcnow() - self.server.last_access).seconds >= deadline:
+                        logger.info(f'No server access in {deadline} seconds for file {self.file} - assume hung')
+                        kill = True
+
+                    if kill:
+                        logger.info(f'Killing process {proc.pid} and retrying')
+                        proc.kill()
+                        return False
 
 
 async def upload(client, upload_url, sshot_file, mime_type, test_result):
