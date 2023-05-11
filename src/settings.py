@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from pydantic import BaseSettings
 
@@ -54,6 +55,8 @@ class RunnerSettings(BaseSettings):
         return os.path.join(self.get_results_dir(), 'videos')
 
     def init_build_dirs(self):
+        if os.path.exists(self.RW_BUILD_DIR):
+            shutil.rmtree(self.RW_BUILD_DIR)
         os.makedirs(self.BUILD_DIR, exist_ok=True)
         os.makedirs(self.NODE_CACHE_DIR, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)

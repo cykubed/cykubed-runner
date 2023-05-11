@@ -115,7 +115,8 @@ def clone(trid: int):
 
     testrun.status = TestRunStatus.building
 
-    clone_repos(testrun)
+    if settings.K8:
+        clone_repos(testrun)
 
     if not testrun.sha:
         testrun.sha = get_git_sha(testrun)

@@ -121,6 +121,7 @@ class RedisLogPipe(threading.Thread):
         """
         for line in iter(self.pipeReader.readline, ''):
             self.redis.rpush(self.key, line)
+            logger.debug(f'Cypress: {line}')
             self.lines += 1
 
         self.pipeReader.close()
@@ -160,8 +161,7 @@ class CypressSpecRunner(object):
     def get_env(self):
         env = os.environ.copy()
         env.update(CYPRESS_CACHE_FOLDER=f'{settings.RW_BUILD_DIR}/cypress_cache',
-                   PATH=f'node_modules/.bin:{env["PATH"]}',
-                   ELECTRON_ENABLE_LOGGING=True)
+                   PATH=f'node_modules/.bin:{env["PATH"]}')
 
         if self.testrun.project.cypress_retries:
             env['CYPRESS_RETRIES'] = str(self.testrun.project.cypress_retries)
@@ -183,17 +183,24 @@ class CypressSpecRunner(object):
         # for the spec
 
         fullcmd = ' '.join(args)
-        logpipe = RedisLogPipe(self.testrun.id, self.file)
+        if self.testrun.project.cypress_debug_enabled:
+            logpipe = RedisLogPipe(self.testrun.id, self.file)
+            stdout = logpipe
+        else:
+            logpipe = None
+            stdout = subprocess.DEVNULL
+
         while not completed and (utcnow() - started).seconds < self.testrun.project.spec_deadline:
             logger.debug(f'Calling cypress with args: "{fullcmd}"')
             with subprocess.Popen(args, env=env, encoding=settings.ENCODING,
                                   text=True, cwd=self.dist_dir,
-                                  stdout=subprocess.PIPE, stderr=logpipe) as proc:
+                                  stdout=stdout, stderr=stdout) as proc:
                 while (utcnow() - started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
-                    initial_lines = logpipe.lines
+                    initial_lines = logpipe.lines if logpipe else 0
                     try:
                         retcode = proc.wait(hang_deadline)
-                        print(f'Finished with code {retcode}')
+                        logger.debug(f'Finished with code {retcode}')
+                        completed = True
                         break
                     except KeyboardInterrupt:
                         proc.kill()
@@ -305,11 +312,18 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
             logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
             sys.exit(0)
 
-        signal.signal(signal.SIGTERM, handle_sigterm_runner)
-        signal.signal(signal.SIGINT, handle_sigterm_runner)
+        if settings.K8:
+            signal.signal(signal.SIGTERM, handle_sigterm_runner)
+            signal.signal(signal.SIGINT, handle_sigterm_runner)
 
         # run cypress for this spec
-        CypressSpecRunner(server, testrun, httpclient, spec).run()
+        try:
+            CypressSpecRunner(server, testrun, httpclient, spec).run()
+        except Exception as ex:
+            # something went wrong - push the spec back onto the stack
+            logger.warning(f'Runner failed unpexectedly: add the spec back to the stack')
+            redis.sadd(f'testrun:{testrun.id}:specs', spec)
+            raise ex
 
 
 def runner_stopped(trid: int, duration: int):
@@ -323,8 +337,9 @@ def get_total_run_duration(trid: int) -> int:
 def run(testrun_id: int, httpclient: Client):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
 
-    signal.signal(signal.SIGTERM, default_sigterm_runner)
-    signal.signal(signal.SIGINT, default_sigterm_runner)
+    if settings.K8:
+        signal.signal(signal.SIGTERM, default_sigterm_runner)
+        signal.signal(signal.SIGINT, default_sigterm_runner)
 
     start_time = time()
     try:
@@ -353,7 +368,7 @@ def run(testrun_id: int, httpclient: Client):
         runcmd(f'cp -fr {srccypress} {rw_cypress}')
         runcmd(f'cp -fr {srcnode} {rw_node}')
 
-        # start the server
+        # start the server=
         server = start_server()
 
         try:
