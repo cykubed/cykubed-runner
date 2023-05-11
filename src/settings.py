@@ -32,6 +32,8 @@ class RunnerSettings(BaseSettings):
 
     RW_BUILD_DIR = '/tmp/cykubed/build'
 
+    SERVER_PORT = 9000
+
     @property
     def dist_dir(self):
         return os.path.join(self.BUILD_DIR, 'dist')

@@ -5,17 +5,18 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 from time import time, sleep
 
 from httpx import Client
 
 from common.enums import TestResultStatus, TestRunStatus, AgentEventType
 from common.exceptions import RunFailedException
-from common.redisutils import sync_redis
+from common.redisutils import sync_redis, get_specfile_log_key
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
     AgentSpecStarted, NewTestRun, AgentEvent
 from common.utils import utcnow, get_hostname
-from server import start_server
+from server import start_server, ServerThread
 from settings import settings
 from utils import set_status, get_testrun, send_agent_event, logger, runcmd
 
@@ -96,41 +97,134 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
     return result
 
 
-def run_cypress(testrun: NewTestRun, file: str, port: int):
-    logger.debug(f'Run Cypress for {file}')
-    results_dir = settings.get_results_dir()
-    if os.path.exists(results_dir):
-        shutil.rmtree(results_dir)
-    os.makedirs(results_dir)
-    results_file = f'{results_dir}/out.json'
-    base_url = f'http://localhost:{port}'
-    json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
+class RedisLogPipe(threading.Thread):
+    def __init__(self, trid: int, file: str):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self.trid = trid
+        self.fdRead, self.fdWrite = os.pipe()
+        self.pipeReader = os.fdopen(self.fdRead)
+        self.start()
+        self.redis = sync_redis()
+        self.key = get_specfile_log_key(trid, file)
+        self.redis.delete(self.key)
+        self.redis.expire(self.key, 60)
+        self.lines = 0
 
-    env = os.environ.copy()
-    env['CYPRESS_CACHE_FOLDER'] = f'{settings.RW_BUILD_DIR}/cypress_cache'
-    if testrun.project.cypress_retries:
-        env['CYPRESS_RETRIES'] = str(testrun.project.cypress_retries)
-    env['PATH'] = f'node_modules/.bin:{env["PATH"]}'
+    def fileno(self):
+        """Return the write file descriptor of the pipe
+        """
+        return self.fdWrite
 
-    dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
-    args = ['cypress', 'run',
-            '-q',
-            '--browser', testrun.project.browser or 'electron',
-            '-s', file,
-            '--reporter', json_reporter,
-            '-o', f'output={results_file}',
-            '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
-                  f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}']
-    fullcmd = ' '.join(args)
-    logger.debug(f'Calling cypress with args: "{fullcmd}"')
-    result = subprocess.run(args,
-                            timeout=settings.CYPRESS_RUN_TIMEOUT, capture_output=True,
-                            env=env, cwd=dist_dir)
+    def run(self):
+        """Run the thread, logging everything.
+        """
+        for line in iter(self.pipeReader.readline, ''):
+            self.redis.rpush(self.key, line)
+            self.lines += 1
 
-    # sleep(3600)
+        self.pipeReader.close()
 
-    if result.returncode and result.stderr and not os.path.exists(results_file):
-        logger.error('Cypress run failed: ' + result.stderr.decode())
+    def close(self):
+        """Close the write end of the pipe.
+        """
+        os.close(self.fdWrite)
+
+
+class CypressSpecRunner(object):
+    def __init__(self, server: ServerThread, testrun: NewTestRun, httpclient: Client, file: str):
+        self.server = server
+        self.testrun = testrun
+        self.file = file
+        self.httpclient = httpclient
+        self.dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
+        self.results_file = f'{settings.get_results_dir()}/out.json'
+        self.results_dir = settings.get_results_dir()
+        if os.path.exists(self.results_dir):
+            shutil.rmtree(self.results_dir)
+        os.makedirs(self.results_dir)
+
+    def get_args(self):
+        base_url = f'http://localhost:{self.server.port}'
+        json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
+
+        return ['cypress', 'run',
+                '-q',
+                '--browser', self.testrun.project.browser or 'electron',
+                '-s', self.file,
+                '--reporter', json_reporter,
+                '-o', f'output={self.results_file}',
+                '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
+                      f'baseUrl={base_url},video=false,videosFolder={settings.get_videos_folder()}']
+
+    def get_env(self):
+        env = os.environ.copy()
+        env.update(CYPRESS_CACHE_FOLDER=f'{settings.RW_BUILD_DIR}/cypress_cache',
+                   PATH=f'node_modules/.bin:{env["PATH"]}',
+                   ELECTRON_ENABLE_LOGGING=True)
+
+        if self.testrun.project.cypress_retries:
+            env['CYPRESS_RETRIES'] = str(self.testrun.project.cypress_retries)
+        if self.testrun.project.cypress_debug_enabled:
+            env['DEBUG'] = 'cypress:*'
+        return env
+
+    def run(self):
+        started = utcnow()
+        logger.debug(f'Run Cypress for {self.file}')
+
+        env = self.get_env()
+        args = self.get_args()
+        hang_deadline = self.testrun.project.spec_hang_deadline
+        completed = False
+
+        # Cypress still occasionally hangs for no obvious reason. The best way to detect this is if there is
+        # no server access for a period of time. In that happens we kill the process and retry up to the deadline
+        # for the spec
+
+        fullcmd = ' '.join(args)
+        logpipe = RedisLogPipe(self.testrun.id, self.file)
+        while not completed and (utcnow() - started).seconds < self.testrun.project.spec_deadline:
+            logger.debug(f'Calling cypress with args: "{fullcmd}"')
+            with subprocess.Popen(args, env=env, encoding=settings.ENCODING,
+                                  text=True, cwd=self.dist_dir,
+                                  stdout=subprocess.PIPE, stderr=logpipe) as proc:
+                while (utcnow() - started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
+                    initial_lines = logpipe.lines
+                    try:
+                        retcode = proc.wait(hang_deadline)
+                        print(f'Finished with code {retcode}')
+                        break
+                    except KeyboardInterrupt:
+                        proc.kill()
+                        break
+                    except subprocess.TimeoutExpired:
+                        kill = False
+                        if self.testrun.project.cypress_debug_enabled and logpipe.lines == initial_lines:
+                            logger.info(f'No log output in {hang_deadline} for file {self.file}: assume process is hung')
+                            kill = True
+                        elif not self.server.last_access or (utcnow() - self.server.last_access).seconds >= hang_deadline:
+                            logger.info(f'No server access in {hang_deadline} seconds for file {self.file} - assume hung')
+                            kill = True
+
+                        if kill:
+                            logger.info(f'Killing process {proc.pid} and retrying')
+                            proc.kill()
+                            break
+            if not completed:
+                # check that we're not cancelled
+                if not sync_redis().exists(f'testrun:{self.testrun.id}'):
+                    logger.info('Test run has been cancelled: quit')
+                    return
+                else:
+                    logger.info("Retrying...")
+
+        if not os.path.exists(self.results_file):
+            raise RunFailedException(f'Missing results file')
+
+        # parse and upload the results
+        result = parse_results(started)
+        upload_results(self.testrun.id, self.file, result, self.httpclient)
 
 
 async def upload(client, upload_url, sshot_file, mime_type, test_result):
@@ -181,7 +275,7 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-def run_tests(testrun: NewTestRun, port: int, httpclient: Client):
+def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
 
     while True:
 
@@ -213,16 +307,9 @@ def run_tests(testrun: NewTestRun, port: int, httpclient: Client):
 
         signal.signal(signal.SIGTERM, handle_sigterm_runner)
         signal.signal(signal.SIGINT, handle_sigterm_runner)
-        try:
-            started = utcnow()
-            run_cypress(testrun, spec, port)
-            result = parse_results(started)
-            upload_results(testrun.id, spec, result, httpclient)
 
-        except subprocess.CalledProcessError as ex:
-            raise RunFailedException(f'Cypress run failed with return code {ex.returncode}')
-        except subprocess.TimeoutExpired:
-            raise RunFailedException("Exceeded run timeout")
+        # run cypress for this spec
+        CypressSpecRunner(server, testrun, httpclient, spec).run()
 
 
 def runner_stopped(trid: int, duration: int):
@@ -272,7 +359,7 @@ def run(testrun_id: int, httpclient: Client):
         try:
             # now fetch specs until we're done or the build is cancelled
             logger.debug(f"Server running on port {server.port}")
-            run_tests(testrun, server.port, httpclient)
+            run_tests(server, testrun, httpclient)
         finally:
             # kill the server
             server.stop()

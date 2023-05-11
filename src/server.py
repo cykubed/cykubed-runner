@@ -13,7 +13,33 @@ from httpx import RemoteProtocolError
 from loguru import logger
 
 from common.exceptions import BuildFailedException
+from common.utils import utcnow
 from settings import settings
+
+
+class ServerThread(threading.Thread):
+    """
+    Trivial thread using a specific Single Page App handler (as we always want to return the index file if
+    the path isn't a real file)
+    """
+    def __init__(self, port=0, **kwargs):
+        super().__init__(**kwargs)
+        self.port = port
+        self.httpd = None
+        self.last_access = None
+
+    def run(self):
+        with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
+            self.httpd = httpd
+            self.port = httpd.server_address[1]
+            httpd.serve_forever()
+
+    def stop(self):
+        self.httpd.shutdown()
+        self.join()
+
+
+server: ServerThread = ServerThread(settings.SERVER_PORT)
 
 
 class SPAHandler(SimpleHTTPRequestHandler):
@@ -35,6 +61,7 @@ class SPAHandler(SimpleHTTPRequestHandler):
         logic
         We'll either be returning an asses or the index file
         """
+        server.last_access = utcnow()
         path = self.translate_path(self.path)
 
         f = None
@@ -90,34 +117,11 @@ class SPAHandler(SimpleHTTPRequestHandler):
             raise
 
 
-class ServerThread(threading.Thread):
-    """
-    Trivial thread using a specific Single Page App handler (as we always want to return the index file if
-    the path isn't a real file)
-    """
-    def __init__(self, port=0, **kwargs):
-        super().__init__(**kwargs)
-        self.port = port
-        self.httpd = None
-
-    def run(self):
-        with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
-            self.httpd = httpd
-            self.port = httpd.server_address[1]
-            httpd.serve_forever()
-
-    def stop(self):
-        self.httpd.shutdown()
-        self.join()
-
-
 def start_server() -> ServerThread:
     """
     Start the server
     :return:
     """
-
-    server = ServerThread()
     server.start()
 
     # wait until it's ready
