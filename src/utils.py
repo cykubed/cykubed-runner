@@ -30,6 +30,7 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     if env:
         cmdenv.update(env)
 
+    result = None
     if not cmd:
         result = subprocess.run(args, env=cmdenv, shell=True, encoding=settings.ENCODING, capture_output=True,
                                 **kwargs)
@@ -38,7 +39,6 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
         if result.returncode:
             logger.error(f"Command failed: {result.returncode}: {result.stderr}")
             raise BuildFailedException(msg=f'Command failed: {result.stderr}', status_code=result.returncode)
-        return result
     else:
         logger.cmd(args)
         with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,
@@ -55,6 +55,8 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
             if proc.returncode:
                 logger.error(f"Command failed: error code {proc.returncode}")
                 raise BuildFailedException(msg='Command failed', status_code=proc.returncode)
+    os.sync()
+    return result
 
 
 def set_status(httpclient: Client, status: TestRunStatus):

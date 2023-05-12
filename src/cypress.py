@@ -18,7 +18,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, A
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import set_status, get_testrun, send_agent_event, logger, runcmd
+from utils import set_status, get_testrun, send_agent_event, logger
 
 
 def spec_terminated(trid: int, spec: str):
@@ -138,7 +138,6 @@ class CypressSpecRunner(object):
         self.testrun = testrun
         self.file = file
         self.httpclient = httpclient
-        self.dist_dir = os.path.join(settings.RW_BUILD_DIR, 'dist')
         self.results_dir = settings.get_results_dir()
         self.results_file = f'{self.results_dir}/out.json'
         if os.path.exists(self.results_dir):
@@ -168,7 +167,7 @@ class CypressSpecRunner(object):
 
     def get_env(self):
         env = os.environ.copy()
-        env.update(CYPRESS_CACHE_FOLDER=f'{settings.RW_BUILD_DIR}/cypress_cache',
+        env.update(CYPRESS_CACHE_FOLDER=f'{settings.NODE_CACHE_DIR}/cypress_cache',
                    PATH=f'node_modules/.bin:{env["PATH"]}')
 
         if self.testrun.project.cypress_retries:
@@ -208,7 +207,7 @@ class CypressSpecRunner(object):
         with subprocess.Popen(args,
                               env=self.get_env(),
                               encoding=settings.ENCODING,
-                              text=True, cwd=self.dist_dir,
+                              text=True, cwd=settings.dist_dir,
                               stdout=self.stdout, stderr=self.stdout) as proc:
             while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
                 initial_lines = self.logpipe.lines if self.logpipe else 0
@@ -325,6 +324,8 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
             redis.sadd(f'testrun:{testrun.id}:specs', spec)
             raise ex
 
+        # sleep(3600)
+
 
 def runner_stopped(trid: int, duration: int):
     sync_redis().incrby(f'testrun:{trid}:run_duration', duration)
@@ -350,28 +351,18 @@ def run(testrun_id: int, httpclient: Client):
             logger.info(f"Missing test run: quitting")
             return
 
-        # need to copy the build dist to a RW folder
-        logger.debug('Copying build')
-        runcmd(f'cp -fr {settings.BUILD_DIR} {settings.RW_BUILD_DIR}')
-
         srcnode = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
         if not os.path.exists(srcnode):
             raise RunFailedException("Missing node_modules")
 
-        # ditto for the Cypress folder cache
         srccypress = os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache')
         if not os.path.exists(srccypress):
             raise RunFailedException("Missing cypress cache folder")
 
-        rw_cypress = os.path.join(settings.RW_BUILD_DIR, 'cypress_cache')
-        rw_node = os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules')
+        # symlink the node_modules
+        os.symlink(srcnode, os.path.join(settings.dist_dir, 'node_modules'))
 
-        logger.debug('Copying cypress_cache')
-        runcmd(f'cp -fr {srccypress} {rw_cypress}')
-        logger.debug('Copying node_dist')
-        runcmd(f'cp -fr {srcnode} {rw_node}')
-
-        # start the server=
+        # start the server
         server = start_server()
 
         try:

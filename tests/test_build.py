@@ -24,9 +24,8 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
     expected_commands = [
         'npm ci',
         'ng build --output-path=dist',
-        f'cp -fr {settings.dist_dir}/node_modules {settings.NODE_CACHE_DIR}/node_modules',
-        f'rm -fr {settings.dist_dir}/node_modules',
     ]
+    assert len(runcmd.call_args_list) == len(expected_commands)
     for i, cmd in enumerate(runcmd.call_args_list):
         assert expected_commands[i] == cmd.args[0]
 
@@ -54,9 +53,7 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
     builder.build(testrun.id)
 
     expected_commands = [
-        f'cp -fr {settings.NODE_CACHE_DIR}/node_modules {settings.dist_dir}/node_modules',
         'ng build --output-path=dist',
-        f'rm -fr {settings.dist_dir}/node_modules',
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert cmd.args[0] == expected_commands[i]

@@ -20,7 +20,7 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
-    runcmd(f'rm -fr {builddir}/dist', log=True)
+    runcmd(f'rm -fr {settings.dist_dir}', log=True)
     runcmd(f'git config --global --add safe.directory {builddir}', log=True)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {settings.dist_dir}',
@@ -149,20 +149,20 @@ def build(trid: int):
     dist_node_modules = os.path.join(settings.dist_dir, 'node_modules')
     if os.path.exists(cached_node_modules):
         logger.info('Using cached node environment')
-        runcmd(f'cp -fr {cached_node_modules} {dist_node_modules}')
-        using_cache = True
+        os.symlink(cached_node_modules, dist_node_modules)
     else:
+        # no cache - create empty node_modules dir and symlink
+        os.mkdir(cached_node_modules)
+        os.symlink(cached_node_modules, dist_node_modules)
         create_node_environment()
-        using_cache = False
 
     # build the app
     build_app(testrun)
 
-    # copy to snapshot dir
-    if not using_cache:
-        runcmd(f'cp -fr {dist_node_modules} {cached_node_modules}')
+    # time.sleep(3600)
 
-    runcmd(f'rm -fr {dist_node_modules}')
+    # remove symlink
+    os.remove(dist_node_modules)
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentEvent(type=AgentEventType.build_completed,

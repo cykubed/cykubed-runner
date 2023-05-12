@@ -1,37 +1,33 @@
 apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: build-1
-  namespace: cykubed
-spec:
-  storageClassName: "cykubed-storageclass"
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-
-apiVersion: v1
 kind: Pod
 metadata:
-  name: runshell
+  name: runner-1
   namespace: cykubed
 spec:
   volumes:
-    - name: build-volume
-      persistentVolumeClaim:
-        claimName: "build-1"
     - name: node-volume
       ephemeral:
         volumeClaimTemplate:
           spec:
             accessModes: [ "ReadWriteOnce" ]
-            storageClassName: "premium-rwo"
+            storageClassName: "cykubed-storageclass"
             dataSource:
               apiGroup: snapshot.storage.k8s.io
               kind: VolumeSnapshot
-              name: build-1
+              name: node-2c28f57dfdc2e7a33a37577c13c665d911ff80ba2837b829101a215b8b8d5718
+            resources:
+              requests:
+                storage: "10Gi"
+    - name: build-volume
+      ephemeral:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            storageClassName: "cykubed-storageclass"
+            dataSource:
+              apiGroup: snapshot.storage.k8s.io
+              kind: VolumeSnapshot
+              name: build-0f4bd73c2429324d912c86caeb7a3e2f5383c0a9
             resources:
               requests:
                 storage: "10Gi"
@@ -42,7 +38,7 @@ spec:
     runAsGroup: 10000
   containers:
     - name: shell
-      image: europe-west2-docker.pkg.dev/cykubeapp/cykube/runner-node16.x:1.2.0
+      image: europe-docker.pkg.dev/cykubeapp/cykubed/runner-node16.x:1.10.0
       volumeMounts:
       - mountPath: "/node"
         name: node-volume
