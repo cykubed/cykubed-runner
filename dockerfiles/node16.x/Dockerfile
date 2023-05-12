@@ -18,6 +18,7 @@ RUN wget --no-verbose -O /usr/src/google-chrome-stable_current_amd64.deb "https:
 RUN npm install --global yarn
 
 USER 10000
+USER root
 
 COPY src .
 

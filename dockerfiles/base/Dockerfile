@@ -16,7 +16,7 @@ RUN apt-get update && \
   xauth \
   xvfb \
   # install text editors
-  vim-tiny \
+  vim \
   # install emoji font
   fonts-noto-color-emoji \
   # install Chinese fonts
