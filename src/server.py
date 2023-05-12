@@ -29,12 +29,17 @@ class ServerThread(threading.Thread):
         self.last_access = None
 
     def run(self):
-        with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
-            self.httpd = httpd
-            self.port = httpd.server_address[1]
-            httpd.serve_forever()
+        try:
+            with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
+                self.httpd = httpd
+                self.port = httpd.server_address[1]
+                httpd.serve_forever()
+        except Exception as ex:
+            logger.exception("Unexpected exception in server: bailing out")
+            return
 
     def stop(self):
+        logger.info('Stopping server')
         self.httpd.shutdown()
         self.join()
 
