@@ -6,7 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
-from time import time, sleep
+from time import time
 
 from httpx import Client
 
@@ -375,7 +375,7 @@ def run(testrun_id: int, httpclient: Client):
     except RunFailedException:
         logger.exception("Cypress run failed")
         set_status(httpclient, TestRunStatus.failed)
-        sleep(3600)
+        # sleep(3600)
         sys.exit(1)
     finally:
         runner_stopped(testrun_id, int(time() - start_time))
