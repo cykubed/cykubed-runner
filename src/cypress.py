@@ -351,6 +351,7 @@ def run(testrun_id: int, httpclient: Client):
             return
 
         # need to copy the build dist to a RW folder
+        logger.debug('Copying build')
         runcmd(f'cp -fr {settings.BUILD_DIR} {settings.RW_BUILD_DIR}')
 
         srcnode = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
@@ -365,7 +366,9 @@ def run(testrun_id: int, httpclient: Client):
         rw_cypress = os.path.join(settings.RW_BUILD_DIR, 'cypress_cache')
         rw_node = os.path.join(settings.RW_BUILD_DIR, 'dist', 'node_modules')
 
+        logger.debug('Copying cypress_cache')
         runcmd(f'cp -fr {srccypress} {rw_cypress}')
+        logger.debug('Copying node_dist')
         runcmd(f'cp -fr {srcnode} {rw_node}')
 
         # start the server=
