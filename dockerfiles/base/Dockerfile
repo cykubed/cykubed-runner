@@ -55,3 +55,4 @@ RUN poetry config installer.max-workers 10
 #RUN poetry install --no-root --without=dev
 RUN poetry install --no-root --with=dev
 
+ENV TZ=UTC
