@@ -207,7 +207,7 @@ class CypressSpecRunner(object):
         with subprocess.Popen(args,
                               env=self.get_env(),
                               encoding=settings.ENCODING,
-                              text=True, cwd=settings.dist_dir,
+                              text=True, cwd=settings.BUILD_DIR,
                               stdout=self.stdout, stderr=self.stdout) as proc:
             while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
                 initial_lines = self.logpipe.lines if self.logpipe else 0
@@ -359,8 +359,7 @@ def run(testrun_id: int, httpclient: Client):
         if not os.path.exists(srccypress):
             raise RunFailedException("Missing cypress cache folder")
 
-        # symlink the node_modules
-        os.symlink(srcnode, os.path.join(settings.dist_dir, 'node_modules'))
+        # sleep(3600)
 
         # start the server
         server = start_server()

@@ -20,17 +20,18 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
     builddir = settings.BUILD_DIR
-    runcmd(f'rm -fr {settings.dist_dir}', log=True)
+    # make sure it's empty (i.e delete the lost+found dir)
+    runcmd(f'rm -fr {settings.BUILD_DIR}/*')
     runcmd(f'git config --global --add safe.directory {builddir}', log=True)
     if not testrun.sha:
-        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} {settings.dist_dir}',
-               log=True)
+        runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} .',
+               log=True, cwd=builddir)
     else:
-        runcmd(f'git clone --recursive {testrun.url} {settings.dist_dir}', log=True)
+        runcmd(f'git clone --recursive {testrun.url} .', log=True, cwd=builddir)
 
     logger.info(f"Cloned branch {testrun.branch}")
     if testrun.sha:
-        runcmd(f'git reset --hard {testrun.sha}', cwd=settings.dist_dir)
+        runcmd(f'git reset --hard {testrun.sha}', cwd=builddir)
 
 
 def get_lock_hash(build_dir):
@@ -56,15 +57,14 @@ def create_node_environment():
     logger.info(f"Creating node distribution")
 
     t = time.time()
-    cypress_cache_folder = f'{settings.NODE_CACHE_DIR}/cypress_cache'
-    env = dict(CYPRESS_CACHE_FOLDER=cypress_cache_folder)
-    if os.path.exists(os.path.join(settings.dist_dir, 'yarn.lock')):
+
+    if os.path.exists(os.path.join(settings.BUILD_DIR, 'yarn.lock')):
         logger.info("Building new node cache using yarn")
         runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}',
-               cmd=True, env=env, cwd=settings.dist_dir)
+               cmd=True, cwd=settings.BUILD_DIR)
     else:
         logger.info("Building new node cache using npm")
-        runcmd('npm ci', cmd=True, env=env, cwd=settings.dist_dir)
+        runcmd('npm ci', cmd=True, cwd=settings.BUILD_DIR)
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
@@ -122,10 +122,10 @@ def clone(trid: int):
         testrun.sha = get_git_sha(testrun)
 
     # determine the specs
-    specs = get_specs(settings.dist_dir)
+    specs = get_specs(settings.BUILD_DIR)
     # tell the agent
     send_agent_event(AgentCloneCompletedEvent(type=AgentEventType.clone_completed,
-                                              cache_key=get_lock_hash(settings.dist_dir),
+                                              cache_key=get_lock_hash(settings.BUILD_DIR),
                                               testrun_id=testrun.id,
                                               specs=specs,
                                               duration=time.time() - tstart))
@@ -146,7 +146,7 @@ def build(trid: int):
     logger.info(f'Build distribution for test run {testrun.local_id}')
 
     cached_node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
-    dist_node_modules = os.path.join(settings.dist_dir, 'node_modules')
+    dist_node_modules = os.path.join(settings.BUILD_DIR, 'node_modules')
     if os.path.exists(cached_node_modules):
         logger.info('Using cached node environment')
         os.symlink(cached_node_modules, dist_node_modules)
@@ -159,10 +159,8 @@ def build(trid: int):
     # build the app
     build_app(testrun)
 
-    # time.sleep(3600)
-
-    # remove symlink
-    os.remove(dist_node_modules)
+    # pre-verify it so it's properly read-only
+    runcmd('cypress verify', cwd=settings.BUILD_DIR, cmd=True)
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentEvent(type=AgentEventType.build_completed,
@@ -173,13 +171,11 @@ def build(trid: int):
 def build_app(testrun: NewTestRun):
     logger.info('Building app')
 
-    wdir = settings.dist_dir
-
     # build the app
-    runcmd(testrun.project.build_cmd, cmd=True, cwd=wdir)
+    runcmd(testrun.project.build_cmd, cmd=True, cwd=settings.BUILD_DIR)
 
     # check for dist and index file
-    distdir = os.path.join(wdir, 'dist')
+    distdir = os.path.join(settings.BUILD_DIR, 'dist')
 
     if not os.path.exists(distdir):
         raise BuildFailedException("No dist directory: please check your build command")

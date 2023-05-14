@@ -49,7 +49,7 @@ server: ServerThread = ServerThread(settings.SERVER_PORT)
 
 class SPAHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        self.root = os.path.join(settings.dist_dir, 'dist')
+        self.root = os.path.join(settings.BUILD_DIR, 'dist')
         self.index_file = None
         for index in "index.html", "index.htm":
             index = os.path.join(self.root, index)

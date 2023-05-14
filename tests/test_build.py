@@ -17,13 +17,14 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
     msgs = redis.lrange('messages', 0, -1)
     assert not msgs
     runcmd = mocker.patch('builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.dist_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR, dirs_exist_ok=True)
 
     builder.build(testrun.id)
 
     expected_commands = [
         'npm ci',
         'ng build --output-path=dist',
+        'cypress verify'
     ]
     assert len(runcmd.call_args_list) == len(expected_commands)
     for i, cmd in enumerate(runcmd.call_args_list):
@@ -46,7 +47,7 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
 def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                fixturedir):
     runcmd = mocker.patch('builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.dist_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(fixturedir, 'project'), settings.BUILD_DIR, dirs_exist_ok=True)
     # fake an empty node_modules
     os.makedirs(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'))
 
@@ -54,6 +55,7 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
 
     expected_commands = [
         'ng build --output-path=dist',
+        'cypress verify'
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert cmd.args[0] == expected_commands[i]

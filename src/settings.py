@@ -34,9 +34,9 @@ class RunnerSettings(BaseSettings):
 
     SERVER_PORT = 9000
 
-    @property
-    def dist_dir(self):
-        return os.path.join(self.BUILD_DIR, 'src')
+    # @property
+    # def dist_dir(self):
+    #     return os.path.join(self.SCRATCH_DIR, 'src')
 
     def get_yarn_cache_dir(self):
         return os.path.join(self.NODE_CACHE_DIR, '.yarn_cache')
