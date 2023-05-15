@@ -6,7 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
-from time import time
+from time import time, sleep
 
 from httpx import Client
 
@@ -320,8 +320,9 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
             CypressSpecRunner(server, testrun, httpclient, spec).run()
         except Exception as ex:
             # something went wrong - push the spec back onto the stack
-            logger.warning(f'Runner failed unpexectedly: add the spec back to the stack')
+            logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
             redis.sadd(f'testrun:{testrun.id}:specs', spec)
+            sleep(3600)
             raise ex
 
         # sleep(3600)
