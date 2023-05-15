@@ -23,8 +23,8 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
 
     expected_commands = [
         'npm ci',
-        'ng build --output-path=dist',
-        'cypress verify'
+        'cypress verify',
+        'ng build --output-path=dist'
     ]
     assert len(runcmd.call_args_list) == len(expected_commands)
     for i, cmd in enumerate(runcmd.call_args_list):
@@ -54,8 +54,7 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
     builder.build(testrun.id)
 
     expected_commands = [
-        'ng build --output-path=dist',
-        'cypress verify'
+        'ng build --output-path=dist'
     ]
     for i, cmd in enumerate(runcmd.call_args_list):
         assert cmd.args[0] == expected_commands[i]
