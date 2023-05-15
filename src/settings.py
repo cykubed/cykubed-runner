@@ -34,9 +34,9 @@ class RunnerSettings(BaseSettings):
 
     SERVER_PORT = 9000
 
-    # @property
-    # def dist_dir(self):
-    #     return os.path.join(self.SCRATCH_DIR, 'src')
+    @property
+    def dist_dir(self):
+        return os.path.join(self.SCRATCH_DIR, 'build')
 
     def get_yarn_cache_dir(self):
         return os.path.join(self.NODE_CACHE_DIR, '.yarn_cache')
@@ -54,6 +54,7 @@ class RunnerSettings(BaseSettings):
         return os.path.join(self.get_results_dir(), 'videos')
 
     def init_build_dirs(self):
+        os.makedirs(self.dist_dir, exist_ok=True)
         os.makedirs(self.BUILD_DIR, exist_ok=True)
         os.makedirs(self.NODE_CACHE_DIR, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)

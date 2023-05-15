@@ -6,7 +6,7 @@ import signal
 import subprocess
 import sys
 import threading
-from time import time, sleep
+from time import time
 
 from httpx import Client
 
@@ -18,7 +18,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, A
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import set_status, get_testrun, send_agent_event, logger
+from utils import set_status, get_testrun, send_agent_event, logger, runcmd
 
 
 def spec_terminated(trid: int, spec: str):
@@ -207,7 +207,7 @@ class CypressSpecRunner(object):
         with subprocess.Popen(args,
                               env=self.get_env(),
                               encoding=settings.ENCODING,
-                              text=True, cwd=settings.BUILD_DIR,
+                              text=True, cwd=settings.dist_dir,
                               stdout=self.stdout, stderr=self.stdout) as proc:
             while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
                 initial_lines = self.logpipe.lines if self.logpipe else 0
@@ -322,7 +322,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
             # something went wrong - push the spec back onto the stack
             logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
             redis.sadd(f'testrun:{testrun.id}:specs', spec)
-            sleep(3600)
+            # sleep(3600)
             raise ex
 
         # sleep(3600)
@@ -360,7 +360,9 @@ def run(testrun_id: int, httpclient: Client):
         if not os.path.exists(srccypress):
             raise RunFailedException("Missing cypress cache folder")
 
-        # sleep(3600)
+        # annoyingly Cypress won't run directly on a RO filesystem (even though it runs happily on a RO folder locally)
+        # so symlink everything into the scratch folder
+        runcmd(f"ln -s {settings.BUILD_DIR}/* {settings.dist_dir}")
 
         # start the server
         server = start_server()
