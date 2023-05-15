@@ -10,15 +10,15 @@ from time import time
 
 from httpx import Client
 
-from common.enums import TestResultStatus, TestRunStatus, AgentEventType
+from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis, get_specfile_log_key
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun, AgentEvent
+    AgentSpecStarted, NewTestRun
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import set_status, get_testrun, send_agent_event, logger, runcmd
+from utils import set_status, get_testrun, logger, runcmd
 
 
 def spec_terminated(trid: int, spec: str):
@@ -220,6 +220,7 @@ class CypressSpecRunner(object):
                     return False
                 except subprocess.TimeoutExpired:
                     kill = False
+                    logger.debug(f'Spec activity deadline exceeded for {self.file}')
                     if self.testrun.project.cypress_debug_enabled and self.logpipe.lines == initial_lines:
                         logger.info(f'No log output in {deadline} for file {self.file}: assume process is hung')
                         kill = True
@@ -292,9 +293,6 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
         if not spec:
             # we're done
             logger.debug("No more tests - exiting")
-            # tell the agent
-            send_agent_event(AgentEvent(type=AgentEventType.run_completed,
-                                        testrun_id=testrun.id))
             return
 
         r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
