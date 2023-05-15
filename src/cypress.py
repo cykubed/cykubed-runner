@@ -10,15 +10,15 @@ from time import time
 
 from httpx import Client
 
-from common.enums import TestResultStatus, TestRunStatus
+from common.enums import TestResultStatus, TestRunStatus, AgentEventType
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis, get_specfile_log_key
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun
+    AgentSpecStarted, NewTestRun, AgentEvent
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import set_status, get_testrun, logger, runcmd
+from utils import set_status, get_testrun, logger, runcmd, send_agent_event
 
 
 def spec_terminated(trid: int, spec: str):
@@ -198,6 +198,13 @@ class CypressSpecRunner(object):
         # parse and upload the results
         result = parse_results(self.started)
         upload_results(self.testrun.id, self.file, result, self.httpclient)
+        completions_remaining = spec_completed(self.testrun.id)
+        logger.debug(f'{completions_remaining} specs remaining')
+        if not completions_remaining:
+            # no more completions - we're done
+            logger.info(f'Run completed')
+            send_agent_event(AgentEvent(type=AgentEventType.run_completed,
+                                        testrun_id=self.testrun.id))
 
     def create_cypress_process(self) -> bool:
         args = self.get_args()
@@ -267,7 +274,6 @@ def upload_results(trid: int, spec: str, result: SpecResult, httpclient: Client)
     r = httpclient.post('/spec-completed',
                               content=AgentSpecCompleted(
                                   result=result,
-                                  total_run_duration=get_total_run_duration(trid),
                                   file=spec,
                                   finished=utcnow()).json())
     if r.status_code != 200:
@@ -332,6 +338,13 @@ def runner_stopped(trid: int, duration: int):
 
 def get_total_run_duration(trid: int) -> int:
     return sync_redis().get(f'testrun:{trid}:run_duration')
+
+
+def spec_completed(trid: int) -> int:
+    """
+    Decrement the to-complete count and return the new value
+    """
+    return sync_redis().decr(f'testrun:{trid}:to-complete')
 
 
 def run(testrun_id: int, httpclient: Client):

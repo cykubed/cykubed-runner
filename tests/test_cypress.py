@@ -85,6 +85,5 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                 }
             ],
             "video": None
-        },
-        "total_run_duration": 120
+        }
     }
