@@ -313,7 +313,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
             """
             spec_terminated(testrun.id, spec)
             logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-            sys.exit(0)
+            sys.exit(1)
 
         if settings.K8:
             signal.signal(signal.SIGTERM, handle_sigterm_runner)

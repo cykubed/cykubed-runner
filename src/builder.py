@@ -68,6 +68,9 @@ def create_node_environment():
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
+    # pre-verify it so it's properly read-only
+    runcmd('cypress verify', cwd=settings.BUILD_DIR, cmd=True)
+
 
 def make_array(x):
     if not type(x) is list:
@@ -158,9 +161,6 @@ def build(trid: int):
 
     # build the app
     build_app(testrun)
-
-    # pre-verify it so it's properly read-only
-    runcmd('cypress verify', cwd=settings.BUILD_DIR, cmd=True)
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentEvent(type=AgentEventType.build_completed,
