@@ -29,7 +29,7 @@ def spec_terminated(trid: int, spec: str):
     sync_redis().sadd(f'testrun:{trid}:specs', spec)
 
 
-def parse_results(started_at: datetime.datetime) -> SpecResult:
+def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
     tests = []
     failures = 0
     with open(os.path.join(settings.get_results_dir(), 'out.json')) as f:
@@ -65,9 +65,18 @@ def parse_results(started_at: datetime.datetime) -> SpecResult:
             if err:
                 failures += 1
                 frame = err['codeFrame']
+
+                # get line number of test
+                testline = 0
+                for parsed in err['parsedStack']:
+                    if parsed.get('relativeFile') == spec_file:
+                        testline = parsed['line']
+                        break
+
                 try:
                     result.error = TestResultError(title=err['name'],
                                                    type=err.get('type'),
+                                                   test_line=testline,
                                                    message=err['message'],
                                                    stack=err['stack'],
                                                    code_frame=CodeFrame(line=frame['line'],
@@ -185,7 +194,7 @@ class CypressSpecRunner(object):
             raise RunFailedException(f'Missing results file')
 
         # parse and upload the results
-        result = parse_results(self.started)
+        result = parse_results(self.started, self.file)
         upload_results(self.file, result, self.httpclient)
         completions_remaining = spec_completed(self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')

@@ -9,7 +9,7 @@ def test_parse_fail(mocker, fixturedir):
     mocker.patch('settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'two-fails-with-retries'))
 
-    result = parse_results(datetime(2022, 11, 23, 13, 0, 0))
+    result = parse_results(datetime(2022, 11, 23, 13, 0, 0), "cypress/e2e/stuff/test1.spec.ts")
     # these will be the full paths
     sshotdir = os.path.join(fixturedir, 'two-fails-with-retries', 'screenshots')
     viddir = os.path.join(fixturedir, 'two-fails-with-retries', 'videos')
@@ -33,6 +33,7 @@ def test_parse_fail(mocker, fixturedir):
     assert test2.error.stack == '''AssertionError: Timed out retrying after 4000ms: Expected to find element: `h2`, but never found it.
     at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:13:17)'''
     assert test2.error.code_frame.line == 13
+    assert test2.error.test_line == 13
     assert test2.error.code_frame.column == 18
     assert test2.error.code_frame.language == 'ts'
     assert test2.error.code_frame.frame == "  11 | \n  12 |   it('this will fail', () => {\n> 13 |     cy.get('h2').should('contain.text', 'xxx');\n     |                  ^\n  14 |   });\n  15 | \n  16 |   it.skip('this will be skipped', () => {"
@@ -49,3 +50,14 @@ def test_parse_fail(mocker, fixturedir):
     assert test4.status == TestResultStatus.skipped
 
 
+def test_parse_fail_inside_helper(mocker, fixturedir):
+    """
+    If the test fails inside a helper function then record the original line number
+    """
+    mocker.patch('settings.RunnerSettings.get_results_dir',
+                 return_value=os.path.join(fixturedir, 'fail-inside-helper'))
+    result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'cypress/e2e/stuff/test1.spec.ts')
+    assert len(result.tests) == 1
+    test = result.tests[0]
+    assert test.error.code_frame.line == 6
+    assert test.error.test_line == 21
