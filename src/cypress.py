@@ -9,6 +9,7 @@ import threading
 from time import time
 
 from httpx import Client
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
 from common.enums import TestResultStatus, TestRunStatus, AgentEventType
 from common.exceptions import RunFailedException
@@ -197,7 +198,7 @@ class CypressSpecRunner(object):
 
         # parse and upload the results
         result = parse_results(self.started)
-        upload_results(self.testrun.id, self.file, result, self.httpclient)
+        upload_results(self.file, result, self.httpclient)
         completions_remaining = spec_completed(self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
@@ -241,35 +242,27 @@ class CypressSpecRunner(object):
                         return False
 
 
-async def upload(client, upload_url, sshot_file, mime_type, test_result):
-    resp = await client.post(upload_url, files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
+@retry(retry=retry_if_not_exception_type(RunFailedException),
+       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES),
+       wait=wait_fixed(2) + wait_random(0, 4))
+def upload(client, sshot_file, mime_type='image/png') -> str:
+    logger.info(f'Uploading file {sshot_file} to server')
+    resp = client.post('/artifact/upload',
+                        files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
     if resp.status_code != 200:
         raise RunFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
-    if mime_type.endswith('png'):
-        test_result.failure_screenshots[test_result.failure_screenshots.index(sshot_file)] = resp.text
-    else:
-        test_result.video = resp.text
+    return resp.text
 
 
-def upload_results(trid: int, spec: str, result: SpecResult, httpclient: Client):
+def upload_results(spec: str, result: SpecResult, httpclient: Client):
 
     for test in result.tests:
         if test.failure_screenshots:
             for i, sshot in enumerate(test.failure_screenshots):
-                resp = httpclient.post('/artifact/upload',
-                                         files={'file': (sshot, open(sshot, 'rb'), 'image/png')})
-                if resp.status_code != 200:
-                    logger.error(f'Failed to upload screenshot to cykube: {resp.status_code}')
-                else:
-                    test.failure_screenshots[i] = resp.text
+                test.failure_screenshots[i] = upload(httpclient, sshot)
 
     if result.video:
-        resp = httpclient.post('/artifact/upload',
-                                 files={'file': (result.video, open(result.video, 'rb'), 'image/png')})
-        if resp.status_code != 200:
-            logger.error(f'Failed to upload video to cykube: {resp.status_code}')
-        else:
-            result.video = resp.text
+        result.video = upload(result.video, 'video/mp4')
 
     r = httpclient.post('/spec-completed',
                               content=AgentSpecCompleted(
