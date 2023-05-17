@@ -150,7 +150,6 @@ class CypressSpecRunner(object):
         else:
             self.logpipe = None
             self.stdout = subprocess.DEVNULL
-        self.hang_deadline = self.testrun.project.spec_hang_deadline
         self.started = None
 
     def get_args(self):
@@ -180,18 +179,7 @@ class CypressSpecRunner(object):
     def run(self):
         self.started = utcnow()
         logger.debug(f'Run Cypress for {self.file}')
-        # Cypress still occasionally hangs for no obvious reason. The best way to detect this is if there is
-        # no server access for a period of time. In that happens we kill the process and retry up to the deadline
-        # for the spec
-        while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline:
-            if self.create_cypress_process():
-                break
-            # check that we're not cancelled
-            if not sync_redis().exists(f'testrun:{self.testrun.id}'):
-                logger.info('Test run has been cancelled: quit')
-                return
-            else:
-                logger.info("Retrying...")
+        self.create_cypress_process()
 
         if not os.path.exists(self.results_file):
             raise RunFailedException(f'Missing results file')
@@ -207,39 +195,22 @@ class CypressSpecRunner(object):
             send_agent_event(AgentEvent(type=AgentEventType.run_completed,
                                         testrun_id=self.testrun.id))
 
-    def create_cypress_process(self) -> bool:
+    def create_cypress_process(self):
         args = self.get_args()
         fullcmd = ' '.join(args)
         logger.debug(f'Calling cypress with args: "{fullcmd}"')
-        deadline = self.hang_deadline
-        with subprocess.Popen(args,
-                              env=self.get_env(),
-                              encoding=settings.ENCODING,
-                              text=True, cwd=settings.dist_dir,
-                              stdout=self.stdout, stderr=self.stdout) as proc:
-            while (utcnow() - self.started).seconds < self.testrun.project.spec_deadline and proc.returncode is None:
-                initial_lines = self.logpipe.lines if self.logpipe else 0
-                try:
-                    retcode = proc.wait(deadline)
-                    logger.debug(f'Finished with code {retcode}')
-                    return True
-                except KeyboardInterrupt:
-                    proc.kill()
-                    return False
-                except subprocess.TimeoutExpired:
-                    kill = False
-                    logger.debug(f'Spec activity deadline exceeded for {self.file}')
-                    if self.testrun.project.cypress_debug_enabled and self.logpipe.lines == initial_lines:
-                        logger.info(f'No log output in {deadline} for file {self.file}: assume process is hung')
-                        kill = True
-                    elif not self.server.last_access or (utcnow() - self.server.last_access).seconds >= deadline:
-                        logger.info(f'No server access in {deadline} seconds for file {self.file} - assume hung')
-                        kill = True
-
-                    if kill:
-                        logger.info(f'Killing process {proc.pid} and retrying')
-                        proc.kill()
-                        return False
+        try:
+            result = subprocess.run(args,
+                                    timeout=self.testrun.project.spec_deadline or None,
+                                    capture_output=True,
+                                    text=True,
+                                    env=self.get_env(),
+                                    cwd=settings.dist_dir)
+            logger.debug(f'Cypress stdout: \n{result.stdout}')
+            logger.debug(f'Cypress stderr: \n{result.stderr}')
+        except subprocess.TimeoutExpired as ex:
+            logger.debug(f'Spec activity deadline exceeded for {self.file}')
+            raise ex
 
 
 @retry(retry=retry_if_not_exception_type(RunFailedException),
