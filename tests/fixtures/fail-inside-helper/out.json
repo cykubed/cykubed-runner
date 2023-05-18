@@ -1,20 +1,36 @@
 {
   "stats": {
     "suites": 1,
-    "tests": 1,
-    "passes": 0,
-    "pending": 0,
+    "tests": 4,
+    "passes": 2,
+    "pending": 1,
     "failures": 1,
-    "start": "2023-05-17T15:32:12.206Z",
-    "end": "2023-05-17T15:32:38.159Z",
-    "duration": 25953
+    "start": "2023-05-18T11:02:46.353Z",
+    "end": "2023-05-18T11:02:55.544Z",
+    "duration": 9191
   },
   "tests": [
+    {
+      "title": "should show next when button clicked",
+      "context": "test1",
+      "file": null,
+      "duration": 547,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "should have the correct title",
+      "context": "test1",
+      "file": null,
+      "duration": 112,
+      "currentRetry": 0,
+      "err": {}
+    },
     {
       "title": "this will fail inside a helper",
       "context": "test1",
       "file": null,
-      "duration": 4175,
+      "duration": 4180,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
@@ -27,9 +43,9 @@
           },
           {
             "function": "Object.shouldFail",
-            "fileUrl": "http://localhost:4202/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
             "originalFile": "webpack:///./cypress/e2e/helpers/helper.ts",
-            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
             "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
             "line": 6,
             "column": 15,
@@ -37,9 +53,9 @@
           },
           {
             "function": "Context.eval",
-            "fileUrl": "http://localhost:4202/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
             "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
-            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "/build/cypress/e2e/stuff/test1.spec.ts",
             "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
             "line": 21,
             "column": 4,
@@ -53,23 +69,36 @@
           "line": 6,
           "column": 16,
           "originalFile": "cypress/e2e/helpers/helper.ts",
-          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
           "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
           "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
           "language": "ts"
         }
       }
+    },
+    {
+      "title": "this will be skipped",
+      "context": "test1",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
     }
   ],
   "pending": [
-
+    {
+      "title": "this will be skipped",
+      "context": "test1",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
+    }
   ],
   "failures": [
     {
       "title": "this will fail inside a helper",
       "context": "test1",
       "file": null,
-      "duration": 4238,
+      "duration": 4266,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
@@ -82,9 +111,9 @@
           },
           {
             "function": "Object.shouldFail",
-            "fileUrl": "http://localhost:4202/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
             "originalFile": "webpack:///./cypress/e2e/helpers/helper.ts",
-            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
             "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
             "line": 6,
             "column": 15,
@@ -92,9 +121,9 @@
           },
           {
             "function": "Context.eval",
-            "fileUrl": "http://localhost:4202/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
             "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
-            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "/build/cypress/e2e/stuff/test1.spec.ts",
             "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
             "line": 21,
             "column": 4,
@@ -108,7 +137,7 @@
           "line": 6,
           "column": 16,
           "originalFile": "cypress/e2e/helpers/helper.ts",
-          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
           "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
           "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
           "language": "ts"
@@ -117,5 +146,21 @@
     }
   ],
   "passes": [
+    {
+      "title": "should show next when button clicked",
+      "context": "test1",
+      "file": null,
+      "duration": 547,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "should have the correct title",
+      "context": "test1",
+      "file": null,
+      "duration": 112,
+      "currentRetry": 0,
+      "err": {}
+    }
   ]
 }

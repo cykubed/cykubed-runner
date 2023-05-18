@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import time
 
 from wcmatch import glob
@@ -64,7 +65,21 @@ def create_node_environment():
                cmd=True, cwd=settings.BUILD_DIR)
     else:
         logger.info("Building new node cache using npm")
-        runcmd('npm ci', cmd=True, cwd=settings.BUILD_DIR)
+        # build inside the actual directory not the symlink, as npm unilaterally deletes it!
+        # see https://github.com/npm/cli/issues/3669
+        toremove = []
+        for f in ['.npmrc', 'package.json', 'package-lock.json']:
+            srcfile = os.path.join(settings.BUILD_DIR, f)
+            if os.path.exists(srcfile):
+                destfile = os.path.join(settings.NODE_CACHE_DIR, f)
+                shutil.copy(srcfile, destfile)
+                toremove.append(destfile)
+        runcmd('npm ci', cmd=True, cwd=settings.NODE_CACHE_DIR)
+
+        # and remove them
+        for f in toremove:
+            os.remove(f)
+
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 

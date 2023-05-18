@@ -57,7 +57,7 @@ def test_parse_fail_inside_helper(mocker, fixturedir):
     mocker.patch('settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'fail-inside-helper'))
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'cypress/e2e/stuff/test1.spec.ts')
-    assert len(result.tests) == 1
-    test = result.tests[0]
+    assert len(result.tests) == 4
+    test = result.tests[2]
     assert test.error.code_frame.line == 6
     assert test.error.test_line == 21

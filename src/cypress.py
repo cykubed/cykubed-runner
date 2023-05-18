@@ -69,7 +69,7 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
                 # get line number of test
                 testline = 0
                 for parsed in err['parsedStack']:
-                    if parsed.get('relativeFile') == spec_file:
+                    if 'relativeFile' in parsed and parsed['relativeFile'].endswith(spec_file):
                         testline = parsed['line']
                         break
 
@@ -195,6 +195,7 @@ class CypressSpecRunner(object):
 
         # parse and upload the results
         result = parse_results(self.started, self.file)
+
         upload_results(self.file, result, self.httpclient)
         completions_remaining = spec_completed(self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
@@ -208,6 +209,7 @@ class CypressSpecRunner(object):
         args = self.get_args()
         fullcmd = ' '.join(args)
         logger.debug(f'Calling cypress with args: "{fullcmd}"')
+
         try:
             result = subprocess.run(args,
                                     timeout=self.testrun.project.spec_deadline or None,
