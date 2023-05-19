@@ -2,7 +2,6 @@ import os
 import shlex
 import subprocess
 import traceback
-from datetime import datetime
 
 import loguru
 from httpx import Client
@@ -13,6 +12,7 @@ from common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
 from common.schemas import NewTestRun, AgentEvent, AppLogMessage
+from common.utils import utcnow
 from settings import settings
 
 
@@ -113,7 +113,7 @@ class TestRunLogger:
             event = schemas.AgentLogMessage(type=AgentEventType.log,
                                             testrun_id=self.testrun_id,
                                             msg=AppLogMessage(
-                                                ts=datetime.now(),
+                                                ts=utcnow(),
                                                 level=level,
                                                 msg=msg,
                                                 step=self.step,
