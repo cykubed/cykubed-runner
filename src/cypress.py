@@ -5,20 +5,20 @@ import shutil
 import signal
 import subprocess
 import sys
-import threading
 from time import time
 
 from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
-from common.enums import TestResultStatus, TestRunStatus, AgentEventType
+from common.enums import TestResultStatus, TestRunStatus
 from common.exceptions import RunFailedException
-from common.redisutils import sync_redis, get_specfile_log_key
+from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun, AgentEvent
+    AgentSpecStarted, NewTestRun, AgentRunComplete
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
+from src.app import app
 from utils import set_status, get_testrun, logger, runcmd, send_agent_event
 
 
@@ -107,41 +107,6 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
     return result
 
 
-class RedisLogPipe(threading.Thread):
-    def __init__(self, trid: int, file: str):
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self.trid = trid
-        self.fdRead, self.fdWrite = os.pipe()
-        self.pipeReader = os.fdopen(self.fdRead)
-        self.start()
-        self.redis = sync_redis()
-        self.key = get_specfile_log_key(trid, file)
-        self.redis.delete(self.key)
-        self.redis.expire(self.key, 60)
-        self.lines = 0
-
-    def fileno(self):
-        """Return the write file descriptor of the pipe
-        """
-        return self.fdWrite
-
-    def run(self):
-        """Run the thread, logging everything.
-        """
-        for line in iter(self.pipeReader.readline, ''):
-            self.redis.rpush(self.key, line)
-            logger.debug(f'Cypress: {line}')
-            self.lines += 1
-
-        self.pipeReader.close()
-
-    def close(self):
-        """Close the write end of the pipe.
-        """
-        os.close(self.fdWrite)
-
-
 class CypressSpecRunner(object):
     def __init__(self, server: ServerThread, testrun: NewTestRun, httpclient: Client, file: str):
         self.server = server
@@ -153,12 +118,6 @@ class CypressSpecRunner(object):
         if os.path.exists(self.results_dir):
             shutil.rmtree(self.results_dir)
         os.makedirs(self.results_dir)
-        if self.testrun.project.cypress_debug_enabled:
-            self.logpipe = RedisLogPipe(self.testrun.id, self.file)
-            self.stdout = self.logpipe
-        else:
-            self.logpipe = None
-            self.stdout = subprocess.DEVNULL
         self.started = None
 
     def get_args(self):
@@ -181,8 +140,6 @@ class CypressSpecRunner(object):
 
         if self.testrun.project.cypress_retries:
             env['CYPRESS_RETRIES'] = str(self.testrun.project.cypress_retries)
-        if self.testrun.project.cypress_debug_enabled:
-            env['DEBUG'] = 'cypress:*'
         return env
 
     def run(self):
@@ -200,10 +157,7 @@ class CypressSpecRunner(object):
         completions_remaining = spec_completed(self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
-            # no more completions - we're done
-            logger.info(f'Run completed')
-            send_agent_event(AgentEvent(type=AgentEventType.run_completed,
-                                        testrun_id=self.testrun.id))
+            app.run_complete = True
 
     def create_cypress_process(self):
         args = self.get_args()
@@ -308,11 +262,16 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
 
 
 def runner_stopped(trid: int, duration: int):
-    sync_redis().incrby(f'testrun:{trid}:run_duration', duration)
 
+    if not app.is_spot:
+        sync_redis().incrby(f'testrun:{trid}:normal_run_duration', duration)
+    else:
+        sync_redis().incrby(f'testrun:{trid}:spot_run_duration', duration)
 
-def get_total_run_duration(trid: int) -> int:
-    return sync_redis().get(f'testrun:{trid}:run_duration')
+    # no more completions - we're done
+    if app.run_complete:
+        logger.info(f'Run completed')
+        send_agent_event(AgentRunComplete(testrun_id=trid))
 
 
 def spec_completed(trid: int) -> int:
