@@ -27,6 +27,11 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
     runner_stopped(20, 120)
+
+    # check duration
+    dur = redis.get('testrun:20:runner:duration:normal')
+    assert dur == '120'
+
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     spec_result = SpecResult(
         tests=[TestResult(title="my title",

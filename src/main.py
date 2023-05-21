@@ -9,6 +9,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 import builder
 import cypress
+from app import app
 from common.cloudlogging import configure_stackdriver_logging
 from common.enums import AgentEventType
 from common.exceptions import BuildFailedException, RunFailedException
@@ -53,6 +54,7 @@ def main():
     client = None
     tstart = time.time()
     trid = args.testrun_id
+
     try:
         transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
         client = httpx.Client(transport=transport,

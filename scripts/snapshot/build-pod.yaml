@@ -32,13 +32,15 @@ metadata:
 spec:
   serviceAccountName: "cykubed"
   restartPolicy: Never
-  volumes:
-    - name: build-volume
-      persistentVolumeClaim:
-        claimName: build-pvc
-    - name: node-volume
-      persistentVolumeClaim:
-        claimName: node-pvc
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+#  volumes:
+#    - name: build-volume
+#      persistentVolumeClaim:
+#        claimName: build-pvc
+#    - name: node-volume
+#      persistentVolumeClaim:
+#        claimName: node-pvc
   securityContext:
     runAsNonRoot: true
     fsGroup: 10000
@@ -46,16 +48,29 @@ spec:
     runAsGroup: 10000
   containers:
     - name: shell
-      image: europe-docker.pkg.dev/cykubeapp/cykubed/runner-node16.x:1.3.0
-      volumeMounts:
-      - mountPath: "/build"
-        name: build-volume
-      - mountPath: "/node"
-        name: node-volume
+      image: europe-docker.pkg.dev/cykubeapp/cykubed/runner-node16.x:latest
+#      volumeMounts:
+#      - mountPath: "/build"
+#        name: build-volume
+#      - mountPath: "/node"
+#        name: node-volume
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
           cpu: "1"
           memory: 2Gi
+      volumeMounts:
+        - name: podinfo
+          mountPath: /etc/podinfo
+  volumes:
+    - name: podinfo
+      downwardAPI:
+        items:
+          - path: "labels"
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: "annotations"
+            fieldRef:
+              fieldPath: metadata.annotations
 
 

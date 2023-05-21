@@ -19,7 +19,7 @@ from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
 from src.app import app
-from utils import set_status, get_testrun, logger, runcmd, send_agent_event
+from utils import set_status, get_testrun, logger, runcmd, send_agent_event, increase_duration
 
 
 def spec_terminated(trid: int, spec: str):
@@ -263,10 +263,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
 
 def runner_stopped(trid: int, duration: int):
 
-    if not app.is_spot:
-        sync_redis().incrby(f'testrun:{trid}:normal_run_duration', duration)
-    else:
-        sync_redis().incrby(f'testrun:{trid}:spot_run_duration', duration)
+    increase_duration(trid, 'runner', duration)
 
     # no more completions - we're done
     if app.run_complete:

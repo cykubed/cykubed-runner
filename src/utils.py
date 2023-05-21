@@ -7,6 +7,7 @@ import loguru
 from httpx import Client
 from loguru import logger
 
+from app import app
 from common import schemas
 from common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from common.exceptions import BuildFailedException
@@ -143,4 +144,12 @@ class TestRunLogger:
         self.log(str(msg) + '\n' + traceback.format_exc() + '\n', LogLevel.error)
 
 
+def increase_duration(testrun_id, cmd: str, duration: int):
+    if not app.is_spot:
+        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:normal', duration)
+    else:
+        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:spot', duration)
+
+
 logger = TestRunLogger()
+

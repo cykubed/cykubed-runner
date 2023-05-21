@@ -7,12 +7,14 @@ import time
 
 from wcmatch import glob
 
+from app import app
 from common.enums import AgentEventType, TestRunStatus
 from common.exceptions import BuildFailedException
+from common.redisutils import sync_redis
 from common.schemas import NewTestRun, \
     AgentEvent, AgentCloneCompletedEvent
 from settings import settings
-from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger
+from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger, increase_duration
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -154,33 +156,39 @@ def build(trid: int):
     Build the distribution
     """
     tstart = time.time()
+    try:
+        testrun = get_testrun(trid)
+        if not testrun:
+            raise BuildFailedException("No such testrun")
 
-    testrun = get_testrun(trid)
-    if not testrun:
-        raise BuildFailedException("No such testrun")
+        logger.init(testrun.id, source="builder")
 
-    logger.init(testrun.id, source="builder")
+        logger.info(f'Build distribution for test run {testrun.local_id}')
 
-    logger.info(f'Build distribution for test run {testrun.local_id}')
+        cached_node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
+        dist_node_modules = os.path.join(settings.BUILD_DIR, 'node_modules')
+        if os.path.exists(cached_node_modules):
+            logger.info('Using cached node environment')
+            os.symlink(cached_node_modules, dist_node_modules)
+        else:
+            # no cache - create empty node_modules dir and symlink
+            os.mkdir(cached_node_modules)
+            os.symlink(cached_node_modules, dist_node_modules)
+            create_node_environment()
 
-    cached_node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
-    dist_node_modules = os.path.join(settings.BUILD_DIR, 'node_modules')
-    if os.path.exists(cached_node_modules):
-        logger.info('Using cached node environment')
-        os.symlink(cached_node_modules, dist_node_modules)
-    else:
-        # no cache - create empty node_modules dir and symlink
-        os.mkdir(cached_node_modules)
-        os.symlink(cached_node_modules, dist_node_modules)
-        create_node_environment()
+        # build the app
+        build_app(testrun)
 
-    # build the app
-    build_app(testrun)
+        # set the duration
+        increase_duration(testrun.id, 'build', int(time.time() - tstart))
 
-    # tell the agent so it can inform the main server and then start the runner job
-    send_agent_event(AgentEvent(type=AgentEventType.build_completed,
-                                testrun_id=testrun.id,
-                                duration=time.time() - tstart))
+        # tell the agent so it can inform the main server and then start the runner job
+        send_agent_event(AgentEvent(type=AgentEventType.build_completed,
+                                    testrun_id=testrun.id,
+                                    duration=time.time() - tstart))
+    except Exception as ex:
+        increase_duration(testrun.id, 'build', int(time.time() - tstart))
+        raise ex
 
 
 def build_app(testrun: NewTestRun):
