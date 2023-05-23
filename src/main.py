@@ -84,11 +84,11 @@ def main():
         # tell the agent
         send_agent_event(AgentEvent(type=AgentEventType.run_completed,
                                     testrun_id=trid))
-        time.sleep(3600)
+        # time.sleep(3600)
         sys.exit(0)
     except Exception as ex:
         logger.exception(f'Build failed: {ex}')
-        time.sleep(3600)
+        # time.sleep(3600)
         sys.exit(1)
     finally:
         if client:

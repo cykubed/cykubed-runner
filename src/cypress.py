@@ -18,7 +18,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, A
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from src.app import app
+from app import app
 from utils import set_status, get_testrun, logger, runcmd, send_agent_event, increase_duration
 
 
