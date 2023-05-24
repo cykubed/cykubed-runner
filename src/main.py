@@ -14,7 +14,7 @@ from common.cloudlogging import configure_stackdriver_logging
 from common.enums import AgentEventType
 from common.exceptions import BuildFailedException, RunFailedException
 from common.redisutils import sync_redis
-from common.schemas import BuildFailureReport, AgentEvent
+from common.schemas import TestRunFailureReport, AgentEvent, AgentTestRunFailedEvent
 from settings import settings
 from utils import send_agent_event, logger
 
@@ -26,7 +26,7 @@ def handle_sigterm_builder(signum, frame):
     sys.exit(1)
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser('CykubeRunner')
     parser.add_argument('command', choices=['dummy', 'clone', 'build', 'run'], help='Command')
     parser.add_argument('testrun_id', type=int, help='Test run ID')
@@ -54,13 +54,9 @@ def main():
     client = None
     tstart = time.time()
     trid = args.testrun_id
+    exit_code = 0
 
     try:
-        transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
-        client = httpx.Client(transport=transport,
-                              base_url=settings.MAIN_API_URL + f'/agent/testrun/{trid}',
-                              headers={'Authorization': f'Bearer {settings.API_TOKEN}'})
-
         cmd = args.command
         configure_stackdriver_logging(f'cykube-{cmd}')
         if cmd == 'clone':
@@ -68,33 +64,28 @@ def main():
         elif cmd == 'build':
             builder.build(trid)
         else:
-            cypress.run(trid, client)
-    except RunFailedException as ex:
-        logger.error(str(ex))
-        sys.exit(1)
+            cypress.run(trid)
 
     except BuildFailedException as ex:
         logger.error(f'Build failed: {ex}')
         duration = time.time() - tstart
-        r = client.post('/build-failed', json=BuildFailureReport(msg=ex.msg,
-                                                                 status_code=ex.status_code,
-                                                                 duration=duration).dict())
-        if r.status_code != 200:
-            logger.error("Failed to contact cykubed servers to update status")
         # tell the agent
-        send_agent_event(AgentEvent(type=AgentEventType.run_completed,
-                                    testrun_id=trid))
-        # time.sleep(3600)
-        sys.exit(0)
+        send_agent_event(AgentTestRunFailedEvent(testrun_id=trid, report=TestRunFailureReport(msg=ex.msg,
+                                                                                              stage=ex.stage,
+                                                                                              status_code=ex.status_code,
+                                                                                              duration=duration)))
+        if settings.KEEPALIVE_ON_FAILURE:
+            time.sleep(3600)
     except Exception as ex:
         logger.exception(f'Build failed: {ex}')
-        # time.sleep(3600)
-        sys.exit(1)
+        if settings.KEEPALIVE_ON_FAILURE:
+            time.sleep(3600)
+        exit_code = 1
     finally:
         if client:
             client.close()
+    return exit_code
 
 
 if __name__ == '__main__':
-    main()
-    sys.exit(0)
+    sys.exit(main())

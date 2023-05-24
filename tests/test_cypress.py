@@ -9,7 +9,8 @@ from httpx import Response
 from pytz import utc
 from redis import Redis
 
-from common.enums import TestResultStatus
+import cypress
+from common.enums import TestResultStatus, AgentEventType
 from common.schemas import NewTestRun, SpecResult, TestResult
 from cypress import run_tests, runner_stopped
 from settings import settings
@@ -20,10 +21,11 @@ from settings import settings
 def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                  fixturedir):
     redis.sadd(f'testrun:{testrun.id}:specs', 'cypress/e2e/nonsense/test4.spec.ts')
+    redis.set(f'testrun:{testrun.id}:to-complete', 1)
 
     img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
-    spec_started_mock = respx_mock.post('/spec-started')
-    spec_completed_mock = respx_mock.post('/spec-completed')
+    spec_started_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-started')
+    spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
     runner_stopped(20, 120)
@@ -44,10 +46,10 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                           finished_at=started_at + datetime.timedelta(minutes=3)
                           )])
     parse_results_mock = mocker.patch('cypress.parse_results', return_value=spec_result)
-    upload_mock = respx_mock.post('/artifact/upload').mock(
-        return_value=Response(200, text='https://dummy-upload.cykubed.com/artifacts/blah.png'))
-    httpclient = httpx.Client(base_url='https://api.cykubed.com/agent/testrun/20')
+    upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/artifact/upload').mock(
+        return_value=Response(200, text='https://api.cykubed.com/artifacts/blah.png'))
     server_thread_mock = mocker.Mock()
+    start_server_mock = mocker.patch('cypress.start_server', return_valu=server_thread_mock)
 
     def create_mock_output() -> bool:
         with open(f'{settings.get_results_dir()}/out.json', 'w') as f:
@@ -57,7 +59,13 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     subprocess_mock = mocker.patch('cypress.CypressSpecRunner.create_cypress_process',
                                    side_effect=create_mock_output)
 
-    run_tests(server_thread_mock, testrun, httpclient)
+    # we'll need dummy node_modules and cypress_cache directories to pass the checks
+    os.mkdir(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'))
+    os.mkdir(os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache'))
+
+    cypress.run(testrun.id)
+
+    start_server_mock.assert_called_once()
 
     assert spec_started_mock.call_count == 1
 
@@ -79,8 +87,8 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                     "duration": 12,
                     "error": None,
                     "failure_screenshots": [
-                        "https://dummy-upload.cykubed.com/artifacts/blah.png",
-                        "https://dummy-upload.cykubed.com/artifacts/blah.png"
+                        "https://api.cykubed.com/artifacts/blah.png",
+                        "https://api.cykubed.com/artifacts/blah.png"
                     ],
                     "finished_at": "2022-04-03T14:14:00+00:00",
                     "retry": 1,
@@ -92,3 +100,11 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
             "video": None
         }
     }
+
+    msgs = [json.loads(m) for m in redis.lrange('messages', 0, -1)]
+    non_log = [m for m in msgs if m['type'] != 'log']
+    assert len(non_log) == 1
+    assert non_log[0]['type'] == AgentEventType.run_completed
+
+    assert redis.get(f'testrun:{testrun.id}:to-complete') == '0'
+    assert redis.scard(f'testrun:{testrun.id}:specs') == 0

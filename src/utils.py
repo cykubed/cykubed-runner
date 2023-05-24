@@ -81,7 +81,6 @@ def get_testrun(id: int) -> NewTestRun | None:
 
 def send_agent_event(event: AgentEvent):
     sync_redis().rpush('messages', event.json())
-    sync_redis().publish('msgavail', '1')
 
 
 class TestRunLogger:

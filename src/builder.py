@@ -129,7 +129,7 @@ def clone(trid: int):
     tstart = time.time()
     testrun = get_testrun(trid)
     if not testrun:
-        raise BuildFailedException("No such testrun")
+        raise BuildFailedException("cloning", "No such testrun")
 
     logger.init(testrun.id, source="builder")
 

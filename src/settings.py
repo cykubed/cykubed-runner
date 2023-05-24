@@ -13,6 +13,8 @@ class RunnerSettings(BaseSettings):
     SERVER_START_TIMEOUT: int = 60
     CYPRESS_RUN_TIMEOUT: int = 10*60
 
+    KEEPALIVE_ON_FAILURE = False
+
     ENCODING = 'utf8'
 
     TEST = False
@@ -20,7 +22,7 @@ class RunnerSettings(BaseSettings):
     MAX_HTTP_RETRIES = 10
     MAX_HTTP_BACKOFF = 60
 
-    MAIN_API_URL: str = 'https://app.cykube.net/api'
+    MAIN_API_URL: str = 'https://api.cykubed.com'
 
     SENTRY_DSN: str = None
 

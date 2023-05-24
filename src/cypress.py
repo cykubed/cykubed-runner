@@ -7,6 +7,7 @@ import subprocess
 import sys
 from time import time
 
+import httpx
 from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
@@ -184,14 +185,13 @@ class CypressSpecRunner(object):
 def upload(client, sshot_file, mime_type='image/png') -> str:
     logger.info(f'Uploading file {sshot_file} to server')
     resp = client.post('/artifact/upload',
-                        files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
+                       files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
     if resp.status_code != 200:
         raise RunFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
     return resp.text
 
 
 def upload_results(spec: str, result: SpecResult, httpclient: Client):
-
     for test in result.tests:
         if test.failure_screenshots:
             for i, sshot in enumerate(test.failure_screenshots):
@@ -201,10 +201,10 @@ def upload_results(spec: str, result: SpecResult, httpclient: Client):
         result.video = upload(result.video, 'video/mp4')
 
     r = httpclient.post('/spec-completed',
-                              content=AgentSpecCompleted(
-                                  result=result,
-                                  file=spec,
-                                  finished=utcnow()).json())
+                        content=AgentSpecCompleted(
+                            result=result,
+                            file=spec,
+                            finished=utcnow()).json())
     if r.status_code != 200:
         raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
@@ -217,52 +217,54 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-def run_tests(server: ServerThread, testrun: NewTestRun, httpclient: Client):
+def run_tests(server: ServerThread, testrun: NewTestRun):
+    transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
+    with httpx.Client(transport=transport,
+                      base_url=settings.MAIN_API_URL + f'/agent/testrun/{testrun.id}',
+                      headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as httpclient:
 
-    while True:
+        while True:
 
-        hostname = get_hostname()
+            hostname = get_hostname()
 
-        redis = sync_redis()
-        spec = redis.spop(f'testrun:{testrun.id}:specs')
-        if not spec:
-            # we're done
-            logger.debug("No more tests - exiting")
-            return
+            redis = sync_redis()
+            spec = redis.spop(f'testrun:{testrun.id}:specs')
+            if not spec:
+                # we're done
+                logger.debug("No more tests - exiting")
+                return
 
-        r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
-                                                                      started=utcnow(),
-                                                                      pod_name=hostname).json())
-        if r.status_code != 200:
-            raise RunFailedException(f'Failed to update main server that spec has started: {r.status_code}: {r.text}')
+            r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
+                                                                          started=utcnow(),
+                                                                          pod_name=hostname).json())
+            if r.status_code != 200:
+                raise RunFailedException(
+                    f'Failed to update main server that spec has started: {r.status_code}: {r.text}')
 
-        def handle_sigterm_runner(signum, frame):
-            """
-            We can tell the agent that they should reassign the spec
-            """
-            spec_terminated(testrun.id, spec)
-            logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-            sys.exit(1)
+            def handle_sigterm_runner(signum, frame):
+                """
+                We can tell the agent that they should reassign the spec
+                """
+                spec_terminated(testrun.id, spec)
+                logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+                sys.exit(1)
 
-        if settings.K8:
-            signal.signal(signal.SIGTERM, handle_sigterm_runner)
-            signal.signal(signal.SIGINT, handle_sigterm_runner)
+            if settings.K8:
+                signal.signal(signal.SIGTERM, handle_sigterm_runner)
+                signal.signal(signal.SIGINT, handle_sigterm_runner)
 
-        # run cypress for this spec
-        try:
-            CypressSpecRunner(server, testrun, httpclient, spec).run()
-        except Exception as ex:
-            # something went wrong - push the spec back onto the stack
-            logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
-            redis.sadd(f'testrun:{testrun.id}:specs', spec)
-            # sleep(3600)
-            raise ex
-
-        # sleep(3600)
+            # run cypress for this spec
+            try:
+                CypressSpecRunner(server, testrun, httpclient, spec).run()
+            except Exception as ex:
+                # something went wrong - push the spec back onto the stack
+                logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
+                redis.sadd(f'testrun:{testrun.id}:specs', spec)
+                # sleep(3600)
+                raise ex
 
 
 def runner_stopped(trid: int, duration: int):
-
     increase_duration(trid, 'runner', duration)
 
     # no more completions - we're done
@@ -278,7 +280,7 @@ def spec_completed(trid: int) -> int:
     return sync_redis().decr(f'testrun:{trid}:to-complete')
 
 
-def run(testrun_id: int, httpclient: Client):
+def run(testrun_id: int):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
 
     if settings.K8:
@@ -312,17 +314,9 @@ def run(testrun_id: int, httpclient: Client):
         try:
             # now fetch specs until we're done or the build is cancelled
             logger.debug(f"Server running on port {server.port}")
-            run_tests(server, testrun, httpclient)
+            run_tests(server, testrun)
         finally:
             # kill the server
             server.stop()
-    except RunFailedException:
-        logger.exception("Cypress run failed")
-        set_status(httpclient, TestRunStatus.failed)
-        # sleep(3600)
-        sys.exit(1)
     finally:
         runner_stopped(testrun_id, int(time() - start_time))
-
-
-
