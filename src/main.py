@@ -2,19 +2,16 @@ import argparse
 import sys
 import time
 
-import httpx
 import sentry_sdk
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 import builder
 import cypress
-from app import app
 from common.cloudlogging import configure_stackdriver_logging
-from common.enums import AgentEventType
-from common.exceptions import BuildFailedException, RunFailedException
+from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
-from common.schemas import TestRunFailureReport, AgentEvent, AgentTestRunFailedEvent
+from common.schemas import TestRunErrorReport, AgentTestRunErrorEvent
 from settings import settings
 from utils import send_agent_event, logger
 
@@ -70,10 +67,11 @@ def main() -> int:
         logger.error(f'Build failed: {ex}')
         duration = time.time() - tstart
         # tell the agent
-        send_agent_event(AgentTestRunFailedEvent(testrun_id=trid, report=TestRunFailureReport(msg=ex.msg,
-                                                                                              stage=ex.stage,
-                                                                                              status_code=ex.status_code,
-                                                                                              duration=duration)))
+        send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
+                                                report=TestRunErrorReport(msg=ex.msg,
+                                                                          stage=ex.stage,
+                                                                          status_code=ex.status_code,
+                                                                          duration=duration)))
         if settings.KEEPALIVE_ON_FAILURE:
             time.sleep(3600)
     except Exception as ex:
