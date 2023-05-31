@@ -146,15 +146,26 @@ class CypressSpecRunner(object):
     def run(self):
         self.started = utcnow()
         logger.debug(f'Run Cypress for {self.file}')
-        self.create_cypress_process()
+        try:
+            self.create_cypress_process()
+            if not os.path.exists(self.results_file):
+                raise RunFailedException(f'Missing results file')
 
-        if not os.path.exists(self.results_file):
-            raise RunFailedException(f'Missing results file')
+            # parse and upload the results
+            result = parse_results(self.started, self.file)
 
-        # parse and upload the results
-        result = parse_results(self.started, self.file)
+            upload_results(self.file, result, self.httpclient)
+        except subprocess.TimeoutExpired:
+            logger.info(f'Exceeded deadline for spec {self.file}')
 
-        upload_results(self.file, result, self.httpclient)
+            r = self.httpclient.post('/spec-completed',
+                                content=AgentSpecCompleted(
+                                    result=SpecResult(timeout=True, tests=[]),
+                                    file=self.file,
+                                    finished=utcnow()).json())
+            if r.status_code != 200:
+                raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
+
         completions_remaining = spec_completed(self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
@@ -165,18 +176,14 @@ class CypressSpecRunner(object):
         fullcmd = ' '.join(args)
         logger.debug(f'Calling cypress with args: "{fullcmd}"')
 
-        try:
-            result = subprocess.run(args,
-                                    timeout=self.testrun.project.spec_deadline or None,
-                                    capture_output=True,
-                                    text=True,
-                                    env=self.get_env(),
-                                    cwd=settings.dist_dir)
-            logger.debug(f'Cypress stdout: \n{result.stdout}')
-            logger.debug(f'Cypress stderr: \n{result.stderr}')
-        except subprocess.TimeoutExpired as ex:
-            logger.debug(f'Spec activity deadline exceeded for {self.file}')
-            raise ex
+        result = subprocess.run(args,
+                                timeout=self.testrun.project.spec_deadline or None,
+                                capture_output=True,
+                                text=True,
+                                env=self.get_env(),
+                                cwd=settings.dist_dir)
+        logger.debug(f'Cypress stdout: \n{result.stdout}')
+        logger.debug(f'Cypress stderr: \n{result.stderr}')
 
 
 @retry(retry=retry_if_not_exception_type(RunFailedException),

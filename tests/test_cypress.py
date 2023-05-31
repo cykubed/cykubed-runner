@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 
-import httpx
 import pytest
 from freezegun import freeze_time
 from httpx import Response
@@ -12,7 +11,7 @@ from redis import Redis
 import cypress
 from common.enums import TestResultStatus, AgentEventType
 from common.schemas import NewTestRun, SpecResult, TestResult
-from cypress import run_tests, runner_stopped
+from cypress import runner_stopped
 from settings import settings
 
 
@@ -97,6 +96,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                     "title": "my title"
                 }
             ],
+            "timeout": False,
             "video": None
         }
     }
