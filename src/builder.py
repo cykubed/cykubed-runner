@@ -2,17 +2,14 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import time
 
 from wcmatch import glob
 
-from app import app
-from common.enums import AgentEventType, TestRunStatus
+from common.enums import TestRunStatus, AgentEventType
 from common.exceptions import BuildFailedException
-from common.redisutils import sync_redis
 from common.schemas import NewTestRun, \
-    AgentEvent, AgentCloneCompletedEvent
+    AgentBuildCompletedEvent, AgentCloneCompletedEvent
 from settings import settings
 from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger, increase_duration
 
@@ -22,19 +19,15 @@ EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
 
 def clone_repos(testrun: NewTestRun):
     logger.info("Cloning repository")
-    builddir = settings.BUILD_DIR
-    # make sure it's empty (i.e delete the lost+found dir)
-    runcmd(f'rm -fr {settings.BUILD_DIR}/*')
-    runcmd(f'git config --global --add safe.directory {builddir}', log=True)
     if not testrun.sha:
         runcmd(f'git clone --single-branch --depth 1 --recursive --branch {testrun.branch} {testrun.url} .',
-               log=True, cwd=builddir)
+               log=True, cwd=settings.src_dir)
     else:
-        runcmd(f'git clone --recursive {testrun.url} .', log=True, cwd=builddir)
+        runcmd(f'git clone --recursive {testrun.url} .', log=True, cwd=settings.src_dir)
 
     logger.info(f"Cloned branch {testrun.branch}")
     if testrun.sha:
-        runcmd(f'git reset --hard {testrun.sha}', cwd=builddir)
+        runcmd(f'git reset --hard {testrun.sha}', cwd=settings.src_dir)
 
 
 def get_lock_hash(build_dir):
@@ -61,32 +54,20 @@ def create_node_environment():
 
     t = time.time()
 
-    if os.path.exists(os.path.join(settings.BUILD_DIR, 'yarn.lock')):
+    if os.path.exists(os.path.join(settings.src_dir, 'yarn.lock')):
         logger.info("Building new node cache using yarn")
         runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}',
-               cmd=True, cwd=settings.BUILD_DIR)
+               cmd=True, cwd=settings.src_dir)
     else:
         logger.info("Building new node cache using npm")
-        # build inside the actual directory not the symlink, as npm unilaterally deletes it!
-        # see https://github.com/npm/cli/issues/3669
-        toremove = []
-        for f in ['.npmrc', 'package.json', 'package-lock.json']:
-            srcfile = os.path.join(settings.BUILD_DIR, f)
-            if os.path.exists(srcfile):
-                destfile = os.path.join(settings.NODE_CACHE_DIR, f)
-                shutil.copy(srcfile, destfile)
-                toremove.append(destfile)
-        runcmd('npm ci', cmd=True, cwd=settings.NODE_CACHE_DIR)
+        runcmd('npm ci', cmd=True, cwd=settings.src_dir)
 
-        # and remove them
-        for f in toremove:
-            os.remove(f)
 
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
 
     # pre-verify it so it's properly read-only
-    runcmd('cypress verify', cwd=settings.BUILD_DIR, cmd=True)
+    runcmd('cypress verify', cwd=settings.src_dir, cmd=True)
 
 
 def make_array(x):
@@ -156,6 +137,7 @@ def build(trid: int):
     Build the distribution
     """
     tstart = time.time()
+
     try:
         testrun = get_testrun(trid)
         if not testrun:
@@ -165,16 +147,13 @@ def build(trid: int):
 
         logger.info(f'Build distribution for test run {testrun.local_id}')
 
-        cached_node_modules = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
-        dist_node_modules = os.path.join(settings.BUILD_DIR, 'node_modules')
-        if os.path.exists(cached_node_modules):
-            logger.info('Using cached node environment')
-            os.symlink(cached_node_modules, dist_node_modules)
-        else:
-            # no cache - create empty node_modules dir and symlink
-            os.mkdir(cached_node_modules)
-            os.symlink(cached_node_modules, dist_node_modules)
+        cached_node_modules = os.path.join(settings.BUILD_DIR, 'node_modules')
+        if not os.path.exists(cached_node_modules):
+            # no cache - create node environment
             create_node_environment()
+        else:
+            logger.info('Using cached environment')
+            runcmd(f'mv {cached_node_modules} {settings.src_dir}')
 
         # build the app
         build_app(testrun)
@@ -183,22 +162,31 @@ def build(trid: int):
         increase_duration(testrun.id, 'build', int(time.time() - tstart))
 
         # tell the agent so it can inform the main server and then start the runner job
-        send_agent_event(AgentEvent(type=AgentEventType.build_completed,
-                                    testrun_id=testrun.id,
-                                    duration=time.time() - tstart))
+        send_agent_event(AgentBuildCompletedEvent(
+            testrun_id=testrun.id,
+            specs=get_specs(settings.src_dir),
+            cache_key=get_lock_hash(settings.src_dir),
+            duration=time.time() - tstart))
     except Exception as ex:
-        increase_duration(testrun.id, 'build', int(time.time() - tstart))
+        increase_duration(trid, 'build', int(time.time() - tstart))
         raise ex
+
+
+def prepare_cache():
+    runcmd(f'mv {settings.src_dir}/node_modules {settings.BUILD_DIR}')
+    runcmd(f'mv {settings.src_dir}/cypress_cache {settings.BUILD_DIR}')
+    runcmd(f'rm -fr {settings.src_dir}')
+
 
 
 def build_app(testrun: NewTestRun):
     logger.info('Building app')
 
     # build the app
-    runcmd(testrun.project.build_cmd, cmd=True, cwd=settings.BUILD_DIR)
+    runcmd(testrun.project.build_cmd, cmd=True, cwd=settings.src_dir)
 
     # check for dist and index file
-    distdir = os.path.join(settings.BUILD_DIR, 'dist')
+    distdir = os.path.join(settings.src_dir, 'dist')
 
     if not os.path.exists(distdir):
         raise BuildFailedException("No dist directory: please check your build command")

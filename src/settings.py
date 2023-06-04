@@ -30,18 +30,18 @@ class RunnerSettings(BaseSettings):
 
     SCRATCH_DIR = '/tmp/cykubed/scratch'
     BUILD_DIR = '/tmp/cykubed/build'
-    NODE_CACHE_DIR = '/tmp/cykubed/nodecache'
 
     RW_BUILD_DIR = '/tmp/cykubed/build'
 
     SERVER_PORT = 9000
 
     @property
+    def src_dir(self):
+        return os.path.join(self.BUILD_DIR, 'build')
+
+    @property
     def dist_dir(self):
         return os.path.join(self.SCRATCH_DIR, 'build')
-
-    def get_yarn_cache_dir(self):
-        return os.path.join(self.NODE_CACHE_DIR, '.yarn_cache')
 
     def get_results_dir(self):
         return os.path.join(self.SCRATCH_DIR, 'results')
@@ -58,7 +58,6 @@ class RunnerSettings(BaseSettings):
     def init_build_dirs(self):
         os.makedirs(self.dist_dir, exist_ok=True)
         os.makedirs(self.BUILD_DIR, exist_ok=True)
-        os.makedirs(self.NODE_CACHE_DIR, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)
         os.makedirs(self.get_videos_folder(), exist_ok=True)
         os.makedirs(self.get_screenshots_folder(), exist_ok=True)

@@ -25,14 +25,9 @@ def handle_sigterm_builder(signum, frame):
 
 def main() -> int:
     parser = argparse.ArgumentParser('CykubeRunner')
-    parser.add_argument('command', choices=['dummy', 'clone', 'build', 'run'], help='Command')
+    parser.add_argument('command', choices=['clone', 'build', 'prepare_cache', 'run'], help='Command')
     parser.add_argument('testrun_id', type=int, help='Test run ID')
     args = parser.parse_args()
-
-    if args.command == 'dummy':
-        with open('/build/test.txt', 'w') as f:
-            f.write('fish!')
-        return
 
     if settings.SENTRY_DSN:
         sentry_sdk.init(
@@ -48,8 +43,6 @@ def main() -> int:
 
     settings.init_build_dirs()
 
-    client = None
-    tstart = time.time()
     trid = args.testrun_id
     exit_code = 0
 
@@ -60,18 +53,18 @@ def main() -> int:
             builder.clone(trid)
         elif cmd == 'build':
             builder.build(trid)
+        elif cmd == 'prepare_cache':
+            builder.prepare_cache()
         else:
             cypress.run(trid)
 
     except BuildFailedException as ex:
         logger.error(f'Build failed: {ex}')
-        duration = time.time() - tstart
         # tell the agent
         send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
                                                 report=TestRunErrorReport(msg=ex.msg,
                                                                           stage=ex.stage,
-                                                                          status_code=ex.status_code,
-                                                                          duration=duration)))
+                                                                          error_code=ex.status_code)))
         if settings.KEEPALIVE_ON_FAILURE:
             time.sleep(3600)
     except Exception as ex:
@@ -79,9 +72,6 @@ def main() -> int:
         if settings.KEEPALIVE_ON_FAILURE:
             time.sleep(3600)
         exit_code = 1
-    finally:
-        if client:
-            client.close()
     return exit_code
 
 
