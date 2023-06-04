@@ -1,6 +1,19 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: clone-pvc
+  namespace: cykubed
+spec:
+  storageClassName: "cykubed-storageclass"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: build-pvc
   namespace: cykubed
 spec:
@@ -22,6 +35,9 @@ spec:
   nodeSelector:
     cloud.google.com/gke-spot: "true"
   volumes:
+    - name: clone-volume
+      persistentVolumeClaim:
+        claimName: clone-pvc
     - name: build-volume
       persistentVolumeClaim:
         claimName: build-pvc
@@ -52,5 +68,7 @@ spec:
           mountPath: /etc/podinfo
         - mountPath: "/build"
           name: build-volume
+        - mountPath: "/clone"
+          name: clone-volume
 
 
