@@ -61,8 +61,9 @@ spec:
       command: ["/bin/sleep", "3600"]
       resources:
         requests:
-          cpu: "1"
-          memory: 2Gi
+          cpu: "4"
+          memory: 4Gi
+          ephemeral-storage: "6Gi"
       volumeMounts:
         - name: podinfo
           mountPath: /etc/podinfo

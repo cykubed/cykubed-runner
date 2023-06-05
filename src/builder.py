@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -11,6 +10,7 @@ from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentCloneCompletedEvent
 from settings import settings
+from src.common.utils import get_lock_hash
 from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger, increase_duration
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
@@ -30,21 +30,6 @@ def clone_repos(testrun: NewTestRun):
         runcmd(f'git reset --hard {testrun.sha}', cwd=settings.src_dir)
 
 
-def get_lock_hash(build_dir):
-    m = hashlib.sha256()
-    lockfile = os.path.join(build_dir, 'package-lock.json')
-    if not os.path.exists(lockfile):
-        lockfile = os.path.join(build_dir, 'yarn.lock')
-
-    if not os.path.exists(lockfile):
-        raise BuildFailedException("No lock file")
-
-    # hash the lock
-    with open(lockfile, 'rb') as f:
-        m.update(f.read())
-    return m.hexdigest()
-
-
 def create_node_environment():
     """
     Create node environment from either Yarn or npm
@@ -61,7 +46,6 @@ def create_node_environment():
     else:
         logger.info("Building new node cache using npm")
         runcmd('npm ci', cmd=True, cwd=settings.src_dir)
-
 
     t = time.time() - t
     logger.info(f"Created node environment in {t:.1f}s")
