@@ -8,10 +8,9 @@ from wcmatch import glob
 from common.enums import TestRunStatus, AgentEventType
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, \
-    AgentBuildCompletedEvent, AgentCloneCompletedEvent
+    AgentBuildCompletedEvent, AgentEvent
 from settings import settings
-from src.common.utils import get_lock_hash
-from utils import runcmd, get_testrun, get_git_sha, send_agent_event, logger, increase_duration
+from utils import runcmd, get_testrun, send_agent_event, logger, increase_duration
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -90,32 +89,6 @@ def get_specs(wdir):
     return specs
 
 
-def clone(trid: int):
-    tstart = time.time()
-    testrun = get_testrun(trid)
-    if not testrun:
-        raise BuildFailedException("cloning", "No such testrun")
-
-    logger.init(testrun.id, source="builder")
-
-    testrun.status = TestRunStatus.building
-
-    if settings.K8:
-        clone_repos(testrun)
-
-    if not testrun.sha:
-        testrun.sha = get_git_sha(testrun)
-
-    # determine the specs
-    specs = get_specs(settings.BUILD_DIR)
-    # tell the agent
-    send_agent_event(AgentCloneCompletedEvent(type=AgentEventType.clone_completed,
-                                              cache_key=get_lock_hash(settings.BUILD_DIR),
-                                              testrun_id=testrun.id,
-                                              specs=specs,
-                                              duration=time.time() - tstart))
-
-
 def build(trid: int):
     """
     Build the distribution
@@ -124,10 +97,14 @@ def build(trid: int):
 
     try:
         testrun = get_testrun(trid)
+        testrun.status = TestRunStatus.building
+
         if not testrun:
             raise BuildFailedException("No such testrun")
 
         logger.init(testrun.id, source="builder")
+
+        clone_repos(testrun)
 
         logger.info(f'Build distribution for test run {testrun.local_id}')
 
@@ -149,18 +126,19 @@ def build(trid: int):
         send_agent_event(AgentBuildCompletedEvent(
             testrun_id=testrun.id,
             specs=get_specs(settings.src_dir),
-            cache_key=get_lock_hash(settings.src_dir),
             duration=time.time() - tstart))
     except Exception as ex:
         increase_duration(trid, 'build', int(time.time() - tstart))
         raise ex
 
 
-def prepare_cache():
+def prepare_cache(trid):
+    """
+    Move the cachable stuff into root and delete the rest
+    """
     runcmd(f'mv {settings.src_dir}/node_modules {settings.BUILD_DIR}')
-    runcmd(f'mv {settings.src_dir}/cypress_cache {settings.BUILD_DIR}')
     runcmd(f'rm -fr {settings.src_dir}')
-
+    send_agent_event(AgentEvent(testrun_id=trid, type=AgentEventType.cache_prepared))
 
 
 def build_app(testrun: NewTestRun):

@@ -24,7 +24,7 @@ def get_git_sha(testrun: NewTestRun):
 
 def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
     cmdenv = os.environ.copy()
-    cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.src_dir}/cypress_cache'
+    cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.BUILD_DIR}/cypress_cache'
     if 'path' in kwargs:
         cmdenv['PATH'] = kwargs['path']+':'+cmdenv['PATH']
     else:
