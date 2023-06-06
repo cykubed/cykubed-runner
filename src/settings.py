@@ -37,7 +37,7 @@ class RunnerSettings(BaseSettings):
 
     @property
     def src_dir(self):
-        return os.path.join(self.BUILD_DIR, 'build')
+        return os.path.join(self.BUILD_DIR, 'src')
 
     @property
     def dist_dir(self):

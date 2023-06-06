@@ -303,17 +303,13 @@ def run(testrun_id: int):
             logger.info(f"Missing test run: quitting")
             return
 
-        srcnode = os.path.join(settings.NODE_CACHE_DIR, 'node_modules')
+        srcnode = os.path.join(settings.src_dir, 'node_modules')
         if not os.path.exists(srcnode):
             raise RunFailedException("Missing node_modules")
 
-        srccypress = os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache')
+        srccypress = os.path.join(settings.BUILD_DIR, 'cypress_cache')
         if not os.path.exists(srccypress):
             raise RunFailedException("Missing cypress cache folder")
-
-        # annoyingly Cypress won't run directly on a RO filesystem (even though it runs happily on a RO folder locally)
-        # so symlink everything into the scratch folder
-        runcmd(f"ln -s {settings.BUILD_DIR}/* {settings.dist_dir}")
 
         # start the server
         server = start_server()

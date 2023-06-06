@@ -59,8 +59,8 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                    side_effect=create_mock_output)
 
     # we'll need dummy node_modules and cypress_cache directories to pass the checks
-    os.mkdir(os.path.join(settings.NODE_CACHE_DIR, 'node_modules'))
-    os.mkdir(os.path.join(settings.NODE_CACHE_DIR, 'cypress_cache'))
+    os.makedirs(os.path.join(settings.src_dir, 'node_modules'))
+    os.mkdir(os.path.join(settings.BUILD_DIR, 'cypress_cache'))
 
     cypress.run(testrun.id)
 
