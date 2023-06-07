@@ -40,7 +40,7 @@ def create_node_environment():
 
     if os.path.exists(os.path.join(settings.src_dir, 'yarn.lock')):
         logger.info("Building new node cache using yarn")
-        runcmd(f'yarn install --pure-lockfile --cache_folder={settings.get_yarn_cache_dir()}',
+        runcmd(f'yarn install --pure-lockfile --cache_folder={settings.BUILD_DIR}/.yarn-cache',
                cmd=True, cwd=settings.src_dir)
     else:
         logger.info("Building new node cache using npm")
