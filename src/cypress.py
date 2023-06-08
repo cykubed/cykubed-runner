@@ -136,6 +136,9 @@ class CypressSpecRunner(object):
 
     def get_env(self):
         env = os.environ.copy()
+        env.update(CYPRESS_CACHE_FOLDER=f'{settings.BUILD_DIR}/cypress_cache',
+                   PATH=f'node_modules/.bin:{env["PATH"]}')
+
         if self.testrun.project.cypress_retries:
             env['CYPRESS_RETRIES'] = str(self.testrun.project.cypress_retries)
         return env
