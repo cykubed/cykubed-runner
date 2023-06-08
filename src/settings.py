@@ -11,7 +11,6 @@ class RunnerSettings(BaseSettings):
     NAMESPACE = 'cykube'
 
     SERVER_START_TIMEOUT: int = 60
-    CYPRESS_RUN_TIMEOUT: int = 10*60
 
     KEEPALIVE_ON_FAILURE = False
 
@@ -31,17 +30,9 @@ class RunnerSettings(BaseSettings):
     SCRATCH_DIR = '/tmp/cykubed/scratch'
     BUILD_DIR = '/tmp/cykubed/build'
 
-    RW_BUILD_DIR = '/tmp/cykubed/build'
-
-    SERVER_PORT = 9000
-
     @property
     def src_dir(self):
         return os.path.join(self.BUILD_DIR, 'src')
-
-    @property
-    def dist_dir(self):
-        return os.path.join(self.SCRATCH_DIR, 'build')
 
     def get_results_dir(self):
         return os.path.join(self.SCRATCH_DIR, 'results')

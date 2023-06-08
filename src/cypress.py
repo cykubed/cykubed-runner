@@ -20,7 +20,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, A
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import get_testrun, logger, runcmd, send_agent_event, increase_duration
+from utils import get_testrun, logger, send_agent_event, increase_duration
 
 
 def spec_terminated(trid: int, spec: str):
@@ -136,9 +136,6 @@ class CypressSpecRunner(object):
 
     def get_env(self):
         env = os.environ.copy()
-        env.update(CYPRESS_CACHE_FOLDER=f'{settings.NODE_CACHE_DIR}/cypress_cache',
-                   PATH=f'node_modules/.bin:{env["PATH"]}')
-
         if self.testrun.project.cypress_retries:
             env['CYPRESS_RETRIES'] = str(self.testrun.project.cypress_retries)
         return env
@@ -181,7 +178,7 @@ class CypressSpecRunner(object):
                                 capture_output=True,
                                 text=True,
                                 env=self.get_env(),
-                                cwd=settings.dist_dir)
+                                cwd=settings.src_dir)
         logger.debug(f'Cypress stdout: \n{result.stdout}')
         logger.debug(f'Cypress stderr: \n{result.stderr}')
 

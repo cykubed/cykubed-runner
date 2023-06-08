@@ -138,6 +138,7 @@ def prepare_cache(trid):
     """
     runcmd(f'mv {settings.src_dir}/node_modules {settings.BUILD_DIR}')
     runcmd(f'rm -fr {settings.src_dir}')
+    logger.info("Send cache_prepared event")
     send_agent_event(AgentEvent(testrun_id=trid, type=AgentEventType.cache_prepared))
 
 

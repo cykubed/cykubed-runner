@@ -28,8 +28,6 @@ spec:
               key: redis-password
         - name: BUILD_DIR
           value: /build
-        - name: NODE_CACHE_DIR
-          value: /node
       resources:
         limits:
           cpu: '2'
