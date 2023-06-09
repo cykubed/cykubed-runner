@@ -34,6 +34,14 @@ class RunnerSettings(BaseSettings):
     def src_dir(self):
         return os.path.join(self.BUILD_DIR, 'src')
 
+    @property
+    def yarn2_global_cache(self):
+        return f'{settings.BUILD_DIR}/yarn2-cache'
+
+    @property
+    def cached_node_modules(self):
+        return f'{settings.BUILD_DIR}/node_modules'
+
     def get_results_dir(self):
         return os.path.join(self.SCRATCH_DIR, 'results')
 

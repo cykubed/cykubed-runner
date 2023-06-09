@@ -6,6 +6,9 @@ class App(object):
     def __init__(self):
         self.run_complete = False
         self.is_spot = False
+        self.is_yarn = False
+        self.is_yarn_modern = False
+        self.is_yarn_zero_install = False
 
         # detect if spot
         if os.path.exists('/etc/podinfo/annotations'):

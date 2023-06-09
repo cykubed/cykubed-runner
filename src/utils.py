@@ -22,7 +22,7 @@ def get_git_sha(testrun: NewTestRun):
                                               text=True).strip('\n')
 
 
-def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
+def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
     cmdenv = os.environ.copy()
     cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.BUILD_DIR}/cypress_cache'
     if 'path' in kwargs:
@@ -31,6 +31,9 @@ def runcmd(args: str, cmd=False, env=None, log=False, **kwargs):
         cmdenv['PATH'] = f'{settings.src_dir}/node_modules/.bin:' + os.environ['PATH']
     if env:
         cmdenv.update(env)
+
+    if node and app.is_yarn and not args.startswith('yarn '):
+        args = f'yarn run {args}'
 
     result = None
     if not cmd:
@@ -152,3 +155,6 @@ def increase_duration(testrun_id, cmd: str, duration: int):
 
 logger = TestRunLogger()
 
+
+def root_file_exists(name):
+    return os.path.exists(os.path.join(settings.src_dir, name))
