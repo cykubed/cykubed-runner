@@ -53,9 +53,9 @@ def create_node_environment():
     if root_file_exists('yarn.lock'):
         logger.info("Building new node cache using yarn")
         # check for yarn2
+        app.is_yarn = True
         yarnrc = os.path.join(settings.src_dir, '.yarnrc.yml')
         if os.path.exists(yarnrc):
-            app.is_yarn = True
             logger.info("Found a .yarnrc.yml: assume Yarn2")
             runcmd('yarn set version berry', cmd=True, cwd=settings.src_dir)
 
@@ -64,7 +64,9 @@ def create_node_environment():
                 logger.info("Found .yarn/cache: assume zero-install")
                 app.is_yarn_zero_install = True
             else:
-                logger.info("No cache found: set to use global cache")
+                logger.info("No .yarn/cache found: set to use global cache")
+                if os.path.exists(settings.yarn2_global_cache):
+                    using_cache = True
                 enable_yarn2_global_cache(yarnrc)
 
             runcmd(f'yarn install', cmd=True, cwd=settings.src_dir)

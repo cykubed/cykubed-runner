@@ -1,5 +1,4 @@
 tests/build/
-dist/
 tests/dist.tgz
 
 # Created by .ignore support plugin (hsz.mobi)
@@ -18,7 +17,7 @@ cache/
 .Python
 build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/

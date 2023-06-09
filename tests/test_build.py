@@ -7,7 +7,7 @@ from redis import Redis
 
 import builder
 from common.enums import AgentEventType
-from common.schemas import NewTestRun, AgentEvent, AgentBuildCompletedEvent
+from common.schemas import NewTestRun, AgentBuildCompletedEvent
 from settings import settings
 
 
@@ -67,6 +67,63 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
         'git clone --recursive git@github.org/dummy.git .',
         'git reset --hard deadbeef0101',
         f'mv {settings.BUILD_DIR}/node_modules {settings.src_dir}',
+        'ng build --output-path=dist'
+    ]
+    commands = [x.args[0] for x in runcmd.call_args_list]
+    assert commands == expected_commands
+
+
+def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+                               fixturedir):
+    runcmd = mocker.patch('builder.runcmd')
+    shutil.copytree(os.path.join(fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
+
+    builder.build(testrun.id)
+
+    expected_commands = [
+        'git clone --recursive git@github.org/dummy.git .',
+        'git reset --hard deadbeef0101',
+        f'yarn install --pure-lockfile --cache_folder={settings.BUILD_DIR}/.yarn-cache',
+        'cypress verify',
+        'ng build --output-path=dist'
+    ]
+    commands = [x.args[0] for x in runcmd.call_args_list]
+    print(commands)
+    assert commands == expected_commands
+
+
+def test_build_yarn2_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+                               fixturedir):
+    runcmd = mocker.patch('builder.runcmd')
+    shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
+
+    builder.build(testrun.id)
+
+    expected_commands = [
+        'git clone --recursive git@github.org/dummy.git .',
+        'git reset --hard deadbeef0101',
+        'yarn set version berry',
+        'yarn install',
+        'cypress verify',
+        'ng build --output-path=dist'
+    ]
+    commands = [x.args[0] for x in runcmd.call_args_list]
+    assert commands == expected_commands
+
+
+def test_build_yarn2_with_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+                               fixturedir):
+    runcmd = mocker.patch('builder.runcmd')
+    shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
+    os.mkdir(settings.yarn2_global_cache)
+
+    builder.build(testrun.id)
+
+    expected_commands = [
+        'git clone --recursive git@github.org/dummy.git .',
+        'git reset --hard deadbeef0101',
+        'yarn set version berry',
+        'yarn install',
         'ng build --output-path=dist'
     ]
     commands = [x.args[0] for x in runcmd.call_args_list]
