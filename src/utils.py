@@ -118,6 +118,7 @@ class TestRunLogger:
                                             msg=AppLogMessage(
                                                 ts=utcnow(),
                                                 level=level,
+                                                host=app.hostname,
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))

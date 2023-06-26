@@ -25,7 +25,7 @@ def handle_sigterm_builder(signum, frame):
 
 def main() -> int:
     parser = argparse.ArgumentParser('CykubeRunner')
-    parser.add_argument('command', choices=['clone', 'build', 'prepare_cache', 'run'], help='Command')
+    parser.add_argument('command', choices=['build', 'prepare_cache', 'run'], help='Command')
     parser.add_argument('testrun_id', type=int, help='Test run ID')
     args = parser.parse_args()
 
@@ -49,9 +49,7 @@ def main() -> int:
     try:
         cmd = args.command
         configure_stackdriver_logging(f'cykube-{cmd}')
-        if cmd == 'clone':
-            builder.clone(trid)
-        elif cmd == 'build':
+        if cmd == 'build':
             builder.build(trid)
         elif cmd == 'prepare_cache':
             builder.prepare_cache(trid)
