@@ -65,8 +65,16 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
 
             if err:
                 failures += 1
-                frame = err['codeFrame']
-
+                frame = err.get('codeFrame')
+                if not frame:
+                    fullerror = json.dumps(err)
+                    logger.warning(f"No code frame: full error: {fullerror}")
+                else:
+                    codeframe = CodeFrame(line=frame['line'],
+                                          file=frame['relativeFile'],
+                                          column=frame['column'],
+                                          language=frame['language'],
+                                          frame=frame['frame'])
                 # get line number of test
                 testline = 0
                 for parsed in err['parsedStack']:
@@ -80,11 +88,7 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
                                                    test_line=testline,
                                                    message=err['message'],
                                                    stack=err['stack'],
-                                                   code_frame=CodeFrame(line=frame['line'],
-                                                                        file=frame['relativeFile'],
-                                                                        column=frame['column'],
-                                                                        language=frame['language'],
-                                                                        frame=frame['frame']))
+                                                   code_frame=codeframe)
                 except:
                     raise RunFailedException("Failed to parse test result")
 
