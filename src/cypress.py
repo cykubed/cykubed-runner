@@ -113,6 +113,7 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
 
 
 class CypressSpecRunner(object):
+
     def __init__(self, server: ServerThread, testrun: NewTestRun, httpclient: Client, file: str):
         self.server = server
         self.testrun = testrun
