@@ -102,7 +102,7 @@ def make_array(x):
     return x
 
 
-def get_specs(wdir):
+def get_specs(wdir, filter_regex=None):
     cyjson = os.path.join(wdir, 'cypress.json')
 
     if os.path.exists(cyjson):
@@ -129,6 +129,8 @@ def get_specs(wdir):
                       flags=glob.BRACE, exclude=exclude_globs)
 
     specs = [os.path.join(folder, s) for s in specs]
+    if filter_regex:
+        specs = [s for s in specs if re.search(filter_regex, s)]
     return specs
 
 
@@ -168,7 +170,7 @@ def build(trid: int):
         # tell the agent so it can inform the main server and then start the runner job
         send_agent_event(AgentBuildCompletedEvent(
             testrun_id=testrun.id,
-            specs=get_specs(settings.src_dir),
+            specs=get_specs(settings.src_dir, testrun.project.spec_filter),
             duration=time.time() - tstart))
     except Exception as ex:
         increase_duration(trid, 'build', int(time.time() - tstart))
