@@ -171,7 +171,7 @@ class CypressSpecRunner(object):
             if r.status_code != 200:
                 raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
-        completions_remaining = spec_completed(self.testrun.id)
+        completions_remaining = spec_completed(self.file, self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
             app.run_complete = True
@@ -192,31 +192,42 @@ class CypressSpecRunner(object):
 
 
 @retry(retry=retry_if_not_exception_type(RunFailedException),
-       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES),
+       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
        wait=wait_fixed(2) + wait_random(0, 4))
-def upload(client, sshot_file, mime_type='image/png') -> str:
-    logger.info(f'Uploading file {sshot_file} to server')
-    resp = client.post('/artifact/upload',
-                       files={'file': (sshot_file, open(sshot_file, 'rb'), mime_type)})
+def upload_files(client, files) -> list[str]:
+    resp = client.post('/upload-artifacts', files=files)
     if resp.status_code != 200:
         raise RunFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
-    return resp.text
+    return resp.json()['urls']
 
 
 def upload_results(spec: str, result: SpecResult, httpclient: Client):
+    files = []
+
     for test in result.tests:
         if test.failure_screenshots:
-            for i, sshot in enumerate(test.failure_screenshots):
-                test.failure_screenshots[i] = upload(httpclient, sshot)
+            for sshot in test.failure_screenshots:
+                files.append(('files', open(sshot, 'rb')))
 
     if result.video:
-        result.video = upload(result.video, 'video/mp4')
+        files.append(('files', open(result.video, 'rb')))
+
+    if files:
+        urls = upload_files(httpclient, files)
+        for test in result.tests:
+            if test.failure_screenshots:
+                num = len(test.failure_screenshots)
+                test.failure_screenshots = urls[:num]
+                urls = urls[num:]
+        if urls:
+            result.video = urls[0]
 
     r = httpclient.post('/spec-completed',
                         content=AgentSpecCompleted(
                             result=result,
                             file=spec,
                             finished=utcnow()).json())
+
     if r.status_code != 200:
         raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
@@ -235,7 +246,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                       base_url=settings.MAIN_API_URL + f'/agent/testrun/{testrun.id}',
                       headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as httpclient:
 
-        while True:
+        while not app.is_terminating:
 
             hostname = get_hostname()
 
@@ -257,11 +268,14 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                 """
                 We can tell the agent that they should reassign the spec
                 """
-                spec_terminated(testrun.id, spec)
+                # it's possible we've actually just finished this (pretty edge case, but it has happened)
+                app.is_terminating = True
+                if not spec in app.specs_completed:
+                    spec_terminated(testrun.id, spec)
                 logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
                 sys.exit(1)
 
-            if settings.K8:
+            if settings.K8 and not settings.TEST:
                 signal.signal(signal.SIGTERM, handle_sigterm_runner)
                 signal.signal(signal.SIGINT, handle_sigterm_runner)
 
@@ -272,7 +286,8 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                 # FIXME is this too broad?
                 # something went wrong - push the spec back onto the stack
                 logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
-                redis.sadd(f'testrun:{testrun.id}:specs', spec)
+                if not spec not in app.specs_completed:
+                    redis.sadd(f'testrun:{testrun.id}:specs', spec)
                 raise ex
 
 
@@ -285,17 +300,18 @@ def runner_stopped(trid: int, duration: int):
         send_agent_event(AgentRunComplete(testrun_id=trid))
 
 
-def spec_completed(trid: int) -> int:
+def spec_completed(spec: str, trid: int) -> int:
     """
     Decrement the to-complete count and return the new value
     """
+    app.specs_completed.add(spec)
     return sync_redis().decr(f'testrun:{trid}:to-complete')
 
 
 def run(testrun_id: int):
     logger.info(f'Starting Cypress run for testrun {testrun_id}')
 
-    if settings.K8:
+    if settings.K8 and not settings.TEST:
         signal.signal(signal.SIGTERM, default_sigterm_runner)
         signal.signal(signal.SIGINT, default_sigterm_runner)
 

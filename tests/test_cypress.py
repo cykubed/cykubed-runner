@@ -19,6 +19,7 @@ from settings import settings
 @pytest.mark.respx(base_url="https://api.cykubed.com/agent/testrun/20")
 def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                  fixturedir):
+    settings.TEST = True
     redis.sadd(f'testrun:{testrun.id}:specs', 'cypress/e2e/nonsense/test4.spec.ts')
     redis.set(f'testrun:{testrun.id}:to-complete', 1)
 
@@ -45,8 +46,10 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                           finished_at=started_at + datetime.timedelta(minutes=3)
                           )])
     parse_results_mock = mocker.patch('cypress.parse_results', return_value=spec_result)
-    upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/artifact/upload').mock(
-        return_value=Response(200, text='https://api.cykubed.com/artifacts/blah.png'))
+    upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
+        return_value=Response(200, json={'urls': ['https://api.cykubed.com/artifacts/foo.png',
+                                                  'https://api.cykubed.com/artifacts/bah.png',
+                                                  ]}))
     server_thread_mock = mocker.Mock()
     start_server_mock = mocker.patch('cypress.start_server', return_valu=server_thread_mock)
 
@@ -71,7 +74,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     subprocess_mock.assert_called_once()
 
     parse_results_mock.assert_called_once()
-    assert upload_mock.call_count == 2
+    assert upload_mock.call_count == 1
 
     assert spec_completed_mock.call_count == 1
     payload = json.loads(spec_completed_mock.calls[0].request.content.decode())
@@ -86,8 +89,8 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                     "duration": 12,
                     "error": None,
                     "failure_screenshots": [
-                        "https://api.cykubed.com/artifacts/blah.png",
-                        "https://api.cykubed.com/artifacts/blah.png"
+                        "https://api.cykubed.com/artifacts/foo.png",
+                        "https://api.cykubed.com/artifacts/bah.png"
                     ],
                     "finished_at": "2022-04-03T14:14:00+00:00",
                     "retry": 1,
