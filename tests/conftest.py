@@ -7,7 +7,7 @@ from loguru import logger
 from redis import Redis
 
 from common.enums import PlatformEnum
-from common.schemas import OrganisationSummary, Project, NewTestRun
+from common.schemas import Project, NewTestRun
 from settings import settings
 
 
@@ -38,7 +38,6 @@ def fixturedir():
 
 @pytest.fixture()
 def project() -> Project:
-    org = OrganisationSummary(id=5, name='MyOrg')
     return Project(id=10,
                    name='project',
                    default_branch='master',
@@ -47,7 +46,8 @@ def project() -> Project:
                    platform=PlatformEnum.GITHUB,
                    url='git@github.org/dummy.git',
                    start_runners_first=False,
-                   organisation=org)
+                   build_cmd='ng build --output-path=dist',
+                   organisation_id=5)
 
 
 @pytest.fixture()
