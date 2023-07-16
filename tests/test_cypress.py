@@ -11,7 +11,6 @@ from redis import Redis
 import cypress
 from common.enums import TestResultStatus, AgentEventType
 from common.schemas import NewTestRun, SpecResult, TestResult
-from cypress import runner_stopped
 from settings import settings
 
 
@@ -28,7 +27,6 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
-    runner_stopped(20, 120)
 
     # check duration
     dur = redis.get('testrun:20:runner:duration:normal')

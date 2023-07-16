@@ -19,7 +19,7 @@ from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, A
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import get_testrun, logger, send_agent_event, increase_duration
+from utils import get_testrun, logger, send_agent_event
 
 
 def spec_terminated(trid: int, spec: str):
@@ -173,7 +173,7 @@ class CypressSpecRunner(object):
         completions_remaining = spec_completed(self.file, self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
-            app.run_complete = True
+            notify_run_complete(self.httpclient, self.testrun.id)
 
     def create_cypress_process(self):
         args = self.get_args()
@@ -239,6 +239,15 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
+@retry(retry=retry_if_not_exception_type(RunFailedException),
+       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
+       wait=wait_fixed(2) + wait_random(0, 4))
+def notify_run_complete(httpclient: Client, trid: int):
+    resp = httpclient.post(f'/agent/testrun/{trid}/run-completed')
+    if resp.status_code != 200:
+        raise RunFailedException(f'Failed to notify cymain of completed run: {resp.status_code}')
+
+
 def run_tests(server: ServerThread, testrun: NewTestRun):
     transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
     with httpx.Client(transport=transport,
@@ -291,8 +300,6 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
 
 
 def runner_stopped(trid: int, duration: int):
-    increase_duration(trid, 'runner', duration)
-
     # no more completions - we're done
     if app.run_complete:
         logger.info(f'Run completed')

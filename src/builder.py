@@ -12,7 +12,7 @@ from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentEvent
 from settings import settings
-from utils import runcmd, get_testrun, send_agent_event, logger, increase_duration, root_file_exists
+from utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -162,9 +162,6 @@ def build(trid: int):
 
     # build the app
     build_app(testrun)
-
-    # set the duration
-    increase_duration(testrun.id, 'build', int(time.time() - tstart))
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentBuildCompletedEvent(
