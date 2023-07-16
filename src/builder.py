@@ -140,41 +140,38 @@ def build(trid: int):
     """
     tstart = time.time()
 
-    try:
-        testrun = get_testrun(trid)
-        testrun.status = TestRunStatus.building
+    testrun = get_testrun(trid)
+    testrun.status = TestRunStatus.building
 
-        if not testrun:
-            raise BuildFailedException("No such testrun")
+    if not testrun:
+        raise BuildFailedException("No such testrun")
 
-        logger.init(testrun.id, source="builder")
+    logger.init(testrun.id, source="builder")
 
-        clone_repos(testrun)
+    clone_repos(testrun)
 
-        if root_file_exists('yarn.lock'):
-            app.is_yarn = True
-            if root_file_exists('.yarnc.yml'):
-                app.is_yarn_modern = True
+    if root_file_exists('yarn.lock'):
+        app.is_yarn = True
+        if root_file_exists('.yarnc.yml'):
+            app.is_yarn_modern = True
 
-        logger.info(f'Build distribution for test run {testrun.local_id}')
+    logger.info(f'Build distribution for test run {testrun.local_id}')
 
-        # create node environment
-        create_node_environment()
+    # create node environment
+    create_node_environment()
 
-        # build the app
-        build_app(testrun)
+    # build the app
+    build_app(testrun)
 
-        # set the duration
-        increase_duration(testrun.id, 'build', int(time.time() - tstart))
+    # set the duration
+    increase_duration(testrun.id, 'build', int(time.time() - tstart))
 
-        # tell the agent so it can inform the main server and then start the runner job
-        send_agent_event(AgentBuildCompletedEvent(
-            testrun_id=testrun.id,
-            specs=get_specs(settings.src_dir, testrun.project.spec_filter),
-            duration=time.time() - tstart))
-    except Exception as ex:
-        increase_duration(trid, 'build', int(time.time() - tstart))
-        raise ex
+    # tell the agent so it can inform the main server and then start the runner job
+    send_agent_event(AgentBuildCompletedEvent(
+        testrun_id=testrun.id,
+        specs=get_specs(settings.src_dir, testrun.project.spec_filter),
+        duration=time.time() - tstart))
+
 
 
 def prepare_cache(trid):

@@ -5,7 +5,6 @@ import shutil
 import signal
 import subprocess
 import sys
-from time import time
 
 import httpx
 from httpx import Client
@@ -315,32 +314,28 @@ def run(testrun_id: int):
         signal.signal(signal.SIGTERM, default_sigterm_runner)
         signal.signal(signal.SIGINT, default_sigterm_runner)
 
-    start_time = time()
+    logger.init(testrun_id, source="runner")
+
+    testrun = get_testrun(testrun_id)
+    if not testrun:
+        logger.info(f"Missing test run: quitting")
+        return
+
+    srcnode = os.path.join(settings.src_dir, 'node_modules')
+    if not os.path.exists(srcnode):
+        raise RunFailedException("Missing node_modules")
+
+    srccypress = os.path.join(settings.BUILD_DIR, 'cypress_cache')
+    if not os.path.exists(srccypress):
+        raise RunFailedException("Missing cypress cache folder")
+
+    # start the server
+    server = start_server()
+
     try:
-        logger.init(testrun_id, source="runner")
-
-        testrun = get_testrun(testrun_id)
-        if not testrun:
-            logger.info(f"Missing test run: quitting")
-            return
-
-        srcnode = os.path.join(settings.src_dir, 'node_modules')
-        if not os.path.exists(srcnode):
-            raise RunFailedException("Missing node_modules")
-
-        srccypress = os.path.join(settings.BUILD_DIR, 'cypress_cache')
-        if not os.path.exists(srccypress):
-            raise RunFailedException("Missing cypress cache folder")
-
-        # start the server
-        server = start_server()
-
-        try:
-            # now fetch specs until we're done or the build is cancelled
-            logger.debug(f"Server running on port {server.port}")
-            run_tests(server, testrun)
-        finally:
-            # kill the server
-            server.stop()
+        # now fetch specs until we're done or the build is cancelled
+        logger.debug(f"Server running on port {server.port}")
+        run_tests(server, testrun)
     finally:
-        runner_stopped(testrun_id, int(time() - start_time))
+        # kill the server
+        server.stop()
