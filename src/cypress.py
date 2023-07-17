@@ -15,11 +15,11 @@ from common.enums import TestResultStatus
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun, AgentRunComplete
+    AgentSpecStarted, NewTestRun
 from common.utils import utcnow, get_hostname
 from server import start_server, ServerThread
 from settings import settings
-from utils import get_testrun, logger, send_agent_event
+from utils import get_testrun, logger
 
 
 def spec_terminated(trid: int, spec: str):
@@ -239,13 +239,16 @@ def default_sigterm_runner(signum, frame):
     sys.exit(1)
 
 
-@retry(retry=retry_if_not_exception_type(RunFailedException),
+@retry(retry=retry_if_not_exception_type((RunFailedException, AssertionError)),
        stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
        wait=wait_fixed(2) + wait_random(0, 4))
 def notify_run_complete(httpclient: Client, trid: int):
-    resp = httpclient.post(f'/agent/testrun/{trid}/run-completed')
-    if resp.status_code != 200:
-        raise RunFailedException(f'Failed to notify cymain of completed run: {resp.status_code}')
+    try:
+        resp = httpclient.post(f'/run-completed')
+        if resp.status_code != 200:
+            raise RunFailedException(f'Failed to notify cymain of completed run: {resp.status_code}')
+    except Exception as ex:
+        raise ex
 
 
 def run_tests(server: ServerThread, testrun: NewTestRun):
@@ -297,13 +300,6 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                 if not spec not in app.specs_completed:
                     redis.sadd(f'testrun:{testrun.id}:specs', spec)
                 raise ex
-
-
-def runner_stopped(trid: int, duration: int):
-    # no more completions - we're done
-    if app.run_complete:
-        logger.info(f'Run completed')
-        send_agent_event(AgentRunComplete(testrun_id=trid))
 
 
 def spec_completed(spec: str, trid: int) -> int:

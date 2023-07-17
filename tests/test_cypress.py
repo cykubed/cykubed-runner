@@ -9,7 +9,7 @@ from pytz import utc
 from redis import Redis
 
 import cypress
-from common.enums import TestResultStatus, AgentEventType
+from common.enums import TestResultStatus
 from common.schemas import NewTestRun, SpecResult, TestResult
 from settings import settings
 
@@ -25,12 +25,10 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
     spec_started_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-started')
     spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
+    run_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/run-completed')\
+        .mock(return_value=Response(200))
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
-
-    # check duration
-    dur = redis.get('testrun:20:runner:duration:normal')
-    assert dur == '120'
 
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     spec_result = SpecResult(
@@ -66,6 +64,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     cypress.run(testrun.id)
 
     start_server_mock.assert_called_once()
+    assert run_completed_mock.called
 
     assert spec_started_mock.call_count == 1
 
@@ -104,8 +103,6 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
 
     msgs = [json.loads(m) for m in redis.lrange('messages', 0, -1)]
     non_log = [m for m in msgs if m['type'] != 'log']
-    assert len(non_log) == 1
-    assert non_log[0]['type'] == AgentEventType.run_completed
 
     assert redis.get(f'testrun:{testrun.id}:to-complete') == '0'
     assert redis.scard(f'testrun:{testrun.id}:specs') == 0
