@@ -93,12 +93,6 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
 
             tests.append(result)
 
-    # add skipped
-    for skipped in rawjson.get('pending', []):
-        tests.append(TestResult(status=TestResultStatus.skipped,
-                                context=skipped['context'],
-                                title=skipped['title']))
-
     result = SpecResult(tests=tests)
     # we should have a single video - but only add it if we have failures
     if failures:
