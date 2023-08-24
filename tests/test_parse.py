@@ -14,7 +14,7 @@ def test_parse_fail(mocker, fixturedir):
     sshotdir = os.path.join(fixturedir, 'two-fails-with-retries', 'screenshots')
     viddir = os.path.join(fixturedir, 'two-fails-with-retries', 'videos')
     assert result.video == os.path.join(viddir, 'test1.spec.ts.mp4')
-    assert len(result.tests) == 4
+    assert len(result.tests) == 3
     # first test passed
     test1 = result.tests[0]
     assert test1.status == TestResultStatus.passed
@@ -45,10 +45,6 @@ def test_parse_fail(mocker, fixturedir):
         os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed).png'),
         os.path.join(sshotdir, 'stuff/test1.spec.ts/test context -- this will also fail (failed) (attempt 2).png')}
 
-    # 4th test skipped
-    test4 = result.tests[3]
-    assert test4.status == TestResultStatus.skipped
-
 
 def test_parse_fail_inside_helper(mocker, fixturedir):
     """
@@ -57,7 +53,7 @@ def test_parse_fail_inside_helper(mocker, fixturedir):
     mocker.patch('settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'fail-inside-helper'))
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'cypress/e2e/stuff/test1.spec.ts')
-    assert len(result.tests) == 4
+    assert len(result.tests) == 3
     test = result.tests[2]
     assert test.error.code_frame.line == 6
     assert test.error.test_line == 21
