@@ -2,7 +2,7 @@ timeout: 900s
 steps:
   - name: 'gcr.io/cloud-builders/git'
     script: |
-      git config -f .gitmodules submodule.src/common.url https://source.developers.google.com/p/cykubeapp/r/github_cykubed_cykube-common
+      git config -f .gitmodules submodule.src/common.url https://source.developers.google.com/p/cykubeapp/r/github_cykubed_cykubed-common
       git submodule init
       git submodule update
 
