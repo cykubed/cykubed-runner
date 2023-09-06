@@ -83,7 +83,7 @@ def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Re
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',
         'git reset --hard deadbeef0101',
-        f'yarn install --pure-lockfile --cache_folder={settings.BUILD_DIR}/.yarn-cache',
+        f'yarn install --pure-lockfile --cache-folder={settings.BUILD_DIR}/.yarn-cache',
         'cypress verify',
         'ng build --output-path=dist'
     ]

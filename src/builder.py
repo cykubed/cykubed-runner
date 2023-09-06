@@ -77,7 +77,7 @@ def create_node_environment():
                 using_cache = True
                 runcmd(f'mv {settings.cached_node_modules} {settings.src_dir}')
             else:
-                runcmd(f'yarn install --pure-lockfile --cache_folder={settings.BUILD_DIR}/.yarn-cache',
+                runcmd(f'yarn install --pure-lockfile --cache-folder={settings.BUILD_DIR}/.yarn-cache',
                        cmd=True, cwd=settings.src_dir)
     else:
         if os.path.exists(settings.cached_node_modules):
