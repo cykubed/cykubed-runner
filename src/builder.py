@@ -170,7 +170,6 @@ def build(trid: int):
         duration=time.time() - tstart))
 
 
-
 def prepare_cache(trid):
     """
     Move the cachable stuff into root and delete the rest
