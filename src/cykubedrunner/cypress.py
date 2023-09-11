@@ -7,16 +7,16 @@ import subprocess
 import sys
 
 import httpx
-from httpx import Client
-from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
-
-from app import app
 from common.enums import TestResultStatus
 from common.exceptions import RunFailedException
 from common.redisutils import sync_redis
 from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
     AgentSpecStarted, NewTestRun
 from common.utils import utcnow, get_hostname
+from httpx import Client
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
+
+from app import app
 from server import start_server, ServerThread
 from settings import settings
 from utils import get_testrun, logger
@@ -288,7 +288,6 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
             try:
                 CypressSpecRunner(server, testrun, httpclient, spec).run()
             except Exception as ex:
-                # FIXME is this too broad?
                 # something went wrong - push the spec back onto the stack
                 logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
                 if not spec not in app.specs_completed:

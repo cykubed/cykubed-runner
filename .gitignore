@@ -1,5 +1,6 @@
 tests/build/
 tests/dist.tgz
+src/cykubedrunner/common
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template

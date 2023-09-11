@@ -1,3 +1,3 @@
-[submodule "src/common"]
-	path = src/common
-	url = git@github.com:cykube/cykube-common.git
+[submodule "cykubedcommon"]
+	path = src/cykubedcommon/common
+	url = git@github.com:cykubed/cykubed-common.git

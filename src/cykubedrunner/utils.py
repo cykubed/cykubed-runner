@@ -4,16 +4,16 @@ import subprocess
 import traceback
 
 import loguru
-from httpx import Client
-from loguru import logger
-
-from app import app
 from common import schemas
 from common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from common.exceptions import BuildFailedException
 from common.redisutils import sync_redis
 from common.schemas import NewTestRun, AgentEvent, AppLogMessage
 from common.utils import utcnow
+from httpx import Client
+from loguru import logger
+
+from app import app
 from settings import settings
 
 

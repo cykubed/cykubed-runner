@@ -4,13 +4,13 @@ import re
 import time
 
 import yaml
-from wcmatch import glob
-
-from app import app
 from common.enums import TestRunStatus, AgentEventType
 from common.exceptions import BuildFailedException
 from common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentEvent
+from wcmatch import glob
+
+from app import app
 from settings import settings
 from utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists
 

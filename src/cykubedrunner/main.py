@@ -3,15 +3,15 @@ import sys
 import time
 
 import sentry_sdk
+from common.cloudlogging import configure_stackdriver_logging
+from common.exceptions import BuildFailedException
+from common.redisutils import sync_redis
+from common.schemas import TestRunErrorReport, AgentTestRunErrorEvent
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 import builder
 import cypress
-from common.cloudlogging import configure_stackdriver_logging
-from common.exceptions import BuildFailedException
-from common.redisutils import sync_redis
-from common.schemas import TestRunErrorReport, AgentTestRunErrorEvent
 from settings import settings
 from utils import send_agent_event, logger
 

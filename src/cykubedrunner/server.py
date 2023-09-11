@@ -9,11 +9,11 @@ from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
 
 import httpx
+from common.exceptions import BuildFailedException
+from common.utils import utcnow
 from httpx import RemoteProtocolError
 from loguru import logger
 
-from common.exceptions import BuildFailedException
-from common.utils import utcnow
 from settings import settings
 
 
