@@ -1,12 +1,12 @@
 import os
 from datetime import datetime
 
-from common.enums import TestResultStatus
-from cypress import parse_results
+from cykubedrunner.common.enums import TestResultStatus
+from cykubedrunner.cypress import parse_results
 
 
 def test_parse_fail(mocker, fixturedir):
-    mocker.patch('settings.RunnerSettings.get_results_dir',
+    mocker.patch('cykubedrunner.settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'two-fails-with-retries'))
 
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), "cypress/e2e/stuff/test1.spec.ts")
@@ -50,7 +50,7 @@ def test_parse_fail_inside_helper(mocker, fixturedir):
     """
     If the test fails inside a helper function then record the original line number
     """
-    mocker.patch('settings.RunnerSettings.get_results_dir',
+    mocker.patch('cykubedrunner.settings.RunnerSettings.get_results_dir',
                  return_value=os.path.join(fixturedir, 'fail-inside-helper'))
     result = parse_results(datetime(2022, 11, 23, 13, 0, 0), 'cypress/e2e/stuff/test1.spec.ts')
     assert len(result.tests) == 3

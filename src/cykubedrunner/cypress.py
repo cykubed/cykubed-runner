@@ -5,21 +5,20 @@ import shutil
 import signal
 import subprocess
 import sys
-
-import httpx
-from common.enums import TestResultStatus
-from common.exceptions import RunFailedException
-from common.redisutils import sync_redis
-from common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun
-from common.utils import utcnow, get_hostname
 from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
+import httpx
 
-from app import app
-from server import start_server, ServerThread
-from settings import settings
-from utils import get_testrun, logger
+from cykubedrunner.common.enums import TestResultStatus
+from cykubedrunner.common.exceptions import RunFailedException
+from cykubedrunner.common.redisutils import sync_redis
+from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
+    AgentSpecStarted, NewTestRun
+from cykubedrunner.common.utils import utcnow, get_hostname
+from cykubedrunner.app import app
+from cykubedrunner.server import start_server, ServerThread
+from cykubedrunner.settings import settings
+from cykubedrunner.utils import get_testrun, logger
 
 
 def spec_terminated(trid: int, spec: str):

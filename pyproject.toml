@@ -10,11 +10,15 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 packages = [
-  { include = "src/**/*.py", from = "."}
+  { include = "**/*.py", from = "src"}
 ]
 
 [tool.poetry.scripts]
 cykubedrunner = "cykubedrunner.main:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+python_files = "tests/test_*.py"
 
 [tool.poetry.dependencies]
 python = "^3.10"

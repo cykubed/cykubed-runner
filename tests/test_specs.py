@@ -1,6 +1,6 @@
 import os
 
-from builder import get_specs
+from cykubedrunner.builder import get_specs
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 

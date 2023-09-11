@@ -6,9 +6,9 @@ import pytest
 from loguru import logger
 from redis import Redis
 
-from common.enums import PlatformEnum
-from common.schemas import Project, NewTestRun
-from settings import settings
+from cykubedrunner.common.enums import PlatformEnum
+from cykubedrunner.common.schemas import Project, NewTestRun
+from cykubedrunner.settings import settings
 
 
 @pytest.fixture()
@@ -16,7 +16,7 @@ def redis(mocker):
     os.environ['REDIS_DB'] = '1'
     r = Redis(db=1, decode_responses=True)
     r.flushdb()
-    mocker.patch('common.redisutils.get_redis', return_value=r)
+    mocker.patch('cykubedrunner.common.redisutils.get_redis', return_value=r)
     return r
 
 

@@ -5,10 +5,10 @@ import shutil
 from freezegun import freeze_time
 from redis import Redis
 
-import builder
-from common.enums import AgentEventType
-from common.schemas import NewTestRun, AgentBuildCompletedEvent
-from settings import settings
+from cykubedrunner import builder
+from cykubedrunner.common.enums import AgentEventType
+from cykubedrunner.common.schemas import NewTestRun, AgentBuildCompletedEvent
+from cykubedrunner.settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
@@ -16,7 +16,7 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
                              fixturedir):
     msgs = redis.lrange('messages', 0, -1)
     assert not msgs
-    runcmd = mocker.patch('builder.runcmd')
+    runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
@@ -56,7 +56,7 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
 @freeze_time('2022-04-03 14:10:00Z')
 def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                fixturedir):
-    runcmd = mocker.patch('builder.runcmd')
+    runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
     # fake an empty node_modules
     os.makedirs(os.path.join(settings.BUILD_DIR, 'node_modules'))
@@ -75,7 +75,7 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
 
 def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                fixturedir):
-    runcmd = mocker.patch('builder.runcmd')
+    runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
@@ -94,7 +94,7 @@ def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Re
 
 def test_build_yarn2_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                fixturedir):
-    runcmd = mocker.patch('builder.runcmd')
+    runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
@@ -113,7 +113,7 @@ def test_build_yarn2_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Re
 
 def test_build_yarn2_with_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
                                fixturedir):
-    runcmd = mocker.patch('builder.runcmd')
+    runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
     os.mkdir(settings.yarn2_global_cache)
 
