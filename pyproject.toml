@@ -16,10 +16,6 @@ packages = [
 [tool.poetry.scripts]
 cykubedrunner = "cykubedrunner.main:main"
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-python_files = "tests/test_*.py"
-
 [tool.poetry.dependencies]
 python = "^3.10"
 pydantic = "^1.10.4"
@@ -52,7 +48,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "--ignore=src/common"
+addopts = "--ignore=src/cykubedrunner/common"
 testpaths = "tests"
 python_classes = "!Test"
 
