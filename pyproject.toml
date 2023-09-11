@@ -10,8 +10,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 packages = [
-  { include = "src/**/*.py"}
+  { include = "src/**/*.py", from = "."}
 ]
+
+[tool.poetry.scripts]
+cykubedrunner = "cykubedrunner.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
