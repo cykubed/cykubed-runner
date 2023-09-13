@@ -1,0 +1,26 @@
+timeout: 900s
+availableSecrets:
+  secretManager:
+  - versionName: projects/cykubed/secrets/SLACK_HOOK_URL/versions/1
+    env: 'SLACK_HOOK_URL'
+steps:
+
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/base/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base:2.0.0",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-14/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14:2.0.0",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-14-chrome/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-chrome:2.0.0",
+          "--cache=true"]
+
+- name: gcr.io/cloud-builders/curl
+  id: Notify Slack
+  secretEnv: ['SLACK_HOOK_URL']
+  script: |
+    echo "{\"text\":\"Cykubed runner *base* images created with tag 2.0.0\"}" > payload.json
+    /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL

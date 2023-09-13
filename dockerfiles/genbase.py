@@ -1,3 +1,4 @@
+import json
 import os.path
 import shutil
 from string import Template
@@ -6,7 +7,7 @@ import click
 NODE_MAJOR_VERSIONS = ['14'] #, '16', '18', '20']
 BROWSERS = ['chrome'] #, 'edge', 'firefox']
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
-DOCKERFILE_DIR = os.path.join(os.path.dirname(__file__), 'generated')
+GENERATION_DIR = os.path.join(os.path.dirname(__file__), 'generated')
 BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/Dockerfile')
 
 
@@ -16,7 +17,7 @@ def render(template_name, context, outputdir=None) -> str:
         s = Template(f.read()).substitute(context)
 
     if outputdir:
-        ddir = os.path.join(DOCKERFILE_DIR, outputdir)
+        ddir = os.path.join(GENERATION_DIR, outputdir)
         os.makedirs(ddir, exist_ok=True)
         with open(os.path.join(ddir, 'Dockerfile'), 'w') as f:
             f.write(s)
@@ -41,12 +42,12 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
     generate the images (using Kaniko)
     """
     if clear:
-        shutil.rmtree(DOCKERFILE_DIR)
+        shutil.rmtree(GENERATION_DIR)
 
     all_base_paths = []
 
-    os.makedirs(DOCKERFILE_DIR+'/base/base', exist_ok=True)
-    shutil.copy(BASE_DOCKERFILE, DOCKERFILE_DIR+'/base/base')
+    os.makedirs(GENERATION_DIR + '/base/base', exist_ok=True)
+    shutil.copy(BASE_DOCKERFILE, GENERATION_DIR + '/base/base')
     base_context = dict(firefox_version=firefoxvs, region=region, tag=tag)
     steps = [render('base/cloudbuild-step', dict(path='base', destpath='base', **base_context))]
 
@@ -55,7 +56,7 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
         context = dict(node_major=node_major, **base_context)
         render('base/node', context, f'base/{node_base}')
 
-        all_base_paths.append(node_base)
+        all_base_paths.append(f'base-{node_base}:{tag}')
 
         steps.append(render('base/cloudbuild-step',
                             dict(path=node_base, destpath=f'base-{node_base}', **context)))
@@ -67,7 +68,7 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
             path = f'{node_base}-{browser}'
             render('base/base-browser', dict(browsers=browser_snippet, **context),
                    f'base/{path}')
-            all_base_paths.append(path)
+            all_base_paths.append(f'base-{path}:{tag}')
 
             steps.append(render('base/cloudbuild-step',
                                 dict(path=path, destpath=f'base-{path}', **context)))
@@ -77,29 +78,20 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
             context['browsers'] = "\n".join(all_browsers)
             path=f'{node_base}-chrome-edge-firefox'
             render('base/base-browser', context, f'base/{path}')
-            all_base_paths.append(f'{path}:{tag}')
+            all_base_paths.append(f'base-{path}:{tag}')
             steps.append(render('cloudbuild-step', dict(path=path,
                                                         destpath=f'base-{path}', **context)))
 
     # generate cloudbuild.yaml for the base image build
     cb = render('base/cloudbuild', dict(steps="\n".join(steps),
                                    **base_context))
-    with open(os.path.join(DOCKERFILE_DIR, 'base', 'cloudbuild.yaml'), 'w') as f:
+    with open(os.path.join(GENERATION_DIR, 'base', 'cloudbuild.yaml'), 'w') as f:
         f.write(cb)
 
-    # now generate full images for all variants
-    steps = []
-    for base_path in all_base_paths:
-        render('full/dockerfile',
-                    dict(path=base_path, **base_context), f'full/{base_path}')
-        steps.append(render('full/cloudbuild-step', dict(path=base_path, destpath=base_path,
-                                                         **base_context)))
+    with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'w') as f:
+        f.write(json.dumps(all_base_paths, indent=4))
 
-    # generate cloudbuild.yaml for the base image build
-    cb = render('full/cloudbuild', dict(steps="\n".join(steps),
-                                   **base_context))
-    with open(os.path.join(DOCKERFILE_DIR, 'full', 'cloudbuild.yaml'), 'w') as f:
-        f.write(cb)
+
 
 if __name__ == '__main__':
     generate()

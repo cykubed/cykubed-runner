@@ -1,4 +1,4 @@
-FROM ${region}-docker.pkg.dev/cykubed/public/${base_image}
+FROM us-docker.pkg.dev/cykubed/public/base-node-14:2.0.0
 
 USER cykubed
 
