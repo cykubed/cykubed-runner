@@ -42,7 +42,7 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
     generate the images (using Kaniko)
     """
     if clear:
-        shutil.rmtree(GENERATION_DIR)
+        shutil.rmtree(GENERATION_DIR+'/base')
 
     all_base_paths = []
 
@@ -56,7 +56,7 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
         context = dict(node_major=node_major, **base_context)
         render('base/node', context, f'base/{node_base}')
 
-        all_base_paths.append(f'base-{node_base}:{tag}')
+        all_base_paths.append({'image': f'base-{node_base}', 'tag': tag, 'node_major': node_major, 'browsers': []})
 
         steps.append(render('base/cloudbuild-step',
                             dict(path=node_base, destpath=f'base-{node_base}', **context)))
@@ -68,7 +68,9 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
             path = f'{node_base}-{browser}'
             render('base/base-browser', dict(browsers=browser_snippet, **context),
                    f'base/{path}')
-            all_base_paths.append(f'base-{path}:{tag}')
+
+            all_base_paths.append({'image': f'base-{node_base}', 'tag': tag, 'node_major': node_major,
+                                   'browsers': [browser]})
 
             steps.append(render('base/cloudbuild-step',
                                 dict(path=path, destpath=f'base-{path}', **context)))
@@ -76,9 +78,12 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
         # all browsers
         if len(all_browsers) > 1:
             context['browsers'] = "\n".join(all_browsers)
-            path=f'{node_base}-chrome-edge-firefox'
+            path = f'{node_base}-chrome-edge-firefox'
             render('base/base-browser', context, f'base/{path}')
-            all_base_paths.append(f'base-{path}:{tag}')
+
+            all_base_paths.append({'image': f'base-{node_base}', 'tag': tag, 'node_major': node_major,
+                                   'browsers': BROWSERS})
+
             steps.append(render('base/cloudbuild-step', dict(path=path,
                                                         destpath=f'base-{path}', **context)))
 

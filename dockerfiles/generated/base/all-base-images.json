@@ -1,22 +1,162 @@
 [
-    "base-node-14:2.0.1",
-    "base-node-14-chrome:2.0.1",
-    "base-node-14-edge:2.0.1",
-    "base-node-14-firefox:2.0.1",
-    "base-node-14-chrome-edge-firefox:2.0.1",
-    "base-node-16:2.0.1",
-    "base-node-16-chrome:2.0.1",
-    "base-node-16-edge:2.0.1",
-    "base-node-16-firefox:2.0.1",
-    "base-node-16-chrome-edge-firefox:2.0.1",
-    "base-node-18:2.0.1",
-    "base-node-18-chrome:2.0.1",
-    "base-node-18-edge:2.0.1",
-    "base-node-18-firefox:2.0.1",
-    "base-node-18-chrome-edge-firefox:2.0.1",
-    "base-node-20:2.0.1",
-    "base-node-20-chrome:2.0.1",
-    "base-node-20-edge:2.0.1",
-    "base-node-20-firefox:2.0.1",
-    "base-node-20-chrome-edge-firefox:2.0.1"
+    {
+        "image": "base-node-14",
+        "tag": "2.0.1",
+        "node_major": "14",
+        "browsers": []
+    },
+    {
+        "image": "base-node-14",
+        "tag": "2.0.1",
+        "node_major": "14",
+        "browsers": [
+            "chrome"
+        ]
+    },
+    {
+        "image": "base-node-14",
+        "tag": "2.0.1",
+        "node_major": "14",
+        "browsers": [
+            "edge"
+        ]
+    },
+    {
+        "image": "base-node-14",
+        "tag": "2.0.1",
+        "node_major": "14",
+        "browsers": [
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-14",
+        "tag": "2.0.1",
+        "node_major": "14",
+        "browsers": [
+            "chrome",
+            "edge",
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-16",
+        "tag": "2.0.1",
+        "node_major": "16",
+        "browsers": []
+    },
+    {
+        "image": "base-node-16",
+        "tag": "2.0.1",
+        "node_major": "16",
+        "browsers": [
+            "chrome"
+        ]
+    },
+    {
+        "image": "base-node-16",
+        "tag": "2.0.1",
+        "node_major": "16",
+        "browsers": [
+            "edge"
+        ]
+    },
+    {
+        "image": "base-node-16",
+        "tag": "2.0.1",
+        "node_major": "16",
+        "browsers": [
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-16",
+        "tag": "2.0.1",
+        "node_major": "16",
+        "browsers": [
+            "chrome",
+            "edge",
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-18",
+        "tag": "2.0.1",
+        "node_major": "18",
+        "browsers": []
+    },
+    {
+        "image": "base-node-18",
+        "tag": "2.0.1",
+        "node_major": "18",
+        "browsers": [
+            "chrome"
+        ]
+    },
+    {
+        "image": "base-node-18",
+        "tag": "2.0.1",
+        "node_major": "18",
+        "browsers": [
+            "edge"
+        ]
+    },
+    {
+        "image": "base-node-18",
+        "tag": "2.0.1",
+        "node_major": "18",
+        "browsers": [
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-18",
+        "tag": "2.0.1",
+        "node_major": "18",
+        "browsers": [
+            "chrome",
+            "edge",
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-20",
+        "tag": "2.0.1",
+        "node_major": "20",
+        "browsers": []
+    },
+    {
+        "image": "base-node-20",
+        "tag": "2.0.1",
+        "node_major": "20",
+        "browsers": [
+            "chrome"
+        ]
+    },
+    {
+        "image": "base-node-20",
+        "tag": "2.0.1",
+        "node_major": "20",
+        "browsers": [
+            "edge"
+        ]
+    },
+    {
+        "image": "base-node-20",
+        "tag": "2.0.1",
+        "node_major": "20",
+        "browsers": [
+            "firefox"
+        ]
+    },
+    {
+        "image": "base-node-20",
+        "tag": "2.0.1",
+        "node_major": "20",
+        "browsers": [
+            "chrome",
+            "edge",
+            "firefox"
+        ]
+    }
 ]

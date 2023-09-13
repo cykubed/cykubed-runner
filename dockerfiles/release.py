@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 import click
 
@@ -8,8 +9,11 @@ from dockerfiles.genbase import GENERATION_DIR, render
 
 @click.command(help='Generate a new release of the runner')
 @click.option('--region', default='us', help='GCP region')
-@click.option('-t', '--tag', required=True, help='Tag')
-def generate(region: str, tag: str):
+def generate(region: str):
+    # get the tag
+    p = subprocess.run("git describe --tags --abbrev=0", capture_output=True, text=True, shell=True)
+    tag = p.stdout.strip()
+
     with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'r') as f:
         all_base_images = json.loads(f.read())
 

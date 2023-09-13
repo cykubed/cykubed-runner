@@ -1,4 +1,4 @@
-timeout: 900s
+timeout: 3600s
 availableSecrets:
   secretManager:
   - versionName: projects/cykubed/secrets/SLACK_HOOK_URL/versions/1
