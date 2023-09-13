@@ -50,3 +50,5 @@ RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /buil
 
 ENV PATH="/home/cykubed/.local/bin:$PATH"
 ENV TZ=UTC
+
+RUN pip install poetry==1.3.1
