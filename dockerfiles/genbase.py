@@ -4,8 +4,8 @@ import shutil
 from string import Template
 import click
 
-NODE_MAJOR_VERSIONS = ['14'] #, '16', '18', '20']
-BROWSERS = ['chrome'] #, 'edge', 'firefox']
+NODE_MAJOR_VERSIONS = ['14', '16', '18', '20']
+BROWSERS = ['chrome', 'edge', 'firefox']
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 GENERATION_DIR = os.path.join(os.path.dirname(__file__), 'generated')
 BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/Dockerfile')
@@ -79,7 +79,7 @@ def generate(region: str, tag: str, clear: bool, firefoxvs: str):
             path=f'{node_base}-chrome-edge-firefox'
             render('base/base-browser', context, f'base/{path}')
             all_base_paths.append(f'base-{path}:{tag}')
-            steps.append(render('cloudbuild-step', dict(path=path,
+            steps.append(render('base/cloudbuild-step', dict(path=path,
                                                         destpath=f'base-{path}', **context)))
 
     # generate cloudbuild.yaml for the base image build

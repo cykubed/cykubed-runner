@@ -7,20 +7,92 @@ steps:
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/base/base/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base:2.0.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/base:2.0.1",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/base/node-14/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14:2.0.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14:2.0.1",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/base/node-14-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-chrome:2.0.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-chrome:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-14-edge/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-edge:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-14-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-14-chrome-edge-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-14-chrome-edge-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-16/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-16:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-16-chrome/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-16-chrome:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-16-edge/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-16-edge:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-16-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-16-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-16-chrome-edge-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-16-chrome-edge-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-18/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-18:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-18-chrome/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-18-chrome:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-18-edge/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-18-edge:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-18-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-18-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-18-chrome-edge-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-18-chrome-edge-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-20/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-20:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-20-chrome/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-20-chrome:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-20-edge/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-20-edge:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-20-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-20-firefox:2.0.1",
+          "--cache=true"]
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/generated/base/node-20-chrome-edge-firefox/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-node-20-chrome-edge-firefox:2.0.1",
           "--cache=true"]
 
 - name: gcr.io/cloud-builders/curl
   id: Notify Slack
   secretEnv: ['SLACK_HOOK_URL']
   script: |
-    echo "{\"text\":\"Cykubed runner *base* images created with tag 2.0.0\"}" > payload.json
+    echo "{\"text\":\"Cykubed runner *base* images created with tag 2.0.1\"}" > payload.json
     /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL
