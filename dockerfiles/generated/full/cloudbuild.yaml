@@ -34,6 +34,7 @@ steps:
 
 - name: alpine/httpie
   id: Update Cykubed app with latest runner images and notify Slack
+  secretEnv: ['SLACK_HOOK_URL', 'CYKUBED_API_TOKEN']
   script: |
     echo $CYKUBED_API_TOKEN
     echo "{\"text\":\"Test\"}" > payload.json
