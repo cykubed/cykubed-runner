@@ -6,7 +6,7 @@
         "browsers": []
     },
     {
-        "image": "base-node-14",
+        "image": "base-node-14-chrome",
         "tag": "2.0.1",
         "node_major": "14",
         "browsers": [
@@ -14,7 +14,7 @@
         ]
     },
     {
-        "image": "base-node-14",
+        "image": "base-node-14-edge",
         "tag": "2.0.1",
         "node_major": "14",
         "browsers": [
@@ -22,7 +22,7 @@
         ]
     },
     {
-        "image": "base-node-14",
+        "image": "base-node-14-firefox",
         "tag": "2.0.1",
         "node_major": "14",
         "browsers": [
@@ -30,7 +30,7 @@
         ]
     },
     {
-        "image": "base-node-14",
+        "image": "base-node-14-chrome-edge-firefox",
         "tag": "2.0.1",
         "node_major": "14",
         "browsers": [
@@ -46,7 +46,7 @@
         "browsers": []
     },
     {
-        "image": "base-node-16",
+        "image": "base-node-16-chrome",
         "tag": "2.0.1",
         "node_major": "16",
         "browsers": [
@@ -54,7 +54,7 @@
         ]
     },
     {
-        "image": "base-node-16",
+        "image": "base-node-16-edge",
         "tag": "2.0.1",
         "node_major": "16",
         "browsers": [
@@ -62,7 +62,7 @@
         ]
     },
     {
-        "image": "base-node-16",
+        "image": "base-node-16-firefox",
         "tag": "2.0.1",
         "node_major": "16",
         "browsers": [
@@ -70,7 +70,7 @@
         ]
     },
     {
-        "image": "base-node-16",
+        "image": "base-node-16-chrome-edge-firefox",
         "tag": "2.0.1",
         "node_major": "16",
         "browsers": [
@@ -86,7 +86,7 @@
         "browsers": []
     },
     {
-        "image": "base-node-18",
+        "image": "base-node-18-chrome",
         "tag": "2.0.1",
         "node_major": "18",
         "browsers": [
@@ -94,7 +94,7 @@
         ]
     },
     {
-        "image": "base-node-18",
+        "image": "base-node-18-edge",
         "tag": "2.0.1",
         "node_major": "18",
         "browsers": [
@@ -102,7 +102,7 @@
         ]
     },
     {
-        "image": "base-node-18",
+        "image": "base-node-18-firefox",
         "tag": "2.0.1",
         "node_major": "18",
         "browsers": [
@@ -110,7 +110,7 @@
         ]
     },
     {
-        "image": "base-node-18",
+        "image": "base-node-18-chrome-edge-firefox",
         "tag": "2.0.1",
         "node_major": "18",
         "browsers": [
@@ -126,7 +126,7 @@
         "browsers": []
     },
     {
-        "image": "base-node-20",
+        "image": "base-node-20-chrome",
         "tag": "2.0.1",
         "node_major": "20",
         "browsers": [
@@ -134,7 +134,7 @@
         ]
     },
     {
-        "image": "base-node-20",
+        "image": "base-node-20-edge",
         "tag": "2.0.1",
         "node_major": "20",
         "browsers": [
@@ -142,7 +142,7 @@
         ]
     },
     {
-        "image": "base-node-20",
+        "image": "base-node-20-firefox",
         "tag": "2.0.1",
         "node_major": "20",
         "browsers": [
@@ -150,7 +150,7 @@
         ]
     },
     {
-        "image": "base-node-20",
+        "image": "base-node-20-chrome-edge-firefox",
         "tag": "2.0.1",
         "node_major": "20",
         "browsers": [

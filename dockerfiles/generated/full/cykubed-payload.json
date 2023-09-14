@@ -1,0 +1,182 @@
+[
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-14",
+        "node_version": "14",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome",
+        "node_version": "14",
+        "description": null,
+        "chrome": true,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-14-edge",
+        "node_version": "14",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-14-firefox",
+        "node_version": "14",
+        "description": null,
+        "chrome": false,
+        "firefox": true,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome-edge-firefox",
+        "node_version": "14",
+        "description": null,
+        "chrome": true,
+        "firefox": true,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-16",
+        "node_version": "16",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-16-chrome",
+        "node_version": "16",
+        "description": null,
+        "chrome": true,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-16-edge",
+        "node_version": "16",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-16-firefox",
+        "node_version": "16",
+        "description": null,
+        "chrome": false,
+        "firefox": true,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-16-chrome-edge-firefox",
+        "node_version": "16",
+        "description": null,
+        "chrome": true,
+        "firefox": true,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-18",
+        "node_version": "18",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-18-chrome",
+        "node_version": "18",
+        "description": null,
+        "chrome": true,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-18-edge",
+        "node_version": "18",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-18-firefox",
+        "node_version": "18",
+        "description": null,
+        "chrome": false,
+        "firefox": true,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-18-chrome-edge-firefox",
+        "node_version": "18",
+        "description": null,
+        "chrome": true,
+        "firefox": true,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-20",
+        "node_version": "20",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-20-chrome",
+        "node_version": "20",
+        "description": null,
+        "chrome": true,
+        "firefox": false,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-20-edge",
+        "node_version": "20",
+        "description": null,
+        "chrome": false,
+        "firefox": false,
+        "edge": true
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-20-firefox",
+        "node_version": "20",
+        "description": null,
+        "chrome": false,
+        "firefox": true,
+        "edge": false
+    },
+    {
+        "tag": "3.0.1",
+        "image": "us-docker.pkg.dev/cykubed/public/node-20-chrome-edge-firefox",
+        "node_version": "20",
+        "description": null,
+        "chrome": true,
+        "firefox": true,
+        "edge": true
+    }
+]
