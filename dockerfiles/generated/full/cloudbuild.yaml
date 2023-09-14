@@ -32,6 +32,14 @@ steps:
     echo "{\"text\":\"Test\"}" > payload.json
     /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL
 
+- name: alpine/httpie
+  id: Update Cykubed app with latest runner images and notify Slack
+  script: |
+    echo $CYKUBED_API_TOKEN
+    echo "{\"text\":\"Test\"}" > payload.json
+    /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL
+  
+
 #- name: alpine/httpie
 #  id: Update Cykubed app with latest runner images and notify Slack
 #  entrypoint: sh
