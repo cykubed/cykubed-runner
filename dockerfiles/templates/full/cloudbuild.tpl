@@ -15,6 +15,6 @@ $steps
   args:
     - '-ce'
     - |-
-     http POST https://api.cykubed.com/admin/runner/image -A bearer -a $$CYKUBED_API_TOKEN  < dockerfiles/generated/full/cykubed-payload.json &&
+     http POST https://api.cykubed.com/admin/runner/image -A bearer -a $$CYKUBED_API_TOKEN  < dockerfiles/generated/full/cykubed-payload.json
      http POST $$SLACK_HOOK_URL < slack-payload.json
   secretEnv: ['CYKUBED_API_TOKEN', 'SLACK_HOOK_URL']
