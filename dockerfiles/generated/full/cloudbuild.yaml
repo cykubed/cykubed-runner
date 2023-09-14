@@ -24,22 +24,12 @@ steps:
           "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome-edge-firefox:3.0.1",
           "--cache=true"]
 
-- name: gcr.io/cloud-builders/curl
-  id: Notify Slack
-  secretEnv: ['SLACK_HOOK_URL', 'CYKUBED_API_TOKEN']
-  script: |
-    echo $CYKUBED_API_TOKEN
-    echo "{\"text\":\"Test\"}" > payload.json
-    /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL
-
 - name: alpine/httpie
   id: Update Cykubed app with latest runner images and notify Slack
   secretEnv: ['SLACK_HOOK_URL', 'CYKUBED_API_TOKEN']
   script: |
-    echo $CYKUBED_API_TOKEN
-    echo "{\"text\":\"Test\"}" > payload.json
-    /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $SLACK_HOOK_URL
-  
+     http POST https://api.cykubed.com/admin/runner/image -A bearer -a $CYKUBED_API_TOKEN  < dockerfiles/generated/full/cykubed-payload.json
+     http POST $SLACK_HOOK_URL < slack-payload.json  
 
 #- name: alpine/httpie
 #  id: Update Cykubed app with latest runner images and notify Slack
