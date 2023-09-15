@@ -8,13 +8,14 @@ import click
 from cykubedrunner.common import schemas
 from dockerfiles.common import GENERATION_DIR, render
 
-BRANCH="runner-images"
+BRANCH = "runner-images"
 
 
 def cmd(args: str) -> str:
     p = subprocess.run(args, capture_output=True, text=True, shell=True)
     if p.returncode != 0:
         raise click.ClickException(f'{args} failed with return code {p.returncode} and output {p.stderr}')
+    print(p.stdout)
     return p.stdout.strip()
 
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cykubed-runner"
-version = "0.0.0"
+version = "3.6.0"
 description = ""
 authors = ["support <support@cykubed.com>"]
 readme = "README.md"

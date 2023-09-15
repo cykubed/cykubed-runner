@@ -7,6 +7,8 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 GENERATION_DIR = os.path.join(os.path.dirname(__file__), 'generated')
 BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/Dockerfile')
 
+print(GENERATION_DIR)
+
 
 def render(template_name, context, outputdir=None, output_file=None) -> str:
     template_file = os.path.join(TEMPLATE_DIR, template_name + '.tpl')
