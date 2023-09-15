@@ -6,7 +6,7 @@ import subprocess
 import click
 
 from cykubedrunner.common import schemas
-from dockerfiles.common import GENERATION_DIR, render
+from dockerfiles.common import GENERATION_DIR, render, TEMPLATE_DIR
 
 BRANCH = "master"
 
@@ -24,33 +24,39 @@ def cmd(args: str, silent=False) -> str:
 @click.option('--region', default='us', help='GCP region')
 @click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
               default='minor', help='Type of version bump')
+@click.option('-g', '--generate_only', is_flag=True, help='Generate only')
 @click.option('-n', '--notes', type=str, required=True, help='Release notes')
-def generate(region: str, bump: str, notes: str):
+def generate(region: str, bump: str, notes: str, generate_only: bool):
+
     if cmd('git branch --show-current') != 'master':
         raise click.BadParameter('Not on master branch')
 
     # run the tests first as a sanity check
-    cmd('py.test', True)
+    if not generate_only:
+        cmd('py.test', True)
+        # bump and get the tag
+        tag = cmd(f"poetry version {bump} -s")
+    else:
+        tag = cmd(f"poetry version -s")
 
-    shutil.rmtree(GENERATION_DIR + '/full', ignore_errors=True)
-
-    # bump and get the tag
-    tag = cmd(f"poetry version {bump} -s")
-
-    bash_steps = []
     with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'r') as f:
         base_image_details = json.loads(f.read())
 
-    steps = []
+    base_tag = base_image_details['tag']
+
+    steps = [render('full/base-runner-cloudbuild-step', dict(tag=tag, region=region))]
+    bash_steps = [render('full/base-runner-shell-step', dict(tag=tag, region=region))]
+
     new_runner_images = []
+    base_context = dict(base_tag=base_tag, region=region, tag=tag)
     # now generate full images for all variants
-    for details in base_image_details:
+    for details in base_image_details['bases']:
         base_image = details['image']
-        base_tag = details['tag']
         path = base_image[5:]
-        render('full/dockerfile', dict(base_image=f'{base_image}:{base_tag}', region=region),
+        render('full/dockerfile',
+               dict(base_image=f'{base_image}:{base_tag}', **base_context),
                f'full/{path}')
-        context = dict(path=path, tag=tag, region=region)
+        context = dict(path=path, **base_context)
         steps.append(render('full/cloudbuild-step', context))
         bash_steps.append(render('full/shell-step', context))
 
@@ -80,12 +86,13 @@ def generate(region: str, bump: str, notes: str):
     # slack payload
     render('full/slack', dict(tag=tag), output_file='full/slack-payload.json')
 
-    # all done: commit and tag
-    cmd(f'git add dockerfiles/generated')
-    cmd(f'git add pyproject.toml')
-    cmd(f'git commit -m "{notes}"')
-    cmd(f'git tag -a {tag} -m "New release:\n{notes}"')
-    cmd(f'git push origin {tag}')
+    if not generate_only:
+        # all done: commit and tag
+        cmd(f'git add dockerfiles/generated')
+        cmd(f'git add pyproject.toml')
+        cmd(f'git commit -m "{notes}"')
+        cmd(f'git tag -a {tag} -m "New release:\n{notes}"')
+        cmd(f'git push origin {tag}')
 
 
 if __name__ == '__main__':

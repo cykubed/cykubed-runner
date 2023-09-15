@@ -38,7 +38,7 @@ def generate(region: str, tag: str, firefoxvs: str):
         context = dict(node_major=node_major, **base_context)
         render('base/node', context, f'base/{node_base}')
 
-        all_base_paths.append({'image': f'base-{node_base}', 'tag': tag, 'node_major': node_major, 'browsers': []})
+        all_base_paths.append({'image': f'base-{node_base}',  'node_major': node_major, 'browsers': []})
 
         context = dict(path=node_base, destpath=f'base-{node_base}', node_major=node_major, **base_context)
         cloudbuild_steps.append(render('base/cloudbuild-step', context))
@@ -53,7 +53,7 @@ def generate(region: str, tag: str, firefoxvs: str):
                                              **base_context),
                    f'base/{path}')
 
-            all_base_paths.append({'image': f'base-{path}', 'tag': tag, 'node_major': node_major,
+            all_base_paths.append({'image': f'base-{path}', 'node_major': node_major,
                                    'browsers': [browser]})
 
             context = dict(path=path, destpath=f'base-{path}', **base_context)
@@ -68,7 +68,7 @@ def generate(region: str, tag: str, firefoxvs: str):
                            browsers="\n".join(all_browsers), **base_context)
             render('base/base-browser', context, f'base/{path}')
 
-            all_base_paths.append({'image': f'base-{path}', 'tag': tag, 'node_major': node_major,
+            all_base_paths.append({'image': f'base-{path}', 'node_major': node_major,
                                    'browsers': BROWSERS})
 
             context['path'] = path
@@ -86,7 +86,7 @@ def generate(region: str, tag: str, firefoxvs: str):
                 **base_context), output_file='base/build.sh')
 
     with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'w') as f:
-        f.write(json.dumps(all_base_paths, indent=4))
+        f.write(json.dumps({'tag': tag, 'bases': all_base_paths}, indent=4))
 
 
 

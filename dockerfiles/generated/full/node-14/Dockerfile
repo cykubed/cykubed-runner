@@ -2,10 +2,7 @@ FROM us-docker.pkg.dev/cykubed/public/base-node-14:2.0.2
 
 USER cykubed
 
-COPY pyproject.toml poetry.lock ./
-RUN poetry config installer.max-workers 10
-RUN poetry install --no-root --without=dev --no-interaction
-
-COPY src/cykubedrunner cykubedrunner
+WORKDIR /usr/app
+COPY --chown=cykubed:cykubed --from=us-docker.pkg.dev/cykubed/public/base-runner:3.13.0 /usr/app .
 ENV PYTHONPATH=/usr/app:.
 ENTRYPOINT ["poetry", "run", "python", "cykubedrunner/main.py"]
