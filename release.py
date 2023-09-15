@@ -74,6 +74,7 @@ def generate(region: str, bump: str, notes: str):
 
     # all done: commit and tag
     cmd(f'git add dockerfiles/generated')
+    cmd(f'git add pyproject.toml')
     cmd(f'git commit -m "{notes}"')
     cmd(f'git tag -a {tag} -m "New release:\n{notes}"')
     cmd(f'git push --tags origin {BRANCH}')
