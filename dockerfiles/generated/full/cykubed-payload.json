@@ -1,6 +1,6 @@
 [
     {
-        "tag": "3.15.0",
+        "tag": "3.16.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14",
         "node_version": "14",
         "description": "Fixed submodule issue",
@@ -9,7 +9,7 @@
         "edge": false
     },
     {
-        "tag": "3.15.0",
+        "tag": "3.16.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome",
         "node_version": "14",
         "description": "Fixed submodule issue",
