@@ -1,4 +1,4 @@
-FROM us-docker.pkg.dev/cykubed/public/base-node-14-chrome-edge-firefox:2.0.1
+FROM us-docker.pkg.dev/cykubed/public/base-node-14-chrome-edge-firefox:2.0.2
 
 USER cykubed
 
