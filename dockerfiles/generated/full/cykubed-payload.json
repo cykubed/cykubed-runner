@@ -1,18 +1,18 @@
 [
     {
-        "tag": "3.13.0",
+        "tag": "3.14.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14",
         "node_version": "14",
-        "description": "Increase timeout",
+        "description": "Faster build",
         "chrome": false,
         "firefox": false,
         "edge": false
     },
     {
-        "tag": "3.13.0",
+        "tag": "3.14.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome",
         "node_version": "14",
-        "description": "Increase timeout",
+        "description": "Faster build",
         "chrome": true,
         "firefox": false,
         "edge": false

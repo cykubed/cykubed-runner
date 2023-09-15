@@ -9,15 +9,15 @@ steps:
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/runner/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.13.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.14.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14:3.13.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14:3.14.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome:3.13.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome:3.14.0",
           "--cache=true"]
 
 - name: alpine/httpie
