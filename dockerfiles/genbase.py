@@ -8,7 +8,6 @@ from dockerfiles.common import NODE_MAJOR_VERSIONS, BROWSERS, GENERATION_DIR, BA
 
 @click.command()
 @click.option('--region', default='us', help='GCP region')
-
 @click.option('-t', '--tag', required=True, help='Build tag')
 @click.option('-ff', '--firefoxvs', default='117.0', help='Firefox version')
 def generate(region: str, tag: str, firefoxvs: str):
