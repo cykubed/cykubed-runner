@@ -1,4 +1,4 @@
-FROM us-docker.pkg.dev/cykubed/public/base-node-16:2.0.1
+FROM us-docker.pkg.dev/cykubed/public/base-node-16:2.0.2
 
 ## Setup Edge
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
