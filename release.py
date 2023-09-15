@@ -8,15 +8,26 @@ import click
 from cykubedrunner.common import schemas
 from dockerfiles.common import GENERATION_DIR, render
 
+BRANCH="runner-images"
+
+
+def cmd(args: str) -> str:
+    p = subprocess.run(args, capture_output=True, text=True, shell=True)
+    if p.returncode != 0:
+        raise click.ClickException(f'{args} failed with return code {p.returncode} and output {p.stderr}')
+    return p.stdout.strip()
+
 
 @click.command(help='Generate a new release of the runner')
 @click.option('--region', default='us', help='GCP region')
-def generate(region: str):
+@click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
+              default='minor', help='Type of version bump')
+@click.option('-n', '--notes', type=str, required=True, help='Release notes')
+def generate(region: str, bump: str, notes: str):
     shutil.rmtree(GENERATION_DIR + '/full', ignore_errors=True)
 
-    # get the tag
-    p = subprocess.run("git describe --tags --abbrev=0", capture_output=True, text=True, shell=True)
-    tag = p.stdout.strip()
+    # bump and get the tag
+    tag = cmd(f"poetry version {bump} -s")
 
     bash_steps = []
     with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'r') as f:
@@ -59,6 +70,12 @@ def generate(region: str):
 
     # slack payload
     render('full/slack', dict(tag=tag), output_file='full/slack-payload.json')
+
+    # all done: commit and tag
+    cmd(f'git add dockerfiles/generated')
+    cmd(f'git commit -m "{notes}"')
+    cmd(f'git tag -a {tag} -m "New release:\n{notes}"')
+    cmd(f'git push --tags origin {BRANCH}')
 
 
 if __name__ == '__main__':

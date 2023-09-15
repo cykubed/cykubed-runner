@@ -1,6 +1,6 @@
 [
     {
-        "tag": "3.0.1",
+        "tag": "3.5.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14",
         "node_version": "14",
         "description": null,
@@ -9,7 +9,7 @@
         "edge": false
     },
     {
-        "tag": "3.0.1",
+        "tag": "3.5.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome",
         "node_version": "14",
         "description": null,
@@ -18,7 +18,7 @@
         "edge": false
     },
     {
-        "tag": "3.0.1",
+        "tag": "3.5.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14-edge",
         "node_version": "14",
         "description": null,
@@ -27,7 +27,7 @@
         "edge": true
     },
     {
-        "tag": "3.0.1",
+        "tag": "3.5.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-14-chrome-edge-firefox",
         "node_version": "14",
         "description": null,
