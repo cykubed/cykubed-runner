@@ -9,83 +9,83 @@ steps:
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14-edge:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14-edge:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-14-chrome-edge-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome-edge-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-14-chrome-edge-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-edge:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-edge:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-chrome-edge-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome-edge-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome-edge-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-edge:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-edge:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-chrome-edge-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome-edge-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome-edge-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-edge:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-edge:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-firefox:3.13.0",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-chrome-edge-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome-edge-firefox:3.12.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome-edge-firefox:3.13.0",
           "--cache=true"]
 
 - name: alpine/httpie
