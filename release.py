@@ -23,7 +23,7 @@ def cmd(args: str, silent=False) -> str:
 @click.command(help='Generate a new release of the runner')
 @click.option('--region', default='us', help='GCP region')
 @click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
-              default='minor', help='Type of version bump')
+              help='Type of version bump')
 @click.option('-g', '--generate_only', is_flag=True, help='Generate only')
 @click.option('-n', '--notes', type=str, required=True, help='Release notes')
 def generate(region: str, bump: str, notes: str, generate_only: bool):

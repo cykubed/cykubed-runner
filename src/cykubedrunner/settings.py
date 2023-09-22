@@ -55,8 +55,8 @@ class RunnerSettings(BaseSettings):
         return os.path.join(self.get_results_dir(), 'videos')
 
     def init_build_dirs(self):
-        os.makedirs(self.src_dir, exist_ok=True)
         os.makedirs(self.BUILD_DIR, exist_ok=True)
+        os.makedirs(self.src_dir, exist_ok=True)
         os.makedirs(self.get_temp_dir(), exist_ok=True)
         os.makedirs(self.get_videos_folder(), exist_ok=True)
         os.makedirs(self.get_screenshots_folder(), exist_ok=True)

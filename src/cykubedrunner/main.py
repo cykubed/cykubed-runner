@@ -1,4 +1,6 @@
 import argparse
+import os.path
+import shutil
 import sys
 import time
 from sentry_sdk.integrations.httpx import HttpxIntegration
@@ -40,13 +42,18 @@ def main() -> int:
         logger.error(f"Failed to contact Redis ({ex}) - quitting")
         sys.exit(1)
 
+    cmd = args.command
+    if cmd == 'build':
+        # in case this is a retry, make sure the build directory is clean
+        if os.path.exists(settings.BUILD_DIR):
+            shutil.rmtree(settings.BUILD_DIR)
+
     settings.init_build_dirs()
 
     trid = args.testrun_id
     exit_code = 0
 
     try:
-        cmd = args.command
         configure_stackdriver_logging(f'cykubed-{cmd}')
         if cmd == 'build':
             builder.build(trid)

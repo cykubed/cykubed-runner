@@ -1017,14 +1017,14 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "identify"
-version = "2.5.28"
+version = "2.5.29"
 description = "File identification library for Python"
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "identify-2.5.28-py2.py3-none-any.whl", hash = "sha256:87816de144bf46d161bd5b3e8f5596b16cade3b80be537087334b26bc5c177f3"},
-    {file = "identify-2.5.28.tar.gz", hash = "sha256:94bb59643083ebd60dc996d043497479ee554381fbc5307763915cda49b0e78f"},
+    {file = "identify-2.5.29-py2.py3-none-any.whl", hash = "sha256:24437fbf6f4d3fe6efd0eb9d67e24dd9106db99af5ceb27996a5f7895f24bf1b"},
+    {file = "identify-2.5.29.tar.gz", hash = "sha256:d43d52b86b15918c137e3a74fff5224f60385cd0e9c38e99d07c257f02f151a5"},
 ]
 
 [package.extras]
@@ -1295,19 +1295,19 @@ testing = ["docopt", "pytest (<6.0.0)"]
 
 [[package]]
 name = "pathvalidate"
-version = "3.1.0"
+version = "3.2.0"
 description = "pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pathvalidate-3.1.0-py3-none-any.whl", hash = "sha256:912fd1d2e1a2a6a6f98da36a91f21ed86746473810ff625b9c34f3d06c0caa1d"},
-    {file = "pathvalidate-3.1.0.tar.gz", hash = "sha256:426970226e24199fd90d93995d223c1e28bda967cdf4370755a14cdf72a2a8ee"},
+    {file = "pathvalidate-3.2.0-py3-none-any.whl", hash = "sha256:cc593caa6299b22b37f228148257997e2fa850eea2daf7e4cc9205cef6908dee"},
+    {file = "pathvalidate-3.2.0.tar.gz", hash = "sha256:5e8378cf6712bff67fbe7a8307d99fa8c1a0cb28aa477056f8fc374f0dff24ad"},
 ]
 
 [package.extras]
 docs = ["Sphinx (>=2.4)", "sphinx-rtd-theme (>=1.2.2)", "urllib3 (<2)"]
-test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1)", "pytest-discord (>=0.1.2)", "pytest-md-report (>=0.3)"]
+test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1)", "pytest-discord (>=0.1.4)", "pytest-md-report (>=0.4.1)"]
 
 [[package]]
 name = "pexpect"
@@ -1939,18 +1939,18 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "tabledata"
-version = "1.3.1"
+version = "1.3.3"
 description = "tabledata is a Python library to represent tabular data. Used for pytablewriter/pytablereader/SimpleSQLite/etc."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "tabledata-1.3.1-py3-none-any.whl", hash = "sha256:73e610c378670a2b9bb80e56cece24427d18c8672a36c80fcdf2a3753b19642b"},
-    {file = "tabledata-1.3.1.tar.gz", hash = "sha256:6608f86171f3285f16251ed6649dcf6e953d4fe6a8e622d39b80d1954b9e7711"},
+    {file = "tabledata-1.3.3-py3-none-any.whl", hash = "sha256:4abad1c996d8607e23b045b44dc0c5f061668f3c37585302c5f6c84c93a89962"},
+    {file = "tabledata-1.3.3.tar.gz", hash = "sha256:c90daaba9a408e4397934b3ff2f6c06797d5289676420bf520c741ad43e6ff91"},
 ]
 
 [package.dependencies]
-DataProperty = ">=0.54.2,<2"
+DataProperty = ">=1.0.1,<2"
 typepy = ">=1.2.0,<2"
 
 [package.extras]
@@ -1959,18 +1959,18 @@ test = ["pytablewriter (>=0.46)", "pytest"]
 
 [[package]]
 name = "tcolorpy"
-version = "0.1.3"
+version = "0.1.4"
 description = "tcolopy is a Python library to apply true color for terminal text."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tcolorpy-0.1.3-py3-none-any.whl", hash = "sha256:4ba9e4d52696a36dc16a55c20317115fb46e4b8e02796e8e270132719bcefad4"},
-    {file = "tcolorpy-0.1.3.tar.gz", hash = "sha256:43c1afe908f9968ff5ce59f129b62e392049b8e7cd6a8d3f416bd3d372bb5c7a"},
+    {file = "tcolorpy-0.1.4-py3-none-any.whl", hash = "sha256:d0926480aa5012f34877d69fc3b670f207dc165674e68ad07458fa6ee5b12724"},
+    {file = "tcolorpy-0.1.4.tar.gz", hash = "sha256:f0dceb1cb95e554cee63024b3cd2fd8d4628c568773de2d1e6b4f0478461901c"},
 ]
 
 [package.extras]
-test = ["pytest", "pytest-md-report (>=0.1)"]
+test = ["pytest (>=6.0.1)", "pytest-md-report (>=0.4.1)"]
 
 [[package]]
 name = "tenacity"
@@ -2039,14 +2039,14 @@ test = ["packaging", "pytest (>=6.0.1)", "python-dateutil (>=2.8.0,<3.0.0)", "py
 
 [[package]]
 name = "typing-extensions"
-version = "4.7.1"
-description = "Backported and Experimental Type Hints for Python 3.7+"
+version = "4.8.0"
+description = "Backported and Experimental Type Hints for Python 3.8+"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.7.1-py3-none-any.whl", hash = "sha256:440d5dd3af93b060174bf433bccd69b0babc3b15b1a8dca43789fd7f61514b36"},
-    {file = "typing_extensions-4.7.1.tar.gz", hash = "sha256:b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2"},
+    {file = "typing_extensions-4.8.0-py3-none-any.whl", hash = "sha256:8f92fc8806f9a6b641eaa5318da32b44d401efaac0f6678c9bc448ba3605faa0"},
+    {file = "typing_extensions-4.8.0.tar.gz", hash = "sha256:df8e4339e9cb77357558cbdbceca33c303714cf861d1eef15e1070055ae8b7ef"},
 ]
 
 [[package]]
