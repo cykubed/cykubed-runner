@@ -45,8 +45,8 @@ def main() -> int:
     cmd = args.command
     if cmd == 'build':
         # in case this is a retry, make sure the build directory is clean
-        if os.path.exists(settings.BUILD_DIR):
-            shutil.rmtree(settings.BUILD_DIR)
+        if os.path.exists(settings.src_dir):
+            shutil.rmtree(settings.src_dir)
 
     settings.init_build_dirs()
 
