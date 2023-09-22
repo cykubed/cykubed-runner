@@ -40,6 +40,7 @@ def fixturedir():
 def project() -> Project:
     return Project(id=10,
                    name='project',
+                   repos='project',
                    default_branch='master',
                    agent_id=1,
                    browser='chrome',
