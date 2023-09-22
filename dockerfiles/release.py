@@ -6,7 +6,7 @@ import subprocess
 import click
 
 from cykubedrunner.common import schemas
-from dockerfiles.common import GENERATION_DIR, render, TEMPLATE_DIR
+from dockerfiles.common import GENERATION_DIR, render, TEMPLATE_DIR, read_base_image_details
 
 BRANCH = "master"
 
@@ -39,9 +39,7 @@ def generate(region: str, bump: str, notes: str, generate_only: bool):
     else:
         tag = cmd(f"poetry version -s")
 
-    with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'r') as f:
-        base_image_details = json.loads(f.read())
-
+    base_image_details = read_base_image_details()
     base_tag = base_image_details['tag']
 
     steps = [render('full/base-runner-cloudbuild-step', dict(tag=tag, region=region))]

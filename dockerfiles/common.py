@@ -1,3 +1,4 @@
+import json
 import os
 from string import Template
 
@@ -7,7 +8,10 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 GENERATION_DIR = os.path.join(os.path.dirname(__file__), 'generated')
 BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/Dockerfile')
 
-print(GENERATION_DIR)
+
+def read_base_image_details():
+    with open(os.path.join(GENERATION_DIR, 'base', 'all-base-images.json'), 'r') as f:
+        return json.loads(f.read())
 
 
 def render(template_name, context, outputdir=None, output_file=None) -> str:

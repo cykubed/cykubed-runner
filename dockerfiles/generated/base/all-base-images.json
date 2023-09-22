@@ -1,143 +1,15 @@
 {
-    "tag": "2.0.2",
+    "tag": "2.0.3",
     "bases": [
-        {
-            "image": "base-node-14",
-            "node_major": "14",
-            "browsers": []
-        },
-        {
-            "image": "base-node-14-chrome",
-            "node_major": "14",
-            "browsers": [
-                "chrome"
-            ]
-        },
-        {
-            "image": "base-node-14-edge",
-            "node_major": "14",
-            "browsers": [
-                "edge"
-            ]
-        },
-        {
-            "image": "base-node-14-firefox",
-            "node_major": "14",
-            "browsers": [
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-14-chrome-edge-firefox",
-            "node_major": "14",
-            "browsers": [
-                "chrome",
-                "edge",
-                "firefox"
-            ]
-        },
         {
             "image": "base-node-16",
             "node_major": "16",
             "browsers": []
         },
         {
-            "image": "base-node-16-chrome",
-            "node_major": "16",
-            "browsers": [
-                "chrome"
-            ]
-        },
-        {
-            "image": "base-node-16-edge",
-            "node_major": "16",
-            "browsers": [
-                "edge"
-            ]
-        },
-        {
             "image": "base-node-16-firefox",
             "node_major": "16",
             "browsers": [
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-16-chrome-edge-firefox",
-            "node_major": "16",
-            "browsers": [
-                "chrome",
-                "edge",
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-18",
-            "node_major": "18",
-            "browsers": []
-        },
-        {
-            "image": "base-node-18-chrome",
-            "node_major": "18",
-            "browsers": [
-                "chrome"
-            ]
-        },
-        {
-            "image": "base-node-18-edge",
-            "node_major": "18",
-            "browsers": [
-                "edge"
-            ]
-        },
-        {
-            "image": "base-node-18-firefox",
-            "node_major": "18",
-            "browsers": [
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-18-chrome-edge-firefox",
-            "node_major": "18",
-            "browsers": [
-                "chrome",
-                "edge",
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-20",
-            "node_major": "20",
-            "browsers": []
-        },
-        {
-            "image": "base-node-20-chrome",
-            "node_major": "20",
-            "browsers": [
-                "chrome"
-            ]
-        },
-        {
-            "image": "base-node-20-edge",
-            "node_major": "20",
-            "browsers": [
-                "edge"
-            ]
-        },
-        {
-            "image": "base-node-20-firefox",
-            "node_major": "20",
-            "browsers": [
-                "firefox"
-            ]
-        },
-        {
-            "image": "base-node-20-chrome-edge-firefox",
-            "node_major": "20",
-            "browsers": [
-                "chrome",
-                "edge",
                 "firefox"
             ]
         }

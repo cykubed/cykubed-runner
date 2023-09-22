@@ -2,15 +2,19 @@ import json
 import os.path
 import shutil
 import click
+import semver
 
-from dockerfiles.common import NODE_MAJOR_VERSIONS, BROWSERS, GENERATION_DIR, BASE_DOCKERFILE, render
+from dockerfiles.common import NODE_MAJOR_VERSIONS, BROWSERS, GENERATION_DIR, BASE_DOCKERFILE, render, \
+    read_base_image_details
 
 
 @click.command()
 @click.option('--region', default='us', help='GCP region')
-@click.option('-t', '--tag', required=True, help='Build tag')
+@click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
+              default='patch',
+              help='Type of version bump')
 @click.option('-ff', '--firefoxvs', default='117.0', help='Firefox version')
-def generate(region: str, tag: str, firefoxvs: str):
+def generate(region: str, bump: str, firefoxvs: str):
     """
     Generate the base Dockerfiles for various combinations of browser and node.
     Note that these are only intended to be base images i.e. they have not installed cykubedrunner,
@@ -22,6 +26,20 @@ def generate(region: str, tag: str, firefoxvs: str):
     The script also generates a cloudbuild.yaml file for use in Google Cloud Build to actually
     generate the images (using Kaniko)
     """
+
+    base_details = read_base_image_details()
+    tag = base_details['tag']
+
+    ver = semver.Version.parse(tag)
+    if bump == 'major':
+        ver = ver.bump_major()
+    elif bump == 'minor':
+        ver = ver.bump_minor()
+    else:
+        ver = ver.bump_patch()
+
+    tag = str(ver)
+
     shutil.rmtree(GENERATION_DIR + '/base', ignore_errors=True)
 
     all_base_paths = []
