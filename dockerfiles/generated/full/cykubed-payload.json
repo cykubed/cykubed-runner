@@ -1,18 +1,18 @@
 [
     {
-        "tag": "3.18.4",
+        "tag": "3.18.5",
         "image": "us-docker.pkg.dev/cykubed/public/node-16",
         "node_version": "16",
-        "description": "Limit builds to just node 16 and Firefox for now",
+        "description": "Was deleting wrong dir",
         "chrome": false,
         "firefox": false,
         "edge": false
     },
     {
-        "tag": "3.18.4",
+        "tag": "3.18.5",
         "image": "us-docker.pkg.dev/cykubed/public/node-16-firefox",
         "node_version": "16",
-        "description": "Limit builds to just node 16 and Firefox for now",
+        "description": "Was deleting wrong dir",
         "chrome": false,
         "firefox": true,
         "edge": false
