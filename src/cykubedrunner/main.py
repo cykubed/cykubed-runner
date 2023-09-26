@@ -63,7 +63,7 @@ def main() -> int:
             cypress.run(trid)
 
     except BuildFailedException as ex:
-        logger.error(f'Build failed: {ex}')
+        logger.error(f'{cmd} failed: {ex}')
         # tell the agent
         send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
                                                 report=TestRunErrorReport(msg=ex.msg,

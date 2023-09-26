@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dummy-ro
+  namespace: cykubed
+spec:
+  accessModes:
+  - ReadOnlyMany
+  dataSource:
+    apiGroup: snapshot.storage.k8s.io
+    kind: VolumeSnapshot
+    name: build-5f4c4d6f00307a1237d4c0d745f98a3ffe93dcde
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: cykubed-storageclass
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dummy-runner
+  namespace: cykubed
+spec:
+  containers:
+  - name: cykubed-runner
+    command: ["/bin/sleep", "3600"]
+    env:
+    - name: BUILD_DIR
+      value: /build
+    - name: CYPRESS_RETRIES
+    - name: TZ
+      value: Europe/London
+    - name: REDIS_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          key: redis-password
+          name: cykubed-redis
+    envFrom:
+    - configMapRef:
+        name: cykubed-agent-configmap
+    - secretRef:
+        name: cykubed-agent-secrets
+    image: us-docker.pkg.dev/cykubed/public/node-16-firefox:3.18.5
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: "2"
+        memory: 2G
+      requests:
+        cpu: "2"
+        memory: 2G
+    volumeMounts:
+    - mountPath: /build
+      name: build-volume
+  volumes:
+  - name: build-volume
+    persistentVolumeClaim:
+      claimName: dummy-ro
+      readOnly: true

@@ -144,8 +144,11 @@ class CypressSpecRunner(object):
         self.started = utcnow()
         logger.debug(f'Run Cypress for {self.file}')
         try:
-            self.create_cypress_process()
+            proc = self.create_cypress_process()
             if not os.path.exists(self.results_file):
+                if proc.returncode == 1:
+                    # there was a problem with the run - log output
+                    logger.error(f"Cypress run failed to produce any results:\n {proc.stdout}\n{proc.stderr}")
                 raise RunFailedException(f'Missing results file')
 
             # parse and upload the results
@@ -168,7 +171,7 @@ class CypressSpecRunner(object):
         if not completions_remaining:
             notify_run_complete(self.httpclient, self.testrun.id)
 
-    def create_cypress_process(self):
+    def create_cypress_process(self) -> subprocess.CompletedProcess:
         args = self.get_args()
         fullcmd = ' '.join(args)
         logger.debug(f'Calling cypress with args: "{fullcmd}"')
@@ -181,6 +184,7 @@ class CypressSpecRunner(object):
                                 cwd=settings.src_dir)
         logger.debug(f'Cypress stdout: \n{result.stdout}')
         logger.debug(f'Cypress stderr: \n{result.stderr}')
+        return result
 
 
 @retry(retry=retry_if_not_exception_type(RunFailedException),
