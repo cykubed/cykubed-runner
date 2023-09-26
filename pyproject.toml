@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cykubed-runner"
-version = "3.19.1"
+version = "3.19.4"
 description = "Builds and runs Cypress tests for the Cykubed platform"
 authors = ["support <support@cykubed.com>"]
 readme = "README.md"
@@ -44,6 +44,7 @@ pytest-github-report = "^0.0.1"
 freezegun = "^1.2.2"
 click = "^8.1.7"
 semver = "^3.0.1"
+jq = "^1.6.0"
 
 [build-system]
 requires = ["poetry-core"]

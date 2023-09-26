@@ -296,7 +296,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                 return
             except Exception as ex:
                 # something went wrong - push the spec back onto the stack
-                logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
+                logger.exception(f'Runner failed unexpectedly: adding the spec back to the stack')
                 if not spec not in app.specs_completed:
                     redis.sadd(f'testrun:{testrun.id}:specs', spec)
                 raise ex

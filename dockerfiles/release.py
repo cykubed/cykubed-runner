@@ -1,12 +1,11 @@
 import json
 import os
-import shutil
 import subprocess
 
 import click
 
 from cykubedrunner.common import schemas
-from dockerfiles.common import GENERATION_DIR, render, TEMPLATE_DIR, read_base_image_details
+from dockerfiles.common import GENERATION_DIR, render, read_base_image_details
 
 BRANCH = "master"
 
@@ -23,6 +22,7 @@ def cmd(args: str, silent=False) -> str:
 @click.command(help='Generate a new release of the runner')
 @click.option('--region', default='us', help='GCP region')
 @click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
+              default='patch',
               help='Type of version bump')
 @click.option('-g', '--generate_only', is_flag=True, help='Generate only')
 @click.option('-n', '--notes', type=str, required=True, help='Release notes')
@@ -34,10 +34,9 @@ def generate(region: str, bump: str, notes: str, generate_only: bool):
     # run the tests first as a sanity check
     if not generate_only:
         cmd('py.test', True)
-        # bump and get the tag
-        tag = cmd(f"poetry version {bump} -s")
-    else:
-        tag = cmd(f"poetry version -s")
+
+    # bump and get the tag
+    tag = cmd(f"poetry version {bump} -s")
 
     base_image_details = read_base_image_details()
     base_tag = base_image_details['tag']
