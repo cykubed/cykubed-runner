@@ -1,18 +1,18 @@
 [
     {
-        "tag": "3.18.5",
+        "tag": "3.19.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-16",
         "node_version": "16",
-        "description": "Was deleting wrong dir",
+        "description": "Show output of failed Cypress run if there is no results json",
         "chrome": false,
         "firefox": false,
         "edge": false
     },
     {
-        "tag": "3.18.5",
+        "tag": "3.19.0",
         "image": "us-docker.pkg.dev/cykubed/public/node-16-firefox",
         "node_version": "16",
-        "description": "Was deleting wrong dir",
+        "description": "Show output of failed Cypress run if there is no results json",
         "chrome": false,
         "firefox": true,
         "edge": false
