@@ -1,18 +1,18 @@
 [
     {
-        "tag": "3.19.4",
+        "tag": "3.19.5",
         "image": "us-docker.pkg.dev/cykubed/public/node-16",
         "node_version": "16",
-        "description": "Local build",
+        "description": "Fixed local build",
         "chrome": false,
         "firefox": false,
         "edge": false
     },
     {
-        "tag": "3.19.4",
+        "tag": "3.19.5",
         "image": "us-docker.pkg.dev/cykubed/public/node-16-firefox",
         "node_version": "16",
-        "description": "Local build",
+        "description": "Fixed local build",
         "chrome": false,
         "firefox": true,
         "edge": false
