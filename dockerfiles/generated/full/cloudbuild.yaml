@@ -15,15 +15,15 @@ steps:
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/runner/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.19.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.19.1",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.19.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.19.1",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.19.0",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.19.1",
           "--cache=true"]
 
 - name: alpine/httpie
