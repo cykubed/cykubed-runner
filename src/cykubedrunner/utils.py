@@ -2,17 +2,19 @@ import os
 import shlex
 import subprocess
 import traceback
+
+import loguru
 from httpx import Client
 from loguru import logger
-import loguru
 
+from cykubedrunner.app import app
 from cykubedrunner.common import schemas
 from cykubedrunner.common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.redisutils import sync_redis
-from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage
+from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, AgentTestRunErrorEvent, \
+    TestRunErrorReport
 from cykubedrunner.common.utils import utcnow
-from cykubedrunner.app import app
 from cykubedrunner.settings import settings
 
 
@@ -83,6 +85,14 @@ def get_testrun(id: int) -> NewTestRun | None:
 
 def send_agent_event(event: AgentEvent):
     sync_redis().rpush('messages', event.json())
+
+
+def log_build_failed_exception(trid: int, ex: BuildFailedException):
+    # tell the agent
+    send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
+                                            report=TestRunErrorReport(msg=ex.msg,
+                                                                      stage=ex.stage,
+                                                                      error_code=ex.status_code)))
 
 
 class TestRunLogger:

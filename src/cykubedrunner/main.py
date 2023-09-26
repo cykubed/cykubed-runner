@@ -3,18 +3,17 @@ import os.path
 import shutil
 import sys
 import time
+
+import sentry_sdk
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
-import sentry_sdk
 
+from cykubedrunner import builder, cypress
 from cykubedrunner.common.cloudlogging import configure_stackdriver_logging
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.redisutils import sync_redis
-from cykubedrunner.common.schemas import TestRunErrorReport, AgentTestRunErrorEvent
-
-from cykubedrunner import builder, cypress
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import send_agent_event, logger
+from cykubedrunner.utils import logger, log_build_failed_exception
 
 
 def handle_sigterm_builder(signum, frame):
@@ -63,12 +62,10 @@ def main() -> int:
             cypress.run(trid)
 
     except BuildFailedException as ex:
-        logger.error(f'{cmd} failed: {ex}')
+        logger.error(f'{cmd.capitalize()} failed: {ex}')
         # tell the agent
-        send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
-                                                report=TestRunErrorReport(msg=ex.msg,
-                                                                          stage=ex.stage,
-                                                                          error_code=ex.status_code)))
+        log_build_failed_exception(trid, ex)
+
         if settings.KEEPALIVE_ON_FAILURE:
             time.sleep(3600)
     except Exception as ex:

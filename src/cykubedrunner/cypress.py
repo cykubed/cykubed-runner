@@ -5,20 +5,21 @@ import shutil
 import signal
 import subprocess
 import sys
+
+import httpx
 from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
-import httpx
 
+from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
     AgentSpecStarted, NewTestRun
 from cykubedrunner.common.utils import utcnow, get_hostname
-from cykubedrunner.app import app
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import get_testrun, logger
+from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception
 
 
 def spec_terminated(trid: int, spec: str):
@@ -290,6 +291,9 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
             # run cypress for this spec
             try:
                 CypressSpecRunner(server, testrun, httpclient, spec).run()
+            except RunFailedException as ex:
+                log_build_failed_exception(testrun.id, ex)
+                return
             except Exception as ex:
                 # something went wrong - push the spec back onto the stack
                 logger.exception(f'Runner failed unexpectedly: add the spec back to the stack')
