@@ -2,14 +2,15 @@ import json
 import os
 import re
 import time
-from wcmatch import glob
-import yaml
 
+import yaml
+from wcmatch import glob
+
+from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestRunStatus, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentEvent
-from cykubedrunner.app import app
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists
 
@@ -167,6 +168,20 @@ def build(trid: int):
         testrun_id=testrun.id,
         specs=get_specs(settings.src_dir, testrun.project.spec_filter),
         duration=time.time() - tstart))
+
+
+def deploy(trid: int):
+    """
+    As this is only ever run after a successful test run we should have everything in place: we just need to
+    execute the deploy command
+    """
+    testrun = get_testrun(trid)
+    try:
+        runcmd(testrun.project.deploy_cmd, cmd=True, cwd=settings.src_dir, node=True)
+        send_agent_event(AgentEvent(testrun_id=testrun.id, type=AgentEventType.deploy_completed))
+    except BuildFailedException as ex:
+        ex.stage = 'deploy'
+        raise ex
 
 
 def prepare_cache(trid):
