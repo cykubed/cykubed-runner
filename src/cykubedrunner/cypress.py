@@ -11,15 +11,15 @@ from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
 from cykubedrunner.app import app
-from cykubedrunner.common.enums import TestResultStatus
+from cykubedrunner.common.enums import TestResultStatus, AgentEventType
 from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun
+    AgentSpecStarted, NewTestRun, AgentEvent
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception
+from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception, send_agent_event
 
 
 def spec_terminated(trid: int, spec: str):
@@ -170,7 +170,8 @@ class CypressSpecRunner(object):
         completions_remaining = spec_completed(self.file, self.testrun.id)
         logger.debug(f'{completions_remaining} specs remaining')
         if not completions_remaining:
-            notify_run_complete(self.httpclient, self.testrun.id)
+            # tell the agent we're done
+            send_agent_event(AgentEvent(testrun_id=self.testrun.id, type=AgentEventType.run_completed))
 
     def create_cypress_process(self) -> subprocess.CompletedProcess:
         args = self.get_args()
@@ -235,18 +236,6 @@ def default_sigterm_runner(signum, frame):
     """
     logger.warning(f"SIGTERM/SIGINT caught: bailing out")
     sys.exit(1)
-
-
-@retry(retry=retry_if_not_exception_type((RunFailedException, AssertionError)),
-       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
-       wait=wait_fixed(2) + wait_random(0, 4))
-def notify_run_complete(httpclient: Client, trid: int):
-    try:
-        resp = httpclient.post(f'/run-completed')
-        if resp.status_code != 200:
-            raise RunFailedException(f'Failed to notify cymain of completed run: {resp.status_code}')
-    except Exception as ex:
-        raise ex
 
 
 def run_tests(server: ServerThread, testrun: NewTestRun):

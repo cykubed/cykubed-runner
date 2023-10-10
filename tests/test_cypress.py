@@ -25,8 +25,6 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
     spec_started_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-started')
     spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
-    run_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/run-completed')\
-        .mock(return_value=Response(200))
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
 
@@ -64,7 +62,6 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
     cypress.run(testrun.id)
 
     start_server_mock.assert_called_once()
-    assert run_completed_mock.called
 
     assert spec_started_mock.call_count == 1
 
@@ -103,6 +100,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
 
     msgs = [json.loads(m) for m in redis.lrange('messages', 0, -1)]
     non_log = [m for m in msgs if m['type'] != 'log']
+    assert [{'type': 'run_completed', 'duration': None, 'testrun_id': 20, 'error_code': None}] == non_log
 
     assert redis.get(f'testrun:{testrun.id}:to-complete') == '0'
     assert redis.scard(f'testrun:{testrun.id}:specs') == 0

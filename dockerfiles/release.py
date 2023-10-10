@@ -28,7 +28,7 @@ def cmd(args: str, silent=False) -> str:
 @click.option('-n', '--notes', type=str, required=True, help='Release notes')
 def generate(region: str, bump: str, notes: str, generate_only: bool):
 
-    if cmd('git branch --show-current') != 'master':
+    if not generate_only and cmd('git branch --show-current') != 'master':
         raise click.BadParameter('Not on master branch')
 
     # run the tests first as a sanity check
