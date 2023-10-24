@@ -1,4 +1,4 @@
-FROM us-docker.pkg.dev/cykubed/public/base-node-16:2.0.3
+FROM us-docker.pkg.dev/cykubed/public/base-node-18-edge:2.0.3
 
 USER cykubed
 

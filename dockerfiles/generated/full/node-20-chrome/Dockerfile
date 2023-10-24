@@ -1,4 +1,4 @@
-FROM us-docker.pkg.dev/cykubed/public/base-node-16:2.0.3
+FROM us-docker.pkg.dev/cykubed/public/base-node-20-chrome:2.0.3
 
 USER cykubed
 
