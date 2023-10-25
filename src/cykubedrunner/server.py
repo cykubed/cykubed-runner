@@ -7,13 +7,14 @@ import time
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
+
 import httpx
 from httpx import RemoteProtocolError
 from loguru import logger
 
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.utils import utcnow
 from cykubedrunner.settings import settings
+from cykubedrunner.utils import utcnow
 
 
 class ServerThread(threading.Thread):

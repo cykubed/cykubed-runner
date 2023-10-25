@@ -1,6 +1,7 @@
 import os
+from typing import Optional
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class RunnerSettings(BaseSettings):
@@ -8,27 +9,27 @@ class RunnerSettings(BaseSettings):
 
     K8: bool = True
 
-    NAMESPACE = 'cykube'
+    NAMESPACE: str = 'cykube'
 
     SERVER_START_TIMEOUT: int = 60
 
-    KEEPALIVE_ON_FAILURE = False
+    KEEPALIVE_ON_FAILURE: bool = False
 
-    ENCODING = 'utf8'
+    ENCODING: str = 'utf8'
 
-    TEST = False
+    TEST: bool = False
 
-    MAX_HTTP_RETRIES = 10
-    MAX_HTTP_BACKOFF = 60
+    MAX_HTTP_RETRIES: int = 10
+    MAX_HTTP_BACKOFFS: int = 60
 
     MAIN_API_URL: str = 'https://api.cykubed.com'
 
-    SENTRY_DSN: str = None
+    SENTRY_DSN: Optional[str] = None
 
-    HOSTNAME: str = None  # for testing
+    HOSTNAME: Optional[str] = None  # for testing
 
-    SCRATCH_DIR = '/tmp/cykubed/scratch'
-    BUILD_DIR = '/tmp/cykubed/build'
+    SCRATCH_DIR: str = '/tmp/cykubed/scratch'
+    BUILD_DIR: str = '/tmp/cykubed/build'
 
     @property
     def src_dir(self):

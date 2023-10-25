@@ -1,3 +1,4 @@
+import datetime
 import os
 import shlex
 import subprocess
@@ -6,6 +7,7 @@ import traceback
 import loguru
 from httpx import Client
 from loguru import logger
+from pytz import utc
 
 from cykubedrunner.app import app
 from cykubedrunner.common import schemas
@@ -14,8 +16,16 @@ from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, AgentTestRunErrorEvent, \
     TestRunErrorReport
-from cykubedrunner.common.utils import utcnow
 from cykubedrunner.settings import settings
+
+
+def utcnow() -> datetime.datetime:
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def mytoday() -> datetime.date:
+    dt = utcnow()
+    return datetime.datetime.combine(dt.date(), datetime.time(0, tzinfo=utc))
 
 
 def get_git_sha(testrun: NewTestRun):

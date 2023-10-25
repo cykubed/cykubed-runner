@@ -16,10 +16,10 @@ from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
     AgentSpecStarted, NewTestRun, AgentEvent
-from cykubedrunner.common.utils import utcnow, get_hostname
+from cykubedrunner.common.utils import get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception, send_agent_event
+from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception, send_agent_event, utcnow
 
 
 def spec_terminated(trid: int, spec: str):

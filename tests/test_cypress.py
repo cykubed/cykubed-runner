@@ -75,20 +75,20 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
 
     assert payload == {
         "file": "cypress/e2e/nonsense/test4.spec.ts",
-        "finished": "2022-04-03T14:10:00+00:00",
+        "finished": "2022-04-03T14:10:00Z",
         "result": {
             "tests": [
                 {
                     "context": "my context",
-                    "duration": 12,
+                    "duration": 12.5,
                     "error": None,
                     "failure_screenshots": [
                         "https://api.cykubed.com/artifacts/foo.png",
                         "https://api.cykubed.com/artifacts/bah.png"
                     ],
-                    "finished_at": "2022-04-03T14:14:00+00:00",
+                    "finished_at": "2022-04-03T14:14:00Z",
                     "retry": 1,
-                    "started_at": "2022-04-03T14:11:00+00:00",
+                    "started_at": "2022-04-03T14:11:00Z",
                     "status": "failed",
                     "title": "my title"
                 }
