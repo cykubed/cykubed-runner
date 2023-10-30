@@ -322,12 +322,8 @@ def run(testrun_id: int):
         raise RunFailedException("Missing cypress cache folder")
 
     # start the server
-    server = start_server()
+    server = start_server(testrun.project)
+    logger.debug(f"Server running on port {server.port}")
 
-    try:
-        # now fetch specs until we're done or the build is cancelled
-        logger.debug(f"Server running on port {server.port}")
-        run_tests(server, testrun)
-    finally:
-        # kill the server
-        server.stop()
+    # now fetch specs until we're done or the build is cancelled
+    run_tests(server, testrun)

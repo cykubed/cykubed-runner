@@ -2,14 +2,15 @@ import json
 import os
 import re
 import time
-from wcmatch import glob
-import yaml
 
+import yaml
+from wcmatch import glob
+
+from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestRunStatus, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentEvent
-from cykubedrunner.app import app
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists
 
@@ -159,8 +160,9 @@ def build(trid: int):
     # create node environment
     create_node_environment()
 
-    # build the app
-    build_app(testrun)
+    # build the app if required
+    if testrun.project.build_cmd:
+        build_app(testrun)
 
     # tell the agent so it can inform the main server and then start the runner job
     send_agent_event(AgentBuildCompletedEvent(

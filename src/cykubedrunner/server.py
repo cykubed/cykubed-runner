@@ -7,13 +7,15 @@ import time
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
+
 import httpx
 from httpx import RemoteProtocolError
 from loguru import logger
 
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.utils import utcnow
+from cykubedrunner.common.schemas import Project
 from cykubedrunner.settings import settings
+from cykubedrunner.utils import runcmd
 
 
 class ServerThread(threading.Thread):
@@ -21,21 +23,28 @@ class ServerThread(threading.Thread):
     Trivial thread using a specific Single Page App handler (as we always want to return the index file if
     the path isn't a real file)
     """
-    def __init__(self, port=0, **kwargs):
-        super().__init__(**kwargs)
-        self.port = port
+    def __init__(self, project: Project):
+        self.port = project.server_port or 0
         self.httpd = None
-        self.last_access = None
+        self.server_cmd = project.server_cmd
 
     def run(self):
-        try:
-            with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
-                self.httpd = httpd
-                self.port = httpd.server_address[1]
-                httpd.serve_forever()
-        except Exception as ex:
-            logger.exception("Unexpected exception in server: bailing out")
-            return
+        if self.server_cmd:
+            # run the command - blocks till completion
+            try:
+                runcmd(self.server_cmd, cmd=True)
+            except BuildFailedException as ex:
+                logger.error(f"Server command failed with status code {ex.status_code}")
+                return
+        else:
+            try:
+                with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
+                    self.httpd = httpd
+                    self.port = httpd.server_address[1]
+                    httpd.serve_forever()
+            except Exception as ex:
+                logger.exception("Unexpected exception in server: bailing out")
+                return
 
     def stop(self):
         logger.info('Stopping server')
@@ -43,7 +52,7 @@ class ServerThread(threading.Thread):
         self.join()
 
 
-server: ServerThread = ServerThread()
+# server: ServerThread = ServerThread()
 
 
 class SPAHandler(SimpleHTTPRequestHandler):
@@ -65,7 +74,6 @@ class SPAHandler(SimpleHTTPRequestHandler):
         logic
         We'll either be returning an asses or the index file
         """
-        server.last_access = utcnow()
         path = self.translate_path(self.path)
 
         f = None
@@ -121,24 +129,14 @@ class SPAHandler(SimpleHTTPRequestHandler):
             raise
 
 
-def start_server() -> ServerThread:
-    """
-    Start the server
-    :return:
-    """
-    server.start()
-
-    # wait until it's ready
+def wait_for_server(port: int):
     endtime = time() + settings.SERVER_START_TIMEOUT
     sleep(1)
-    while server.port == 0:
-        logger.debug('Wait for server to be ready')
-        sleep(2)
-    logger.debug(f"Waiting for server to be ready on port {server.port}...")
+    logger.debug(f"Waiting for server to be ready on port {port}...")
     while True:
         ready = False
         try:
-            r = httpx.get(f'http://localhost:{server.port}')
+            r = httpx.get(f'http://localhost:{port}')
             if r.status_code == 200:
                 ready = True
         except RemoteProtocolError as ex:
@@ -148,15 +146,24 @@ def start_server() -> ServerThread:
 
         if ready:
             logger.debug('Server is ready')
-            return server
+            return
 
         if time() > endtime:
-            server.stop()
             raise BuildFailedException('Failed to start server')
         sleep(5)
 
 
-if __name__ == '__main__':
-    s = start_server()
-    logger.debug(f"Server running on port {s.port}")
-    s.join()
+def start_server(project: Project) -> ServerThread:
+    """
+    Start the server
+    """
+    server = ServerThread(project)
+    server.start()
+    sleep(1)
+
+    # wait until it's ready
+    while server.port == 0:
+        logger.debug('Wait for server port to be allocated')
+        sleep(2)
+
+    wait_for_server(server.port)
