@@ -23,3 +23,7 @@ def test_get_specs_legacy_override():
     specs = set(get_specs(os.path.join(FIXTURE_DIR, 'legacy-cypress-override')))
     assert specs == {'cypress/e2e/stuff/test1.spec.ts'}
 
+
+def test_default_specs():
+    specs = set(get_specs(os.path.join(FIXTURE_DIR, 'nextjs')))
+    assert specs == {'cypress/e2e/app.cy.ts', 'cypress/e2e/stuff/app2.cy.ts'}

@@ -23,7 +23,8 @@ class ServerThread(threading.Thread):
     Trivial thread using a specific Single Page App handler (as we always want to return the index file if
     the path isn't a real file)
     """
-    def __init__(self, project: Project):
+    def __init__(self, project: Project, **kwargs):
+        super().__init__(**kwargs)
         self.port = project.server_port or 0
         self.httpd = None
         self.server_cmd = project.server_cmd
@@ -32,7 +33,7 @@ class ServerThread(threading.Thread):
         if self.server_cmd:
             # run the command - blocks till completion
             try:
-                runcmd(self.server_cmd, cmd=True)
+                runcmd(self.server_cmd, cmd=True, cwd=settings.src_dir)
             except BuildFailedException as ex:
                 logger.error(f"Server command failed with status code {ex.status_code}")
                 return
@@ -131,7 +132,7 @@ class SPAHandler(SimpleHTTPRequestHandler):
 
 def wait_for_server(port: int):
     endtime = time() + settings.SERVER_START_TIMEOUT
-    sleep(1)
+    sleep(5)
     logger.debug(f"Waiting for server to be ready on port {port}...")
     while True:
         ready = False
@@ -140,6 +141,8 @@ def wait_for_server(port: int):
             if r.status_code == 200:
                 ready = True
         except RemoteProtocolError as ex:
+            logger.warning(f"...{ex}: keep waiting")
+        except httpx.ConnectError as ex:
             logger.warning(f"...{ex}: keep waiting")
         except ConnectionRefusedError:
             logger.info("...connection refused to server")
@@ -167,3 +170,5 @@ def start_server(project: Project) -> ServerThread:
         sleep(2)
 
     wait_for_server(server.port)
+
+    return server

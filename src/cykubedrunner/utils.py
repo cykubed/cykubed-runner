@@ -1,4 +1,5 @@
 import os
+import shlex
 import subprocess
 import traceback
 
@@ -22,7 +23,7 @@ def get_git_sha(testrun: NewTestRun):
                                               text=True).strip('\n')
 
 
-def get_cmd_env(env=None, **kwargs):
+def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
     cmdenv = os.environ.copy()
     cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.BUILD_DIR}/cypress_cache'
     if 'path' in kwargs:
@@ -31,12 +32,6 @@ def get_cmd_env(env=None, **kwargs):
         cmdenv['PATH'] = f'{settings.src_dir}/node_modules/.bin:' + os.environ['PATH']
     if env:
         cmdenv.update(env)
-    return cmdenv
-
-
-def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
-
-    cmdenv = get_cmd_env(env, **kwargs)
 
     if node and app.is_yarn and not args.startswith('yarn '):
         args = f'yarn run {args}'
@@ -52,7 +47,7 @@ def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
             raise BuildFailedException(msg=f'Command failed: {result.stderr}', status_code=result.returncode)
     else:
         logger.cmd(args)
-        with subprocess.Popen(args, env=cmdenv, encoding=settings.ENCODING,
+        with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               **kwargs) as proc:
             while True:

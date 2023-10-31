@@ -124,6 +124,11 @@ def get_specs(wdir, filter_regex=None):
             cfgtext = f.read()
             include_globs = re.findall(INCLUDE_SPEC_REGEX, cfgtext)
             exclude_globs = re.findall(EXCLUDE_SPEC_REGEX, cfgtext)
+            if not include_globs:
+                # try default
+                include_globs = ["cypress/{e2e,component}/**/*.cy.{js,jsx,ts,tsx}",
+                                 "cypress/{e2e,component}/*.cy.{js,jsx,ts,tsx}"
+                                 ]
 
     specs = glob.glob(include_globs, root_dir=os.path.join(wdir, folder),
                       flags=glob.BRACE, exclude=exclude_globs)
