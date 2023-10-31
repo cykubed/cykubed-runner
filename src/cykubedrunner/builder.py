@@ -102,40 +102,42 @@ def make_array(x):
     return x
 
 
-def get_specs(wdir, filter_regex=None):
+def get_specs(wdir, spec_filter=None):
     cyjson = os.path.join(wdir, 'cypress.json')
-
-    if os.path.exists(cyjson):
-        with open(cyjson, 'r') as f:
-            config = json.loads(f.read())
-        folder = config.get('integrationFolder', 'cypress/integration')
-        include_globs = make_array(config.get('testFiles', '**/*.*'))
-        exclude_globs = make_array(config.get('ignoreTestFiles', '*.hot-update.js'))
+    folder = wdir
+    prefix = None
+    if spec_filter:
+        include_globs = spec_filter
+        exclude_globs = None
     else:
-        # technically I should use node to extract the various globs, but it's more trouble than it's worth
-        # so i'll stick with regex
-        folder = ""
-        config = os.path.join(wdir, 'cypress.config.js')
-        if not os.path.exists(config):
-            config = os.path.join(wdir, 'cypress.config.ts')
+        if os.path.exists(cyjson):
+            with open(cyjson, 'r') as f:
+                config = json.loads(f.read())
+            prefix = config.get('integrationFolder', 'cypress/integration')
+            folder = os.path.join(wdir, prefix)
+            include_globs = make_array(config.get('testFiles', '**/*.*'))
+            exclude_globs = make_array(config.get('ignoreTestFiles', '*.hot-update.js'))
+        else:
+            # technically I should use node to extract the various globs, but it's more trouble than it's worth
+            # so i'll stick with regex
+            config = os.path.join(wdir, 'cypress.config.js')
             if not os.path.exists(config):
-                raise BuildFailedException("Cannot find Cypress config file")
-        with open(config, 'r') as f:
-            cfgtext = f.read()
-            include_globs = re.findall(INCLUDE_SPEC_REGEX, cfgtext)
-            exclude_globs = re.findall(EXCLUDE_SPEC_REGEX, cfgtext)
-            if not include_globs:
-                # try default
-                include_globs = ["cypress/{e2e,component}/**/*.cy.{js,jsx,ts,tsx}",
-                                 "cypress/{e2e,component}/*.cy.{js,jsx,ts,tsx}"
-                                 ]
+                config = os.path.join(wdir, 'cypress.config.ts')
+                if not os.path.exists(config):
+                    raise BuildFailedException("Cannot find Cypress config file")
+            with open(config, 'r') as f:
+                cfgtext = f.read()
+                include_globs = re.findall(INCLUDE_SPEC_REGEX, cfgtext)
+                exclude_globs = re.findall(EXCLUDE_SPEC_REGEX, cfgtext)
+                if not include_globs:
+                    # try default
+                    include_globs = ["cypress/{e2e,component}/**/*.cy.{js,jsx,ts,tsx}",
+                                     "cypress/{e2e,component}/*.cy.{js,jsx,ts,tsx}"
+                                     ]
 
-    specs = glob.glob(include_globs, root_dir=os.path.join(wdir, folder),
-                      flags=glob.BRACE, exclude=exclude_globs)
-
-    specs = [os.path.join(folder, s) for s in specs]
-    if filter_regex:
-        specs = [s for s in specs if re.search(filter_regex, s)]
+    specs = glob.glob(include_globs, root_dir=folder, flags=glob.BRACE, exclude=exclude_globs)
+    if prefix:
+        specs = [os.path.join(prefix, s) for s in specs]
     return specs
 
 
