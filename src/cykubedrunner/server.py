@@ -9,7 +9,6 @@ from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
 
 import httpx
-from httpx import RemoteProtocolError
 from loguru import logger
 
 from cykubedrunner.common.exceptions import BuildFailedException
@@ -140,9 +139,7 @@ def wait_for_server(port: int):
             r = httpx.get(f'http://localhost:{port}')
             if r.status_code == 200:
                 ready = True
-        except RemoteProtocolError as ex:
-            logger.warning(f"...{ex}: keep waiting")
-        except httpx.ConnectError as ex:
+        except httpx.HTTPError as ex:
             logger.warning(f"...{ex}: keep waiting")
         except ConnectionRefusedError:
             logger.info("...connection refused to server")
