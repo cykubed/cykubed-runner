@@ -1,6 +1,7 @@
 import json
 import os.path
 import shutil
+
 import click
 import semver
 
@@ -56,40 +57,24 @@ def generate(region: str, bump: str, firefoxvs: str):
         context = dict(node_major=node_major, **base_context)
         render('base/node', context, f'base/{node_base}')
 
-        all_base_paths.append({'image': f'base-{node_base}',  'node_major': node_major, 'browsers': []})
+        all_base_paths.append({'image': f'base-{node_base}',  'node_major': node_major})
 
         context = dict(path=node_base, destpath=f'base-{node_base}', node_major=node_major, **base_context)
         cloudbuild_steps.append(render('base/cloudbuild-step', context))
         shell_steps.append(render('base/shell-step', context))
 
-        all_browsers = []
         for browser in BROWSERS:
             browser_snippet = render(f'base/{browser}', base_context)
-            all_browsers.append(browser_snippet)
             path = f'{node_base}-{browser}'
             render('base/base-browser', dict(browsers=browser_snippet, node_major=node_major,
                                              **base_context),
                    f'base/{path}')
 
             all_base_paths.append({'image': f'base-{path}', 'node_major': node_major,
-                                   'browsers': [browser]})
+                                   'browser': browser})
 
             context = dict(path=path, destpath=f'base-{path}', **base_context)
 
-            cloudbuild_steps.append(render('base/cloudbuild-step', context))
-            shell_steps.append(render('base/shell-step', context))
-
-        # all browsers
-        if len(all_browsers) > 1:
-            path = f'{node_base}-chrome-edge-firefox'
-            context = dict(node_major=node_major, destpath=f'base-{path}',
-                           browsers="\n".join(all_browsers), **base_context)
-            render('base/base-browser', context, f'base/{path}')
-
-            all_base_paths.append({'image': f'base-{path}', 'node_major': node_major,
-                                   'browsers': BROWSERS})
-
-            context['path'] = path
             cloudbuild_steps.append(render('base/cloudbuild-step', context))
             shell_steps.append(render('base/shell-step', context))
 

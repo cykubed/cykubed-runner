@@ -1,4 +1,4 @@
-FROM us-docker.pkg.dev/cykubed/public/base:2.0.3
+FROM us-docker.pkg.dev/cykubed/public/base:2.0.4
 
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
 RUN curl -sLf -o /dev/null 'https://deb.nodesource.com/node_18.x/dists/bullseye/Release'

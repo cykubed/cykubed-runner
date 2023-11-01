@@ -57,15 +57,11 @@ def generate(region: str, bump: str, notes: str, generate_only: bool):
         steps.append(render('full/cloudbuild-step', context))
         bash_steps.append(render('full/shell-step', context))
 
-        browsers = details['browsers']
         new_runner_images.append(
-            schemas.NewRunnerImage(tag=tag,
-                                   image=f'{region}-docker.pkg.dev/cykubed/public/{path}',
-                                   description=notes,
-                                   node_version=details['node_major'],
-                                   chrome='chrome' in browsers,
-                                   firefox='firefox' in browsers,
-                                   edge='edge' in browsers))
+            schemas.DockerImage(image=f'{region}-docker.pkg.dev/cykubed/public/{path}:{tag}',
+                                description=notes,
+                                node_major_version=details['node_major'],
+                                browser=details.get('browser')))
 
     payload_obj = [i.dict() for i in new_runner_images]
     with open(os.path.join(GENERATION_DIR, 'full/cykubed-payload.json'), 'w') as f:

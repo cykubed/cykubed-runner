@@ -46,6 +46,8 @@ def project() -> Project:
                    browser='chrome',
                    platform=PlatformEnum.GITHUB,
                    url='git@github.org/dummy.git',
+                   docker_image=dict(image='cykubed-runner:1234', browser='chrome',
+                                     node_major_version=16),
                    start_runners_first=False,
                    build_cmd='ng build --output-path=dist',
                    organisation_id=5)
