@@ -38,6 +38,7 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
     assert log_msgs == ['Cloning repository',
                         'Cloned branch master',
                         'Build distribution for test run 1',
+                        'Using node v18.17.0',
                         'Creating node distribution',
                         'Building new node cache using npm',
                         'Created node environment in 0.0s',

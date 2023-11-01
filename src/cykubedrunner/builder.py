@@ -12,7 +12,7 @@ from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
     AgentBuildCompletedEvent, AgentEvent
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists
+from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists, get_node_version
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -163,6 +163,8 @@ def build(trid: int):
             app.is_yarn_modern = True
 
     logger.info(f'Build distribution for test run {testrun.local_id}')
+
+    logger.info(f'Using node {get_node_version()}')
 
     # create node environment
     create_node_environment()

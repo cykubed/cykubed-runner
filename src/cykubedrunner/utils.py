@@ -163,6 +163,10 @@ def increase_duration(testrun_id, cmd: str, duration: int):
         sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:spot', duration)
 
 
+def get_node_version() -> str:
+    return runcmd('node --version').stdout.strip()
+
+
 logger = TestRunLogger()
 
 

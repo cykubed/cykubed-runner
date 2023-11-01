@@ -54,7 +54,7 @@ def project() -> Project:
 
 
 @pytest.fixture()
-def testrun(project: Project, redis: Redis) -> NewTestRun:
+def testrun(mocker, project: Project, redis: Redis) -> NewTestRun:
     tr = NewTestRun(url='git@github.org/dummy.git',
                     id=20,
                     local_id=1,
@@ -63,4 +63,5 @@ def testrun(project: Project, redis: Redis) -> NewTestRun:
                     status='started',
                     branch='master')
     redis.set(f'testrun:{tr.id}', tr.json())
+    mocker.patch('cykubedrunner.builder.get_node_version', return_value='v18.17.0')
     return tr

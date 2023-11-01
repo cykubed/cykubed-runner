@@ -125,7 +125,7 @@ class CypressSpecRunner(object):
 
         return ['cypress', 'run',
                 '-q',
-                '--browser', self.testrun.project.browser or 'electron',
+                '--browser', self.testrun.project.docker_image.browser or 'electron',
                 '-s', self.file,
                 '--reporter', json_reporter,
                 '-o', f'output={self.results_file}',
