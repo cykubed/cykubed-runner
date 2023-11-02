@@ -15,55 +15,55 @@ steps:
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/runner/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/base-runner:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-firefox:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-chrome:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-16-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-16-edge:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-16-edge:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-firefox:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-firefox:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-chrome:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-18-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-18-edge:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-18-edge:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-firefox/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-firefox:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-firefox:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-chrome/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-chrome:3.20.53",
           "--cache=true"]
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/generated/full/node-20-edge/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/node-20-edge:3.20.52",
+          "--destination=us-docker.pkg.dev/cykubed/public/node-20-edge:3.20.53",
           "--cache=true"]
 
 - name: alpine/httpie
