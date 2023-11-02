@@ -166,7 +166,7 @@ def wait_for_server(port: int):
             if r.status_code == 200:
                 ready = True
         except httpx.HTTPError as ex:
-            logger.warning(f"...{ex}: keep waiting")
+            logger.debug(f"...{ex}: keep waiting")
         except ConnectionRefusedError:
             logger.info("...connection refused to server")
 
