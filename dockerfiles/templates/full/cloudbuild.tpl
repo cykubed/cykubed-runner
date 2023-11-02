@@ -19,5 +19,5 @@ $steps
   id: Update Cykubed app with latest runner images and notify Slack
   secretEnv: ['SLACK_HOOK_URL', 'CYKUBED_API_TOKEN']
   script: |
-    http POST https://api.cykubed.com/admin/runner/image -A bearer -a $$CYKUBED_API_TOKEN  < dockerfiles/generated/full/cykubed-payload.json
+    http POST https://api.cykubed.com/admin/docker/image -A bearer -a $$CYKUBED_API_TOKEN  < dockerfiles/generated/full/cykubed-payload.json
     http POST $$SLACK_HOOK_URL < dockerfiles/generated/full/slack-payload.json

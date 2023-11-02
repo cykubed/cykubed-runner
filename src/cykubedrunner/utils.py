@@ -5,7 +5,6 @@ import traceback
 
 import loguru
 from httpx import Client
-from loguru import logger
 
 from cykubedrunner.app import app
 from cykubedrunner.common import schemas
@@ -23,18 +22,23 @@ def get_git_sha(testrun: NewTestRun):
                                               text=True).strip('\n')
 
 
-def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
+def get_env_and_args(args: str, node=False, **kwargs):
     cmdenv = os.environ.copy()
     cmdenv['CYPRESS_CACHE_FOLDER'] = f'{settings.BUILD_DIR}/cypress_cache'
     if 'path' in kwargs:
         cmdenv['PATH'] = kwargs['path']+':'+cmdenv['PATH']
     else:
         cmdenv['PATH'] = f'{settings.src_dir}/node_modules/.bin:' + os.environ['PATH']
-    if env:
-        cmdenv.update(env)
-
     if node and app.is_yarn and not args.startswith('yarn '):
         args = f'yarn run {args}'
+    return cmdenv, args
+
+
+def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
+    cmdenv, args = get_env_and_args(args, node, **kwargs)
+
+    if env:
+        cmdenv.update(env)
 
     result = None
     if not cmd:

@@ -327,3 +327,5 @@ def run(testrun_id: int):
 
     # now fetch specs until we're done or the build is cancelled
     run_tests(server, testrun)
+
+    server.stop()

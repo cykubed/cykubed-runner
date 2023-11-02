@@ -12,7 +12,6 @@ from dockerfiles.common import NODE_MAJOR_VERSIONS, BROWSERS, GENERATION_DIR, BA
 @click.command()
 @click.option('--region', default='us', help='GCP region')
 @click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
-              default='patch',
               help='Type of version bump')
 @click.option('-ff', '--firefoxvs', default='117.0', help='Firefox version')
 def generate(region: str, bump: str, firefoxvs: str):
@@ -32,12 +31,13 @@ def generate(region: str, bump: str, firefoxvs: str):
     tag = base_details['tag']
 
     ver = semver.Version.parse(tag)
-    if bump == 'major':
-        ver = ver.bump_major()
-    elif bump == 'minor':
-        ver = ver.bump_minor()
-    else:
-        ver = ver.bump_patch()
+    if bump:
+        if bump == 'major':
+            ver = ver.bump_major()
+        elif bump == 'minor':
+            ver = ver.bump_minor()
+        else:
+            ver = ver.bump_patch()
 
     tag = str(ver)
 

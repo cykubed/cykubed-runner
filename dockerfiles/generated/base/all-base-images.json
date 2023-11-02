@@ -3,81 +3,60 @@
     "bases": [
         {
             "image": "base-node-16",
-            "node_major": "16",
-            "browsers": []
+            "node_major": "16"
         },
         {
             "image": "base-node-16-firefox",
             "node_major": "16",
-            "browsers": [
-                "firefox"
-            ]
+            "browser": "firefox"
         },
         {
             "image": "base-node-16-chrome",
             "node_major": "16",
-            "browsers": [
-                "chrome"
-            ]
+            "browser": "chrome"
         },
         {
             "image": "base-node-16-edge",
             "node_major": "16",
-            "browsers": [
-                "edge"
-            ]
+            "browser": "edge"
         },
         {
             "image": "base-node-18",
-            "node_major": "18",
-            "browsers": []
+            "node_major": "18"
         },
         {
             "image": "base-node-18-firefox",
             "node_major": "18",
-            "browsers": [
-                "firefox"
-            ]
+            "browser": "firefox"
         },
         {
             "image": "base-node-18-chrome",
             "node_major": "18",
-            "browsers": [
-                "chrome"
-            ]
+            "browser": "chrome"
         },
         {
             "image": "base-node-18-edge",
             "node_major": "18",
-            "browsers": [
-                "edge"
-            ]
+            "browser": "edge"
         },
         {
             "image": "base-node-20",
-            "node_major": "20",
-            "browsers": []
+            "node_major": "20"
         },
         {
             "image": "base-node-20-firefox",
             "node_major": "20",
-            "browsers": [
-                "firefox"
-            ]
+            "browser": "firefox"
         },
         {
             "image": "base-node-20-chrome",
             "node_major": "20",
-            "browsers": [
-                "chrome"
-            ]
+            "browser": "chrome"
         },
         {
             "image": "base-node-20-edge",
             "node_major": "20",
-            "browsers": [
-                "edge"
-            ]
+            "browser": "edge"
         }
     ]
 }

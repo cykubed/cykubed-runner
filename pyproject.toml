@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cykubed-runner"
-version = "3.20.41"
+version = "3.20.52"
 description = "Builds and runs Cypress tests for the Cykubed platform"
 authors = ["support <support@cykubed.com>"]
 readme = "README.md"
@@ -32,6 +32,7 @@ tenacity = "^8.2.2"
 pyyaml = "^6.0"
 dnspython = "^2.4.2"
 click = "^8.1.7"
+psutil = "^5.9.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"

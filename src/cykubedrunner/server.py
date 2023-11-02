@@ -1,7 +1,9 @@
 import datetime
 import email.utils
 import os
+import shlex
 import socketserver
+import subprocess
 import threading
 import time
 from http import HTTPStatus
@@ -9,12 +11,12 @@ from http.server import SimpleHTTPRequestHandler
 from time import time, sleep
 
 import httpx
-from loguru import logger
+import psutil
 
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import Project
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import runcmd
+from cykubedrunner.utils import get_env_and_args, logger
 
 
 class ServerThread(threading.Thread):
@@ -22,20 +24,35 @@ class ServerThread(threading.Thread):
     Trivial thread using a specific Single Page App handler (as we always want to return the index file if
     the path isn't a real file)
     """
-    def __init__(self, project: Project, **kwargs):
-        super().__init__(**kwargs)
-        self.port = project.server_port or 0
+    def __init__(self, server_cmd: str = None, server_port=0, **kwargs):
+        super().__init__(daemon=True, **kwargs)
+        self.port = server_port
         self.httpd = None
-        self.server_cmd = project.server_cmd
+        self.server_cmd = server_cmd
+        self.proc = None
+        self.stopping = False
 
     def run(self):
         if self.server_cmd:
             # run the command - blocks till completion
-            try:
-                runcmd(self.server_cmd, cmd=True, cwd=settings.src_dir)
-            except BuildFailedException as ex:
-                logger.error(f"Server command failed with status code {ex.status_code}")
-                return
+            cmdenv, args = get_env_and_args(self.server_cmd, True)
+
+            logger.cmd(args)
+            with subprocess.Popen(shlex.split(args), env=cmdenv, encoding=settings.ENCODING,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  cwd=settings.src_dir) as proc:
+                self.proc = proc
+                while not self.stopping:
+                    line = proc.stdout.readline()
+                    if not line and proc.returncode is not None:
+                        break
+                    if line:
+                        logger.cmdout(line)
+                    proc.poll()
+                logger.debug("Process exiting")
+                if proc.returncode and not self.stopping:
+                    logger.error(f"Server command failed with status code {proc.returncode}")
+                    return
         else:
             try:
                 with socketserver.TCPServer(("", self.port or 0), SPAHandler) as httpd:
@@ -47,12 +64,21 @@ class ServerThread(threading.Thread):
                 return
 
     def stop(self):
-        logger.info('Stopping server')
-        self.httpd.shutdown()
-        self.join()
-
-
-# server: ServerThread = ServerThread()
+        logger.debug('Stopping server')
+        self.stopping = True
+        if self.httpd:
+            self.httpd.shutdown()
+        else:
+            logger.debug('Killing server process')
+            # we need to kill all child process to ensure a clean death
+            # not strictly necessary if running in a Pod as this is a daemon thread and
+            # so will not stop the pod exiting
+            if self.proc:
+                parent = psutil.Process(self.proc.pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                self.proc.kill()
+            logger.debug('Server killed')
 
 
 class SPAHandler(SimpleHTTPRequestHandler):
@@ -157,7 +183,7 @@ def start_server(project: Project) -> ServerThread:
     """
     Start the server
     """
-    server = ServerThread(project)
+    server = ServerThread(server_cmd=project.server_cmd, server_port=project.server_port)
     server.start()
     sleep(1)
 
