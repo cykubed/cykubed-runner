@@ -29,11 +29,3 @@ minikube image load us-docker.pkg.dev/cykubed/public/node-18-chrome:$TAG &
 echo "Update projects to use Electron base image"
 
 http POST http://localhost:5002/admin/docker/image -A bearer -a $APITOKEN  < dockerfiles/generated/full/cykubed-payload.json
-
-http PUT http://localhost:5002/project/bulk/update-docker-images -A bearer -a $APITOKEN
-
-#
-#VERSIONID=$(mysql -sNe "select id from docker_image where image='us-docker.pkg.dev/cykubed/public/node-16-chrome:$TAG' and archived=0" cykubedmain)
-#
-#mysql cykubedmain -e "update project set docker_image_id=$VERSIONID"
-
