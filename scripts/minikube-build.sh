@@ -21,10 +21,10 @@ grep node-18 dockerfiles/generated/full/build.sh | head -n 3 | sh
 
 echo "Load images into Minikube"
 
-minikube image load us-docker.pkg.dev/cykubed/public/node-16:$TAG &
-minikube image load us-docker.pkg.dev/cykubed/public/node-16-chrome:$TAG &
-minikube image load us-docker.pkg.dev/cykubed/public/node-18:$TAG &
-minikube image load us-docker.pkg.dev/cykubed/public/node-18-chrome:$TAG &
+minikube image load us-docker.pkg.dev/cykubed/public/node-16:$TAG
+minikube image load us-docker.pkg.dev/cykubed/public/node-16-chrome:$TAG
+minikube image load us-docker.pkg.dev/cykubed/public/node-18:$TAG
+minikube image load us-docker.pkg.dev/cykubed/public/node-18-chrome:$TAG
 
 echo "Update projects to use Electron base image"
 

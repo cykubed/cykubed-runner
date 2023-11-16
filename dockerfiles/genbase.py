@@ -5,7 +5,7 @@ import shutil
 import click
 import semver
 
-from dockerfiles.common import NODE_MAJOR_VERSIONS, BROWSERS, GENERATION_DIR, BASE_DOCKERFILE, render, \
+from dockerfiles.common import NODE_MAJOR_VERSIONS, GENERATION_DIR, BASE_DOCKERFILE, render, \
     read_base_image_details
 
 
@@ -59,24 +59,9 @@ def generate(region: str, bump: str, firefoxvs: str):
 
         all_base_paths.append({'image': f'base-{node_base}',  'node_major': node_major})
 
-        context = dict(path=node_base, destpath=f'base-{node_base}', node_major=node_major, **base_context)
+        context = dict(path=f'base/{node_base}', destpath=f'base-{node_base}', node_major=node_major, **base_context)
         cloudbuild_steps.append(render('base/cloudbuild-step', context))
         shell_steps.append(render('base/shell-step', context))
-
-        for browser in BROWSERS:
-            browser_snippet = render(f'base/{browser}', base_context)
-            path = f'{node_base}-{browser}'
-            render('base/base-browser', dict(browsers=browser_snippet, node_major=node_major,
-                                             **base_context),
-                   f'base/{path}')
-
-            all_base_paths.append({'image': f'base-{path}', 'node_major': node_major,
-                                   'browser': browser})
-
-            context = dict(path=path, destpath=f'base-{path}', **base_context)
-
-            cloudbuild_steps.append(render('base/cloudbuild-step', context))
-            shell_steps.append(render('base/shell-step', context))
 
     # generate cloudbuild.yaml for the base image build
     render('base/cloudbuild', dict(steps="\n".join(cloudbuild_steps),

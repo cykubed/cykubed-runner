@@ -1,62 +1,17 @@
 {
-    "tag": "2.0.3",
+    "tag": "2.1.0",
     "bases": [
         {
             "image": "base-node-16",
             "node_major": "16"
         },
         {
-            "image": "base-node-16-firefox",
-            "node_major": "16",
-            "browser": "firefox"
-        },
-        {
-            "image": "base-node-16-chrome",
-            "node_major": "16",
-            "browser": "chrome"
-        },
-        {
-            "image": "base-node-16-edge",
-            "node_major": "16",
-            "browser": "edge"
-        },
-        {
             "image": "base-node-18",
             "node_major": "18"
         },
         {
-            "image": "base-node-18-firefox",
-            "node_major": "18",
-            "browser": "firefox"
-        },
-        {
-            "image": "base-node-18-chrome",
-            "node_major": "18",
-            "browser": "chrome"
-        },
-        {
-            "image": "base-node-18-edge",
-            "node_major": "18",
-            "browser": "edge"
-        },
-        {
             "image": "base-node-20",
             "node_major": "20"
-        },
-        {
-            "image": "base-node-20-firefox",
-            "node_major": "20",
-            "browser": "firefox"
-        },
-        {
-            "image": "base-node-20-chrome",
-            "node_major": "20",
-            "browser": "chrome"
-        },
-        {
-            "image": "base-node-20-edge",
-            "node_major": "20",
-            "browser": "edge"
         }
     ]
 }

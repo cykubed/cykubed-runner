@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cykubed-runner"
-version = "3.20.57"
+version = "3.20.58"
 description = "Builds and runs Cypress tests for the Cykubed platform"
 authors = ["support <support@cykubed.com>"]
 readme = "README.md"
