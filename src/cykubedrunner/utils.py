@@ -81,14 +81,25 @@ def get_testrun(id: int) -> NewTestRun | None:
     :param id:
     :return:
     """
-    d = sync_redis().get(f'testrun:{id}')
-    if d:
-        return NewTestRun.parse_raw(d)
+    if settings.LOCAL_REDIS:
+        d = sync_redis().get(f'testrun:{id}')
+        if d:
+            return NewTestRun.parse_raw(d)
+    else:
+        r = app.http_client.get('')
+        if r.status_code != 200:
+            raise BuildFailedException(f"Failed to fetch testrun")
+        return r.json()
     return None
 
 
 def send_agent_event(event: AgentEvent):
-    sync_redis().rpush('messages', event.json())
+    if settings.LOCAL_REDIS:
+        sync_redis().rpush('messages', event.json())
+    else:
+        r = app.http_client.post('/event', json=event.json())
+        if r.status_code != 200:
+            raise BuildFailedException('Failed to send event to server')
 
 
 def log_build_failed_exception(trid: int, ex: BuildFailedException):

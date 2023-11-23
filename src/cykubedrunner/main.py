@@ -9,6 +9,7 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from cykubedrunner import builder, cypress
+from cykubedrunner.app import app
 from cykubedrunner.common.cloudlogging import configure_stackdriver_logging
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.redisutils import sync_redis
@@ -34,12 +35,13 @@ def main() -> int:
             dsn=settings.SENTRY_DSN,
             integrations=[RedisIntegration(), HttpxIntegration(), ], )
 
-    # we'll need access to Redis
-    try:
-        sync_redis()
-    except Exception as ex:
-        logger.error(f"Failed to contact Redis ({ex}) - quitting")
-        sys.exit(1)
+    if settings.LOCAL_REDIS:
+        # we'll need access to Redis
+        try:
+            sync_redis()
+        except Exception as ex:
+            logger.error(f"Failed to contact Redis ({ex}) - quitting")
+            sys.exit(1)
 
     cmd = args.command
     if cmd == 'build':
@@ -50,6 +52,7 @@ def main() -> int:
     settings.init_build_dirs()
 
     trid = args.testrun_id
+    app.init_http_client(trid)
     exit_code = 0
 
     try:

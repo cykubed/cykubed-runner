@@ -21,6 +21,8 @@ class RunnerSettings(BaseSettings):
     MAX_HTTP_RETRIES = 10
     MAX_HTTP_BACKOFF = 60
 
+    LOCAL_REDIS: bool = False
+
     MAIN_API_URL: str = 'https://api.cykubed.com'
 
     SENTRY_DSN: str = None
