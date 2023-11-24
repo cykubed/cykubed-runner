@@ -7,12 +7,12 @@ import yaml
 from wcmatch import glob
 
 from cykubedrunner.app import app
-from cykubedrunner.common.enums import TestRunStatus, AgentEventType
+from cykubedrunner.common.enums import TestRunStatus
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
-    AgentBuildCompletedEvent, AgentEvent
+    AgentBuildCompleted
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists, get_node_version
+from cykubedrunner.utils import runcmd, get_testrun, logger, root_file_exists, get_node_version
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -174,13 +174,14 @@ def build(trid: int):
         build_app(testrun)
 
     # tell the agent so it can inform the main server and then start the runner job
-    send_agent_event(AgentBuildCompletedEvent(
-        testrun_id=testrun.id,
-        specs=get_specs(settings.src_dir, testrun.project.spec_filter),
-        duration=time.time() - tstart))
+    specs = get_specs(settings.src_dir, testrun.project.spec_filter)
+    r = app.http_client.post('/build-completed',
+                             json=AgentBuildCompleted(specs=specs).json())
+    if r.status_code != 200:
+        raise BuildFailedException("Failed to contact server - bailing out")
 
 
-def prepare_cache(trid):
+def prepare_cache():
     """
     Move the cachable stuff into root and delete the rest
     """
@@ -190,7 +191,10 @@ def prepare_cache(trid):
 
     runcmd(f'rm -fr {settings.src_dir}')
     logger.info("Send cache_prepared event")
-    send_agent_event(AgentEvent(testrun_id=trid, type=AgentEventType.cache_prepared))
+
+    r = app.http_client.post('/cache-prepared')
+    if r.status_code != 200:
+        raise BuildFailedException("Failed to contact server - bailing out")
 
 
 def build_app(testrun: NewTestRun):

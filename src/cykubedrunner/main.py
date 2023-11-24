@@ -6,13 +6,11 @@ import time
 
 import sentry_sdk
 from sentry_sdk.integrations.httpx import HttpxIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from cykubedrunner import builder, cypress
 from cykubedrunner.app import app
 from cykubedrunner.common.cloudlogging import configure_stackdriver_logging
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import logger, log_build_failed_exception
 
@@ -33,15 +31,7 @@ def main() -> int:
     if settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
-            integrations=[RedisIntegration(), HttpxIntegration(), ], )
-
-    if settings.LOCAL_REDIS:
-        # we'll need access to Redis
-        try:
-            sync_redis()
-        except Exception as ex:
-            logger.error(f"Failed to contact Redis ({ex}) - quitting")
-            sys.exit(1)
+            integrations=[HttpxIntegration(), ], )
 
     cmd = args.command
     if cmd == 'build':
@@ -60,7 +50,7 @@ def main() -> int:
         if cmd == 'build':
             builder.build(trid)
         elif cmd == 'prepare_cache':
-            builder.prepare_cache(trid)
+            builder.prepare_cache()
         else:
             cypress.run(trid)
 

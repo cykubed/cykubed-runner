@@ -6,27 +6,17 @@ import signal
 import subprocess
 import sys
 
-import httpx
-from httpx import Client
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
 from cykubedrunner.app import app
-from cykubedrunner.common.enums import TestResultStatus, AgentEventType
+from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
-from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    AgentSpecStarted, NewTestRun, AgentEvent
+    NewTestRun
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception, send_agent_event
-
-
-def spec_terminated(trid: int, spec: str):
-    """
-    Return the spec to the pool
-    """
-    sync_redis().sadd(f'testrun:{trid}:specs', spec)
+from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception
 
 
 def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
@@ -107,11 +97,10 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
 
 class CypressSpecRunner(object):
 
-    def __init__(self, server: ServerThread, testrun: NewTestRun, httpclient: Client, file: str):
+    def __init__(self, server: ServerThread, testrun: NewTestRun, file: str):
         self.server = server
         self.testrun = testrun
         self.file = file
-        self.httpclient = httpclient
         self.results_dir = settings.get_results_dir()
         self.results_file = f'{self.results_dir}/out.json'
         if os.path.exists(self.results_dir):
@@ -155,7 +144,7 @@ class CypressSpecRunner(object):
             # parse and upload the results
             result = parse_results(self.started, self.file)
 
-            upload_results(self.file, result, self.httpclient)
+            upload_results(self.file, result)
         except subprocess.TimeoutExpired:
             logger.info(f'Exceeded deadline for spec {self.file}')
 
@@ -166,12 +155,6 @@ class CypressSpecRunner(object):
                                     finished=utcnow()).json())
             if r.status_code != 200:
                 raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
-
-        completions_remaining = spec_completed(self.file, self.testrun.id)
-        logger.debug(f'{completions_remaining} specs remaining')
-        if not completions_remaining:
-            # tell the agent we're done
-            send_agent_event(AgentEvent(testrun_id=self.testrun.id, type=AgentEventType.run_completed))
 
     def create_cypress_process(self) -> subprocess.CompletedProcess:
         args = self.get_args()
@@ -192,14 +175,14 @@ class CypressSpecRunner(object):
 @retry(retry=retry_if_not_exception_type(RunFailedException),
        stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
        wait=wait_fixed(2) + wait_random(0, 4))
-def upload_files(client, files) -> list[str]:
-    resp = client.post('/upload-artifacts', files=files)
+def upload_files(files) -> list[str]:
+    resp = app.http_client.post('/upload-artifacts', files=files)
     if resp.status_code != 200:
         raise RunFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
     return resp.json()['urls']
 
 
-def upload_results(spec: str, result: SpecResult, httpclient: Client):
+def upload_results(spec: str, result: SpecResult):
     files = []
 
     for test in result.tests:
@@ -211,7 +194,7 @@ def upload_results(spec: str, result: SpecResult, httpclient: Client):
         files.append(('files', open(result.video, 'rb')))
 
     if files:
-        urls = upload_files(httpclient, files)
+        urls = upload_files(files)
         for test in result.tests:
             if test.failure_screenshots:
                 num = len(test.failure_screenshots)
@@ -220,7 +203,7 @@ def upload_results(spec: str, result: SpecResult, httpclient: Client):
         if urls:
             result.video = urls[0]
 
-    r = httpclient.post('/spec-completed',
+    r = app.http_client.post('/spec-completed',
                         content=AgentSpecCompleted(
                             result=result,
                             file=spec,
@@ -239,64 +222,57 @@ def default_sigterm_runner(signum, frame):
 
 
 def run_tests(server: ServerThread, testrun: NewTestRun):
-    transport = httpx.HTTPTransport(retries=settings.MAX_HTTP_RETRIES)
-    with httpx.Client(transport=transport,
-                      base_url=settings.MAIN_API_URL + f'/agent/testrun/{testrun.id}',
-                      headers={'Authorization': f'Bearer {settings.API_TOKEN}'}) as httpclient:
 
-        while not app.is_terminating:
+    def spec_terminated(specfile: str):
+        """
+        Return the spec to the pool
+        """
+        resp = app.http_client.post('/return-spec', json={'file': specfile})
+        if resp.status_code != 200:
+            logger.error(f'Failed to return spec to queue: {r.status_code}: {r.text}')
 
-            hostname = get_hostname()
+    while not app.is_terminating:
 
-            redis = sync_redis()
-            spec = redis.spop(f'testrun:{testrun.id}:specs')
-            if not spec:
-                # we're done
-                logger.debug("No more tests - exiting")
-                return
+        hostname = get_hostname()
+        r = app.http_client.post('/next-spec', json={'pod_name': hostname})
+        if r.status_code == 204:
+            # we're finished
+            logger.debug('No more spec file - quitting')
+            return
+        if r.status_code != 200:
+            raise RunFailedException(
+                f'Failed to request next spec from server: {r.status_code}: {r.text} - bailing out')
 
-            r = httpclient.post('/spec-started', content=AgentSpecStarted(file=spec,
-                                                                          started=utcnow(),
-                                                                          pod_name=hostname).json())
-            if r.status_code != 200:
-                raise RunFailedException(
-                    f'Failed to update main server that spec has started: {r.status_code}: {r.text}')
+        spec = r.text
 
-            def handle_sigterm_runner(signum, frame):
-                """
-                We can tell the agent that they should reassign the spec
-                """
-                # it's possible we've actually just finished this (pretty edge case, but it has happened)
-                app.is_terminating = True
-                if not spec in app.specs_completed:
-                    spec_terminated(testrun.id, spec)
-                logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
-                sys.exit(1)
+        def handle_sigterm_runner(signum, frame):
+            """
+            We can tell the agent that they should reassign the spec
+            """
+            # it's possible we've actually just finished this (pretty edge case, but it has happened)
+            app.is_terminating = True
+            if spec not in app.specs_completed:
+                spec_terminated(spec)
+            logger.warning(f"SIGTERM/SIGINT caught: relinquish spec {spec}")
+            sys.exit(1)
 
-            if settings.K8 and not settings.TEST:
-                signal.signal(signal.SIGTERM, handle_sigterm_runner)
-                signal.signal(signal.SIGINT, handle_sigterm_runner)
+        if settings.K8 and not settings.TEST:
+            signal.signal(signal.SIGTERM, handle_sigterm_runner)
+            signal.signal(signal.SIGINT, handle_sigterm_runner)
 
-            # run cypress for this spec
-            try:
-                CypressSpecRunner(server, testrun, httpclient, spec).run()
-            except RunFailedException as ex:
-                log_build_failed_exception(testrun.id, ex)
-                return
-            except Exception as ex:
-                # something went wrong - push the spec back onto the stack
-                logger.exception(f'Runner failed unexpectedly: adding the spec back to the stack')
-                if not spec not in app.specs_completed:
-                    redis.sadd(f'testrun:{testrun.id}:specs', spec)
-                raise ex
-
-
-def spec_completed(spec: str, trid: int) -> int:
-    """
-    Decrement the to-complete count and return the new value
-    """
-    app.specs_completed.add(spec)
-    return sync_redis().decr(f'testrun:{trid}:to-complete')
+        # run cypress for this spec
+        try:
+            CypressSpecRunner(server, testrun, spec).run()
+        except RunFailedException as ex:
+            log_build_failed_exception(testrun.id, ex)
+            return
+        except Exception as ex:
+            # something went wrong - push the spec back onto the stack
+            logger.exception(f'Runner failed unexpectedly: adding the spec back to the stack')
+            # FIXME too broad? Probably, although in this case we probably do want to catch stuff
+            # like OOM, etc
+            spec_terminated(spec)
+            raise ex
 
 
 def run(testrun_id: int):

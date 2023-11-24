@@ -104,10 +104,10 @@ def send_agent_event(event: AgentEvent):
 
 def log_build_failed_exception(trid: int, ex: BuildFailedException):
     # tell the agent
-    send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
+    app.http_client.post('/error', json=AgentTestRunErrorEvent(testrun_id=trid,
                                             report=TestRunErrorReport(msg=ex.msg,
                                                                       stage=ex.stage,
-                                                                      error_code=ex.status_code)))
+                                                                      error_code=ex.status_code)).json())
 
 
 class TestRunLogger:
@@ -146,7 +146,9 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            send_agent_event(event)
+            r = app.http_client.post('/log', json=event.json())
+            if r.status_code != 200:
+                loguru.logger.warning('Failed to send log message')
 
     def cmd(self, msg: str):
         self.step += 1
@@ -169,13 +171,6 @@ class TestRunLogger:
 
     def exception(self, msg):
         self.log(str(msg) + '\n' + traceback.format_exc() + '\n', LogLevel.error)
-
-
-def increase_duration(testrun_id, cmd: str, duration: int):
-    if not app.is_spot:
-        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:normal', duration)
-    else:
-        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:spot', duration)
 
 
 def get_node_version() -> str:
