@@ -145,8 +145,6 @@ def build(trid: int):
     """
     Build the distribution
     """
-    tstart = time.time()
-
     testrun = get_testrun(trid)
     testrun.status = TestRunStatus.building
 
@@ -173,7 +171,8 @@ def build(trid: int):
     if testrun.project.build_cmd:
         build_app(testrun)
 
-    # tell the agent so it can inform the main server and then start the runner job
+    # inform the main server so it can tell the agent to
+    # start the runner job
     specs = get_specs(settings.src_dir, testrun.project.spec_filter)
     r = app.http_client.post('/build-completed',
                              json=AgentBuildCompleted(specs=specs).json())
