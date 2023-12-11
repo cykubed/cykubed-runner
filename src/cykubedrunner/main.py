@@ -50,7 +50,7 @@ def main() -> int:
         if cmd == 'build':
             builder.build(trid)
         elif cmd == 'prepare_cache':
-            builder.prepare_cache()
+            builder.prepare_cache(trid)
         else:
             cypress.run(trid)
 

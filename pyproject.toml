@@ -26,7 +26,6 @@ sentry-sdk = {extras = ["httpx"], version = "*"}
 aiofiles = "^23.1.0"
 aiohttp = "^3.8.4"
 aioshutil = "^1.3"
-redis = {extras = ["hiredis"], version = "==4.5.4"}
 google-cloud-logging = "^3.5.0"
 tenacity = "^8.2.2"
 pyyaml = "^6.0"

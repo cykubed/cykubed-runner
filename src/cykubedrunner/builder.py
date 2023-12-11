@@ -12,7 +12,7 @@ from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
     AgentBuildCompleted
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import runcmd, get_testrun, logger, root_file_exists, get_node_version
+from cykubedrunner.utils import runcmd, logger, root_file_exists, get_node_version
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -145,7 +145,7 @@ def build(trid: int):
     """
     Build the distribution
     """
-    testrun = get_testrun(trid)
+    testrun = app.get_testrun()
     testrun.status = TestRunStatus.building
 
     if not testrun:
@@ -174,13 +174,10 @@ def build(trid: int):
     # inform the main server so it can tell the agent to
     # start the runner job
     specs = get_specs(settings.src_dir, testrun.project.spec_filter)
-    r = app.http_client.post('/build-completed',
-                             json=AgentBuildCompleted(specs=specs).json())
-    if r.status_code != 200:
-        raise BuildFailedException("Failed to contact server - bailing out")
+    app.post('build-completed', content=AgentBuildCompleted(specs=specs).json())
 
 
-def prepare_cache():
+def prepare_cache(trid: int):
     """
     Move the cachable stuff into root and delete the rest
     """
@@ -191,9 +188,7 @@ def prepare_cache():
     runcmd(f'rm -fr {settings.src_dir}')
     logger.info("Send cache_prepared event")
 
-    r = app.http_client.post('/cache-prepared')
-    if r.status_code != 200:
-        raise BuildFailedException("Failed to contact server - bailing out")
+    app.post('cache-prepared')
 
 
 def build_app(testrun: NewTestRun):

@@ -16,7 +16,7 @@ from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame,
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import get_testrun, logger, log_build_failed_exception
+from cykubedrunner.utils import logger, log_build_failed_exception
 
 
 def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
@@ -176,9 +176,7 @@ class CypressSpecRunner(object):
        stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
        wait=wait_fixed(2) + wait_random(0, 4))
 def upload_files(files) -> list[str]:
-    resp = app.http_client.post('/upload-artifacts', files=files)
-    if resp.status_code != 200:
-        raise RunFailedException(f'Failed to upload screenshot to cykube: {resp.status_code}')
+    resp = app.post('upload-artifacts', files=files)
     return resp.json()['urls']
 
 
@@ -203,14 +201,10 @@ def upload_results(spec: str, result: SpecResult):
         if urls:
             result.video = urls[0]
 
-    r = app.http_client.post('/spec-completed',
-                        content=AgentSpecCompleted(
-                            result=result,
-                            file=spec,
-                            finished=utcnow()).json())
-
-    if r.status_code != 200:
-        raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
+    app.post('spec-completed', content=AgentSpecCompleted(
+        result=result,
+        file=spec,
+        finished=utcnow()).json())
 
 
 def default_sigterm_runner(signum, frame):
@@ -227,21 +221,16 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
         """
         Return the spec to the pool
         """
-        resp = app.http_client.post('/return-spec', json={'file': specfile})
-        if resp.status_code != 200:
-            logger.error(f'Failed to return spec to queue: {r.status_code}: {r.text}')
+        app.post('return-spec', json={'file': specfile})
 
     while not app.is_terminating:
 
         hostname = get_hostname()
-        r = app.http_client.post('/next-spec', json={'pod_name': hostname})
+        r = app.post('next-spec', json={'pod_name': hostname})
         if r.status_code == 204:
             # we're finished
             logger.debug('No more spec file - quitting')
             return
-        if r.status_code != 200:
-            raise RunFailedException(
-                f'Failed to request next spec from server: {r.status_code}: {r.text} - bailing out')
 
         spec = r.text
 
@@ -284,7 +273,7 @@ def run(testrun_id: int):
 
     logger.init(testrun_id, source="runner")
 
-    testrun = get_testrun(testrun_id)
+    testrun = app.get_testrun()
     if not testrun:
         logger.info(f"Missing test run: quitting")
         return

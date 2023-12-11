@@ -10,7 +10,6 @@ from cykubedrunner.app import app
 from cykubedrunner.common import schemas
 from cykubedrunner.common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.redisutils import sync_redis
 from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, AgentTestRunErrorEvent, \
     TestRunErrorReport
 from cykubedrunner.common.utils import utcnow
@@ -75,31 +74,10 @@ def set_status(httpclient: Client, status: TestRunStatus):
         raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
 
 
-def get_testrun(id: int) -> NewTestRun | None:
-    """
-    Used by agents and runners to return a deserialised NewTestRun
-    :param id:
-    :return:
-    """
-    if settings.LOCAL_REDIS:
-        d = sync_redis().get(f'testrun:{id}')
-        if d:
-            return NewTestRun.parse_raw(d)
-    else:
-        r = app.http_client.get('')
-        if r.status_code != 200:
-            raise BuildFailedException(f"Failed to fetch testrun")
-        return r.json()
-    return None
-
-
 def send_agent_event(event: AgentEvent):
-    if settings.LOCAL_REDIS:
-        sync_redis().rpush('messages', event.json())
-    else:
-        r = app.http_client.post('/event', json=event.json())
-        if r.status_code != 200:
-            raise BuildFailedException('Failed to send event to server')
+    r = app.http_client.post('/event', json=event.json())
+    if r.status_code != 200:
+        raise BuildFailedException('Failed to send event to server')
 
 
 def log_build_failed_exception(trid: int, ex: BuildFailedException):
@@ -135,7 +113,7 @@ class TestRunLogger:
 
         if loglevelToInt[level] < self.level:
             return
-        # post to the agent
+        # post to the server
         if self.testrun_id:
             event = schemas.AgentLogMessage(type=AgentEventType.log,
                                             testrun_id=self.testrun_id,
@@ -146,7 +124,7 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            r = app.http_client.post('/log', json=event.json())
+            r = app.post('log', content=event.json())
             if r.status_code != 200:
                 loguru.logger.warning('Failed to send log message')
 
