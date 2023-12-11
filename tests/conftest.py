@@ -8,7 +8,7 @@ from loguru import logger
 
 from cykubedrunner.app import app
 from cykubedrunner.common.enums import PlatformEnum
-from cykubedrunner.common.schemas import Project, NewTestRun, AgentLogMessage
+from cykubedrunner.common.schemas import Project, NewTestRun, AgentLogMessage, TestRunBuildState
 from cykubedrunner.settings import settings
 
 
@@ -53,7 +53,8 @@ def testrun(mocker, project: Project) -> NewTestRun:
                     sha='deadbeef0101',
                     project=project,
                     status='started',
-                    branch='master')
+                    branch='master',
+                    buildstate=TestRunBuildState(testrun_id=20))
     mocker.patch('cykubedrunner.builder.get_node_version', return_value='v18.17.0')
     app.init_http_client(20)
     return tr
