@@ -56,8 +56,8 @@ def main() -> int:
 
     except BuildFailedException as ex:
         logger.error(f'{cmd.capitalize()} failed: {ex}')
-        # tell the agent
-        log_build_failed_exception(trid, ex)
+        # tell the server
+        log_build_failed_exception(ex)
 
         if settings.KEEPALIVE_ON_FAILURE:
             time.sleep(3600)

@@ -3,15 +3,14 @@ import shlex
 import subprocess
 import traceback
 
+import httpx
 import loguru
-from httpx import Client
 
 from cykubedrunner.app import app
 from cykubedrunner.common import schemas
-from cykubedrunner.common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
+from cykubedrunner.common.enums import loglevelToInt, LogLevel, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, AgentTestRunErrorEvent, \
-    TestRunErrorReport
+from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, TestRunErrorReport
 from cykubedrunner.common.utils import utcnow
 from cykubedrunner.settings import settings
 
@@ -68,24 +67,16 @@ def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
     return result
 
 
-def set_status(httpclient: Client, status: TestRunStatus):
-    r = httpclient.post(f'/status/{status}')
-    if r.status_code != 200:
-        raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
-
-
 def send_agent_event(event: AgentEvent):
-    r = app.http_client.post('/event', json=event.json())
+    r = app.post('/event', content=event.json())
     if r.status_code != 200:
         raise BuildFailedException('Failed to send event to server')
 
 
-def log_build_failed_exception(trid: int, ex: BuildFailedException):
+def log_build_failed_exception(ex: BuildFailedException):
     # tell the agent
-    app.http_client.post('/error', json=AgentTestRunErrorEvent(testrun_id=trid,
-                                            report=TestRunErrorReport(msg=ex.msg,
-                                                                      stage=ex.stage,
-                                                                      error_code=ex.status_code)).json())
+    app.post('error',
+             content=TestRunErrorReport(msg=ex.msg, stage=ex.stage, error_code=ex.status_code).json())
 
 
 class TestRunLogger:
@@ -124,7 +115,12 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            r = app.post('log', content=event.json())
+            if settings.AGENT_URL:
+                # via the agent websocket
+                r = httpx.post(f'{settings.AGENT_URL}/log', content=event.json())
+            else:
+                # direct to the server
+                r = app.post('log', content=event.json())
             if r.status_code != 200:
                 loguru.logger.warning('Failed to send log message')
 

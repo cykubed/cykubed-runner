@@ -253,7 +253,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
         try:
             CypressSpecRunner(server, testrun, spec).run()
         except RunFailedException as ex:
-            log_build_failed_exception(testrun.id, ex)
+            log_build_failed_exception(ex)
             return
         except Exception as ex:
             # something went wrong - push the spec back onto the stack
