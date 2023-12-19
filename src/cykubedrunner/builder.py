@@ -7,12 +7,12 @@ import yaml
 from wcmatch import glob
 
 from cykubedrunner.app import app
-from cykubedrunner.common.enums import TestRunStatus, AgentEventType
+from cykubedrunner.common.enums import TestRunStatus
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
-    AgentBuildCompletedEvent, AgentEvent
+    AgentBuildCompleted
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import runcmd, get_testrun, send_agent_event, logger, root_file_exists, get_node_version
+from cykubedrunner.utils import runcmd, logger, root_file_exists, get_node_version
 
 INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
 EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
@@ -145,9 +145,7 @@ def build(trid: int):
     """
     Build the distribution
     """
-    tstart = time.time()
-
-    testrun = get_testrun(trid)
+    testrun = app.get_testrun()
     testrun.status = TestRunStatus.building
 
     if not testrun:
@@ -173,14 +171,13 @@ def build(trid: int):
     if testrun.project.build_cmd:
         build_app(testrun)
 
-    # tell the agent so it can inform the main server and then start the runner job
-    send_agent_event(AgentBuildCompletedEvent(
-        testrun_id=testrun.id,
-        specs=get_specs(settings.src_dir, testrun.project.spec_filter),
-        duration=time.time() - tstart))
+    # inform the main server so it can tell the agent to
+    # start the runner job
+    specs = get_specs(settings.src_dir, testrun.project.spec_filter)
+    app.post('build-completed', content=AgentBuildCompleted(specs=specs).json())
 
 
-def prepare_cache(trid):
+def prepare_cache(trid: int):
     """
     Move the cachable stuff into root and delete the rest
     """
@@ -190,7 +187,8 @@ def prepare_cache(trid):
 
     runcmd(f'rm -fr {settings.src_dir}')
     logger.info("Send cache_prepared event")
-    send_agent_event(AgentEvent(testrun_id=trid, type=AgentEventType.cache_prepared))
+
+    app.post('cache-prepared')
 
 
 def build_app(testrun: NewTestRun):

@@ -1,25 +1,26 @@
-import json
 import os
 import shutil
 
 from freezegun import freeze_time
-from redis import Redis
 
 from cykubedrunner import builder
-from cykubedrunner.common.enums import AgentEventType
-from cykubedrunner.common.schemas import NewTestRun, AgentBuildCompletedEvent
+from cykubedrunner.common.schemas import NewTestRun, AgentBuildCompleted
 from cykubedrunner.settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
-def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_build_no_node_cache(mocker,
+                             fetch_testrun_mock,
+                             build_completed_mock,
+                             post_logs_mock,
+                             testrun: NewTestRun,
                              fixturedir):
-    msgs = redis.lrange('messages', 0, -1)
-    assert not msgs
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
+
+    assert fetch_testrun_mock.called
 
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',
@@ -31,10 +32,8 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
     commands = [x.args[0] for x in runcmd.call_args_list]
     assert expected_commands == commands
 
-    msgs = redis.lrange('messages', 0, -1)
-    msg_dicts = [json.loads(m) for m in msgs]
+    log_msgs = post_logs_mock()
 
-    log_msgs = [x['msg']['msg'] for x in msg_dicts if x['type'] == 'log']
     assert log_msgs == ['Cloning repository',
                         'Cloned branch master',
                         'Build distribution for test run 1',
@@ -44,9 +43,8 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
                         'Created node environment in 0.0s',
                         'Building app']
 
-    event = AgentBuildCompletedEvent.parse_raw(msgs[-1])
-    assert event.type == AgentEventType.build_completed
-    assert event.testrun_id == 20
+    assert build_completed_mock.called
+    event = AgentBuildCompleted.parse_raw(build_completed_mock.calls.last.request.content.decode())
     assert set(event.specs) == {'cypress/e2e/nonsense/test4.spec.ts',
                                 'cypress/e2e/nonsense/another-test.spec.ts',
                                 'cypress/e2e/stuff/test1.spec.ts',
@@ -55,7 +53,11 @@ def test_build_no_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Red
 
 
 @freeze_time('2022-04-03 14:10:00Z')
-def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_build_with_node_cache(mocker,
+                               fetch_testrun_mock,
+                               build_completed_mock,
+                               post_logs_mock,
+                               testrun: NewTestRun,
                                fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
@@ -74,7 +76,9 @@ def test_build_with_node_cache(mocker, respx_mock, testrun: NewTestRun, redis: R
     assert commands == expected_commands
 
 
-def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_build_yarn1_no_cache(mocker, fetch_testrun_mock,
+                               build_completed_mock,
+                               post_logs_mock, testrun: NewTestRun,
                                fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
@@ -93,7 +97,9 @@ def test_build_yarn1_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Re
     assert commands == expected_commands
 
 
-def test_build_yarn2_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_build_yarn2_no_cache(mocker, fetch_testrun_mock,
+                               build_completed_mock,
+                               post_logs_mock, testrun: NewTestRun,
                                fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
@@ -112,7 +118,9 @@ def test_build_yarn2_no_cache(mocker, respx_mock, testrun: NewTestRun, redis: Re
     assert commands == expected_commands
 
 
-def test_build_yarn2_with_cache(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_build_yarn2_with_cache(mocker, fetch_testrun_mock,
+                               build_completed_mock,
+                               post_logs_mock, testrun: NewTestRun,
                                fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)

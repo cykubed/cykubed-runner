@@ -2,11 +2,9 @@ import datetime
 import json
 import os
 
-import pytest
 from freezegun import freeze_time
 from httpx import Response
 from pytz import utc
-from redis import Redis
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
@@ -15,15 +13,18 @@ from cykubedrunner.settings import settings
 
 
 @freeze_time('2022-04-03 14:10:00Z')
-@pytest.mark.respx(base_url="https://api.cykubed.com/agent/testrun/20")
-def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
+def test_cypress(mocker, respx_mock,
+                 fetch_testrun_mock,
+                 testrun: NewTestRun,
+                 post_logs_mock,
                  fixturedir):
     settings.TEST = True
-    redis.sadd(f'testrun:{testrun.id}:specs', 'cypress/e2e/nonsense/test4.spec.ts')
-    redis.set(f'testrun:{testrun.id}:to-complete', 1)
 
+    next_spec_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/next-spec').mock(side_effect=[
+        Response(status_code=200, content='cypress/e2e/nonsense/test4.spec.ts'),
+        Response(status_code=204)
+    ])
     img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
-    spec_started_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-started')
     spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
@@ -63,7 +64,7 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
 
     start_server_mock.assert_called_once()
 
-    assert spec_started_mock.call_count == 1
+    assert next_spec_mock.call_count == 2
 
     subprocess_mock.assert_called_once()
 
@@ -98,9 +99,3 @@ def test_cypress(mocker, respx_mock, testrun: NewTestRun, redis: Redis,
         }
     }
 
-    msgs = [json.loads(m) for m in redis.lrange('messages', 0, -1)]
-    non_log = [m for m in msgs if m['type'] != 'log']
-    assert [{'type': 'run_completed', 'duration': None, 'testrun_id': 20, 'error_code': None}] == non_log
-
-    assert redis.get(f'testrun:{testrun.id}:to-complete') == '0'
-    assert redis.scard(f'testrun:{testrun.id}:specs') == 0

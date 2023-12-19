@@ -2,7 +2,7 @@
 set -e
 python dockerfiles/release.py -g -b patch -n "Local build"
 
-APITOKEN=$(mysql -sNe "select token from user limit 1" cykubedmain)
+APITOKEN=$(mysql -sNe "select token from user where email='nick@cykube.net'" cykubedmain)
 BASETAG=$(jq -r '.[0].image' dockerfiles/generated/full/cykubed-payload.json | sed 's/:/\n/g' | tail -n 1
 )
 

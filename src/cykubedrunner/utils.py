@@ -3,16 +3,14 @@ import shlex
 import subprocess
 import traceback
 
+import httpx
 import loguru
-from httpx import Client
 
 from cykubedrunner.app import app
 from cykubedrunner.common import schemas
-from cykubedrunner.common.enums import TestRunStatus, loglevelToInt, LogLevel, AgentEventType
+from cykubedrunner.common.enums import loglevelToInt, LogLevel, AgentEventType
 from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.redisutils import sync_redis
-from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, AgentTestRunErrorEvent, \
-    TestRunErrorReport
+from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, TestRunErrorReport
 from cykubedrunner.common.utils import utcnow
 from cykubedrunner.settings import settings
 
@@ -69,34 +67,16 @@ def runcmd(args: str, cmd=False, env=None, log=False, node=False, **kwargs):
     return result
 
 
-def set_status(httpclient: Client, status: TestRunStatus):
-    r = httpclient.post(f'/status/{status}')
-    if r.status_code != 200:
-        raise BuildFailedException(f"Failed to contact main server to update status to {status}: {r.status_code}: {r.text}")
-
-
-def get_testrun(id: int) -> NewTestRun | None:
-    """
-    Used by agents and runners to return a deserialised NewTestRun
-    :param id:
-    :return:
-    """
-    d = sync_redis().get(f'testrun:{id}')
-    if d:
-        return NewTestRun.parse_raw(d)
-    return None
-
-
 def send_agent_event(event: AgentEvent):
-    sync_redis().rpush('messages', event.json())
+    r = app.post('/event', content=event.json())
+    if r.status_code != 200:
+        raise BuildFailedException('Failed to send event to server')
 
 
-def log_build_failed_exception(trid: int, ex: BuildFailedException):
+def log_build_failed_exception(ex: BuildFailedException):
     # tell the agent
-    send_agent_event(AgentTestRunErrorEvent(testrun_id=trid,
-                                            report=TestRunErrorReport(msg=ex.msg,
-                                                                      stage=ex.stage,
-                                                                      error_code=ex.status_code)))
+    app.post('error',
+             content=TestRunErrorReport(msg=ex.msg, stage=ex.stage, error_code=ex.status_code).json())
 
 
 class TestRunLogger:
@@ -124,7 +104,7 @@ class TestRunLogger:
 
         if loglevelToInt[level] < self.level:
             return
-        # post to the agent
+        # post to the server
         if self.testrun_id:
             event = schemas.AgentLogMessage(type=AgentEventType.log,
                                             testrun_id=self.testrun_id,
@@ -135,7 +115,14 @@ class TestRunLogger:
                                                 msg=msg,
                                                 step=self.step,
                                                 source=self.source))
-            send_agent_event(event)
+            if settings.AGENT_URL:
+                # via the agent websocket
+                r = httpx.post(f'{settings.AGENT_URL}/log', content=event.json())
+            else:
+                # direct to the server
+                r = app.post('log', content=event.json())
+            if r.status_code != 200:
+                loguru.logger.warning('Failed to send log message')
 
     def cmd(self, msg: str):
         self.step += 1
@@ -158,13 +145,6 @@ class TestRunLogger:
 
     def exception(self, msg):
         self.log(str(msg) + '\n' + traceback.format_exc() + '\n', LogLevel.error)
-
-
-def increase_duration(testrun_id, cmd: str, duration: int):
-    if not app.is_spot:
-        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:normal', duration)
-    else:
-        sync_redis().incrby(f'testrun:{testrun_id}:{cmd}:duration:spot', duration)
 
 
 def get_node_version() -> str:
