@@ -12,16 +12,18 @@ from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    NewTestRun
+    NewTestRun, SpecTest
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import logger, log_build_failed_exception
 
 
-def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
-    tests = []
+def parse_cypress_results(browser: str,
+                          started_at: datetime.datetime, spec_file: str) -> SpecResult:
     failures = 0
+    specresult = SpecResult(tests=[])
+
     with open(os.path.join(settings.get_results_dir(), 'out.json')) as f:
         rawjson = json.loads(f.read())
 
@@ -34,17 +36,19 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
 
             if 'duration' not in test:
                 continue
+            title, context = test['title'], test['context']
 
-            result = TestResult(title=test['title'],
-                                context=test['context'],
+            result = TestResult(browser=browser,
                                 status=TestResultStatus.failed if err else TestResultStatus.passed,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
                                 started_at=started_at.isoformat(),
                                 finished_at=datetime.datetime.now().isoformat())
 
+            spectest = SpecTest(results=[result], title=title, context=context, status=result.status)
+
             # check for screenshots
-            prefix = f'{result.context} -- {result.title} (failed)'
+            prefix = f'{context} -- {title} (failed)'
             sshots = []
             for fname in sshot_fnames:
                 if os.path.split(fname)[-1].startswith(prefix):
@@ -81,9 +85,8 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
                 except:
                     raise RunFailedException("Failed to parse test result")
 
-            tests.append(result)
+            specresult.tests.append(spectest)
 
-    result = SpecResult(tests=tests)
     # we should have a single video - but only add it if we have failures
     if failures:
         video_fnames = []
@@ -91,8 +94,8 @@ def parse_results(started_at: datetime.datetime, spec_file: str) -> SpecResult:
             video_fnames += [os.path.join(root, f) for f in files]
 
         if video_fnames:
-            result.video = video_fnames[0]
-    return result
+            specresult.video = video_fnames[0]
+    return specresult
 
 
 class CypressSpecRunner(object):
@@ -142,17 +145,17 @@ class CypressSpecRunner(object):
                 raise RunFailedException(f'Missing results file')
 
             # parse and upload the results
-            result = parse_results(self.started, self.file)
+            result = parse_cypress_results(self.started, self.file)
 
             upload_results(self.file, result)
         except subprocess.TimeoutExpired:
             logger.info(f'Exceeded deadline for spec {self.file}')
 
-            r = self.httpclient.post('/spec-completed',
-                                content=AgentSpecCompleted(
-                                    result=SpecResult(timeout=True, tests=[]),
-                                    file=self.file,
-                                    finished=utcnow()).json())
+            r = app.http_client.post('/spec-completed',
+                                     content=AgentSpecCompleted(
+                                         result=SpecResult(timeout=True, tests=[]),
+                                         file=self.file,
+                                         finished=utcnow()).json())
             if r.status_code != 200:
                 raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
@@ -180,29 +183,30 @@ def upload_files(files) -> list[str]:
     return resp.json()['urls']
 
 
-def upload_results(spec: str, result: SpecResult):
+def upload_results(spec: str, specresult: SpecResult):
     files = []
 
-    for test in result.tests:
-        if test.failure_screenshots:
-            for sshot in test.failure_screenshots:
-                files.append(('files', open(sshot, 'rb')))
-
-    if result.video:
-        files.append(('files', open(result.video, 'rb')))
+    for test in specresult.tests:
+        for result in test.results:
+            if result.failure_screenshots:
+                for sshot in result.failure_screenshots:
+                    files.append(('files', open(sshot, 'rb')))
 
     if files:
         urls = upload_files(files)
-        for test in result.tests:
-            if test.failure_screenshots:
-                num = len(test.failure_screenshots)
-                test.failure_screenshots = urls[:num]
-                urls = urls[num:]
-        if urls:
-            result.video = urls[0]
+        for test in specresult.tests:
+            for result in test.results:
+                if result.failure_screenshots:
+                    num = len(result.failure_screenshots)
+                    result.failure_screenshots = urls[:num]
+                    urls = urls[num:]
+
+    if specresult.video:
+        urls = upload_files([('files', open(specresult.video, 'rb'))])
+        specresult.video = urls[0]
 
     app.post('spec-completed', content=AgentSpecCompleted(
-        result=result,
+        result=specresult,
         file=spec,
         finished=utcnow()).json())
 
@@ -216,7 +220,6 @@ def default_sigterm_runner(signum, frame):
 
 
 def run_tests(server: ServerThread, testrun: NewTestRun):
-
     def spec_terminated(specfile: str):
         """
         Return the spec to the pool

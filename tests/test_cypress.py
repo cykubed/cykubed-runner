@@ -8,7 +8,7 @@ from pytz import utc
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
-from cykubedrunner.common.schemas import NewTestRun, SpecResult, TestResult
+from cykubedrunner.common.schemas import NewTestRun, SpecResult, TestResult, SpecTest
 from cykubedrunner.settings import settings
 
 
@@ -31,16 +31,20 @@ def test_cypress(mocker, respx_mock,
 
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     spec_result = SpecResult(
-        tests=[TestResult(title="my title",
-                          context="my context",
-                          status=TestResultStatus.failed,
-                          duration=12.5,
-                          retry=1,
-                          failure_screenshots=[img1_path, img1_path],
-                          started_at=started_at,
-                          finished_at=started_at + datetime.timedelta(minutes=3)
-                          )])
-    parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_results', return_value=spec_result)
+        tests=[SpecTest(title="my title",
+                        context="my context",
+                        status=TestResultStatus.failed,
+                        results=[
+                            TestResult(
+                                browser="chrome",
+                                status=TestResultStatus.failed,
+                                duration=12.5,
+                                retry=1,
+                                failure_screenshots=[img1_path, img1_path],
+                                started_at=started_at,
+                                finished_at=started_at + datetime.timedelta(minutes=3)
+                            )])])
+    parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_cypress_results', return_value=spec_result)
     upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
         return_value=Response(200, json={'urls': ['https://api.cykubed.com/artifacts/foo.png',
                                                   'https://api.cykubed.com/artifacts/bah.png',
@@ -80,18 +84,24 @@ def test_cypress(mocker, respx_mock,
         "result": {
             "tests": [
                 {
+                    "title": "my title",
                     "context": "my context",
-                    "duration": 12,
-                    "error": None,
-                    "failure_screenshots": [
-                        "https://api.cykubed.com/artifacts/foo.png",
-                        "https://api.cykubed.com/artifacts/bah.png"
-                    ],
-                    "finished_at": "2022-04-03T14:14:00+00:00",
-                    "retry": 1,
-                    "started_at": "2022-04-03T14:11:00+00:00",
                     "status": "failed",
-                    "title": "my title"
+                    "results": [
+                        {
+                            "browser" : "chrome",
+                            "status": "failed",
+                            "duration": 12,
+                            "error": None,
+                            "failure_screenshots": [
+                                "https://api.cykubed.com/artifacts/foo.png",
+                                "https://api.cykubed.com/artifacts/bah.png"
+                            ],
+                            "finished_at": "2022-04-03T14:14:00+00:00",
+                            "retry": 1,
+                            "started_at": "2022-04-03T14:11:00+00:00",
+                        }
+                    ]
                 }
             ],
             "timeout": False,
