@@ -1,17 +1,16 @@
-import datetime
 import json
-import os
+
+from dateutil.parser import parse
 
 from cykubedrunner.common.enums import TestResultStatus
-from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, SpecTest, \
+from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, SpecTest, \
     SpecTestBrowserResults
-from cykubedrunner.settings import settings
 
 
-def parse_playwright_results() -> SpecResult:
-    specresult = SpecResult(tests=[])
+def parse_playwright_results(json_file: str) -> SpecTests:
+    specresult = SpecTests(tests=[])
 
-    with open(os.path.join(settings.get_results_dir(), 'out.json')) as f:
+    with open(json_file) as f:
         rawjson = json.loads(f.read())
 
     # first group by line
@@ -25,30 +24,30 @@ def parse_playwright_results() -> SpecResult:
         failed = any([not x['ok'] for x in specs])
         spectest = SpecTest(title=specs[0]['title'],
                             line=specs[0]['line'],
-                            results=[],
+                            browser_results=[],
                             status=TestResultStatus.passed if failed else TestResultStatus.failed)
         specresult.tests.append(spectest)
         for spec in specs:
             if spec['tests']:
+
                 bybrowser = SpecTestBrowserResults(browser=spec['tests'][0]['projectName'],
                                                    results=[])
-                spectest.results.append(bybrowser)
-                for spectest in spec['tests']:
-                    testresult = TestResult(
-                        browser=spectest['projectName'],
-                        status=TestResultStatus.passed if spectest['status'] == 'passed' else
-                                            TestResultStatus.failed)
-                    bybrowser.results.append(testresult)
+                spectest.browser_results.append(bybrowser)
+                for test in spec['tests']:
 
-                    for pwresult in spectest['results']:
+                    for pwresult in test['results']:
+                        testresult = TestResult(
+                            status=TestResultStatus.passed if pwresult['status'] == 'passed' else
+                                                TestResultStatus.failed)
+                        bybrowser.results.append(testresult)
                         testresult.retry = pwresult['retry']
                         testresult.duration = pwresult['duration']
-                        testresult.started_at = datetime.datetime.fromisoformat(pwresult['startTime'])
-                        spectest.results.append(testresult)
+                        testresult.started_at = parse(pwresult['startTime'])
 
-                        if spectest['errors']:
+                        errors = pwresult.get('errors')
+                        if errors:
                             testresult.errors = []
-                            for error in spectest['errors']:
+                            for error in errors:
                                 trerr = TestResultError(message=error['message'])
                                 loc = error.get('location')
                                 if loc:
@@ -57,7 +56,7 @@ def parse_playwright_results() -> SpecResult:
                                                                  column=loc['column'])
                                 testresult.errors.append(trerr)
 
-                    attachments = spectest.get('attachments')
+                    attachments = test.get('attachments')
                     if attachments:
                         testresult.failure_screenshots = [x['path'] for x in attachments]
     return specresult

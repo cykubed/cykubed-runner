@@ -8,7 +8,7 @@ from pytz import utc
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
-from cykubedrunner.common.schemas import NewTestRun, SpecResult, TestResult, SpecTest, SpecTestBrowserResults
+from cykubedrunner.common.schemas import NewTestRun, SpecTests, TestResult, SpecTest, SpecTestBrowserResults
 from cykubedrunner.settings import settings
 
 
@@ -30,7 +30,7 @@ def test_cypress(mocker, respx_mock,
     cmdresult.returncode = 0
 
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
-    spec_result = SpecResult(
+    spec_result = SpecTests(
         tests=[SpecTest(title="my title",
                         context="my context",
                         status=TestResultStatus.failed,

@@ -28,6 +28,11 @@ def cypress_fixturedir():
     return os.path.join(os.path.dirname(__file__), 'fixtures', 'cypress')
 
 
+@pytest.fixture
+def playwright_fixturedir():
+    return os.path.join(os.path.dirname(__file__), 'fixtures', 'playwright')
+
+
 @pytest.fixture()
 def project() -> Project:
     return Project(id=10,

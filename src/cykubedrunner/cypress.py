@@ -11,7 +11,7 @@ from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wai
 from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
-from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
+from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, AgentSpecCompleted, \
     NewTestRun, SpecTest, SpecTestBrowserResults
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
@@ -19,9 +19,9 @@ from cykubedrunner.settings import settings
 from cykubedrunner.utils import logger, log_build_failed_exception
 
 
-def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecResult:
+def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecTests:
     failures = 0
-    specresult = SpecResult(tests=[])
+    specresult = SpecTests(tests=[])
 
     with open(json_file) as f:
         rawjson = json.loads(f.read())
@@ -158,7 +158,7 @@ class CypressSpecRunner(object):
 
             r = app.http_client.post('/spec-completed',
                                      content=AgentSpecCompleted(
-                                         result=SpecResult(timeout=True, tests=[]),
+                                         result=SpecTests(timeout=True, tests=[]),
                                          file=self.file,
                                          finished=utcnow()).json())
             if r.status_code != 200:
@@ -188,7 +188,7 @@ def upload_files(files) -> list[str]:
     return resp.json()['urls']
 
 
-def all_results_with_screenshots_generator(specresult: SpecResult):
+def all_results_with_screenshots_generator(specresult: SpecTests):
     for test in specresult.tests:
         for browser_results in test.browser_results:
             for result in browser_results.results:
@@ -196,7 +196,7 @@ def all_results_with_screenshots_generator(specresult: SpecResult):
                     yield result
 
 
-def upload_results(spec: str, specresult: SpecResult):
+def upload_results(spec: str, specresult: SpecTests):
     files = []
 
     for result in all_results_with_screenshots_generator(specresult):
