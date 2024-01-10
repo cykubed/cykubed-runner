@@ -44,6 +44,10 @@ def parse_playwright_results(json_file: str) -> SpecTests:
                         testresult.duration = pwresult['duration']
                         testresult.started_at = parse(pwresult['startTime'])
 
+                        attachments = pwresult.get('attachments')
+                        if attachments:
+                            testresult.failure_screenshots = [x['path'] for x in attachments]
+
                         errors = pwresult.get('errors')
                         if errors:
                             testresult.errors = []
@@ -51,12 +55,9 @@ def parse_playwright_results(json_file: str) -> SpecTests:
                                 trerr = TestResultError(message=error['message'])
                                 loc = error.get('location')
                                 if loc:
+                                    trerr.test_line = loc['line']
                                     trerr.code_frame = CodeFrame(file=loc['file'],
                                                                  line=loc['line'],
                                                                  column=loc['column'])
                                 testresult.errors.append(trerr)
-
-                    attachments = test.get('attachments')
-                    if attachments:
-                        testresult.failure_screenshots = [x['path'] for x in attachments]
     return specresult
