@@ -1,4 +1,4 @@
-import { defineConfig } from "cypress";
+import {defineConfig} from "cypress";
 
 export default defineConfig({
   projectId: "b94pqi",
@@ -11,8 +11,5 @@ export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:4200",
     specPattern: 'cypress/e2e/**/*.spec.ts'
-  },
-  component: {
-    specPattern: 'cypress/components/**/*.cy.{js,jsx,ts,tsx}'
   }
 });

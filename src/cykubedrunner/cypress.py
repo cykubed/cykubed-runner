@@ -12,19 +12,18 @@ from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecResult, AgentSpecCompleted, \
-    NewTestRun, SpecTest
+    NewTestRun, SpecTest, SpecTestBrowserResults
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import logger, log_build_failed_exception
 
 
-def parse_cypress_results(browser: str,
-                          started_at: datetime.datetime, spec_file: str) -> SpecResult:
+def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecResult:
     failures = 0
     specresult = SpecResult(tests=[])
 
-    with open(os.path.join(settings.get_results_dir(), 'out.json')) as f:
+    with open(json_file) as f:
         rawjson = json.loads(f.read())
 
         sshot_fnames = []
@@ -38,14 +37,17 @@ def parse_cypress_results(browser: str,
                 continue
             title, context = test['title'], test['context']
 
-            result = TestResult(browser=browser,
-                                status=TestResultStatus.failed if err else TestResultStatus.passed,
+            result = TestResult(status=TestResultStatus.failed if err else TestResultStatus.passed,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
-                                started_at=started_at.isoformat(),
                                 finished_at=datetime.datetime.now().isoformat())
 
-            spectest = SpecTest(results=[result], title=title, context=context, status=result.status)
+            browser_results = SpecTestBrowserResults(browser=browser,
+                                                     results=[result])
+            spectest = SpecTest(browser_results=[browser_results],
+                                title=title,
+                                context=context,
+                                status=result.status)
 
             # check for screenshots
             prefix = f'{context} -- {title} (failed)'
@@ -76,12 +78,12 @@ def parse_cypress_results(browser: str,
                         break
 
                 try:
-                    result.error = TestResultError(title=err['name'],
+                    result.errors = [TestResultError(title=err['name'],
                                                    type=err.get('type'),
                                                    test_line=testline,
                                                    message=err['message'],
                                                    stack=err['stack'],
-                                                   code_frame=codeframe)
+                                                   code_frame=codeframe)]
                 except:
                     raise RunFailedException("Failed to parse test result")
 
@@ -145,7 +147,10 @@ class CypressSpecRunner(object):
                 raise RunFailedException(f'Missing results file')
 
             # parse and upload the results
-            result = parse_cypress_results(self.started, self.file)
+            json_file = os.path.join(settings.get_results_dir(), 'out.json')
+            result = parse_cypress_results(json_file,
+                                           self.testrun.project.docker_image.browser,
+                                           self.file)
 
             upload_results(self.file, result)
         except subprocess.TimeoutExpired:
@@ -183,23 +188,27 @@ def upload_files(files) -> list[str]:
     return resp.json()['urls']
 
 
+def all_results_with_screenshots_generator(specresult: SpecResult):
+    for test in specresult.tests:
+        for browser_results in test.browser_results:
+            for result in browser_results.results:
+                if result.failure_screenshots:
+                    yield result
+
+
 def upload_results(spec: str, specresult: SpecResult):
     files = []
 
-    for test in specresult.tests:
-        for result in test.results:
-            if result.failure_screenshots:
-                for sshot in result.failure_screenshots:
-                    files.append(('files', open(sshot, 'rb')))
+    for result in all_results_with_screenshots_generator(specresult):
+        for sshot in result.failure_screenshots:
+            files.append(('files', open(sshot, 'rb')))
 
     if files:
         urls = upload_files(files)
-        for test in specresult.tests:
-            for result in test.results:
-                if result.failure_screenshots:
-                    num = len(result.failure_screenshots)
-                    result.failure_screenshots = urls[:num]
-                    urls = urls[num:]
+        for result in all_results_with_screenshots_generator(specresult):
+            num = len(result.failure_screenshots)
+            result.failure_screenshots = urls[:num]
+            urls = urls[num:]
 
     if specresult.video:
         urls = upload_files([('files', open(specresult.video, 'rb'))])

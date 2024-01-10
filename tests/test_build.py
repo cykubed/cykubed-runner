@@ -14,9 +14,9 @@ def test_build_no_node_cache(mocker,
                              build_completed_mock,
                              post_logs_mock,
                              testrun: NewTestRun,
-                             fixturedir):
+                             cypress_fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(cypress_fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
 
@@ -58,9 +58,9 @@ def test_build_with_node_cache(mocker,
                                build_completed_mock,
                                post_logs_mock,
                                testrun: NewTestRun,
-                               fixturedir):
+                               cypress_fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(cypress_fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
     # fake an empty node_modules
     os.makedirs(os.path.join(settings.BUILD_DIR, 'node_modules'))
 
@@ -79,9 +79,9 @@ def test_build_with_node_cache(mocker,
 def test_build_yarn1_no_cache(mocker, fetch_testrun_mock,
                                build_completed_mock,
                                post_logs_mock, testrun: NewTestRun,
-                               fixturedir):
+                               cypress_fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
 
@@ -100,9 +100,9 @@ def test_build_yarn1_no_cache(mocker, fetch_testrun_mock,
 def test_build_yarn2_no_cache(mocker, fetch_testrun_mock,
                                build_completed_mock,
                                post_logs_mock, testrun: NewTestRun,
-                               fixturedir):
+                               cypress_fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
 
     builder.build(testrun.id)
 
@@ -121,9 +121,9 @@ def test_build_yarn2_no_cache(mocker, fetch_testrun_mock,
 def test_build_yarn2_with_cache(mocker, fetch_testrun_mock,
                                build_completed_mock,
                                post_logs_mock, testrun: NewTestRun,
-                               fixturedir):
+                               cypress_fixturedir):
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
-    shutil.copytree(os.path.join(fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
+    shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
     os.mkdir(settings.yarn2_global_cache)
 
     builder.build(testrun.id)

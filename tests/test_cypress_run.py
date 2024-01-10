@@ -8,7 +8,7 @@ from pytz import utc
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
-from cykubedrunner.common.schemas import NewTestRun, SpecResult, TestResult, SpecTest
+from cykubedrunner.common.schemas import NewTestRun, SpecResult, TestResult, SpecTest, SpecTestBrowserResults
 from cykubedrunner.settings import settings
 
 
@@ -17,14 +17,14 @@ def test_cypress(mocker, respx_mock,
                  fetch_testrun_mock,
                  testrun: NewTestRun,
                  post_logs_mock,
-                 fixturedir):
+                 cypress_fixturedir):
     settings.TEST = True
 
     next_spec_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/next-spec').mock(side_effect=[
         Response(status_code=200, content='cypress/e2e/nonsense/test4.spec.ts'),
         Response(status_code=204)
     ])
-    img1_path = os.path.join(fixturedir, 'dummy-sshot1.png')
+    img1_path = os.path.join(cypress_fixturedir, 'dummy-sshot1.png')
     spec_completed_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/spec-completed')
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
@@ -34,16 +34,18 @@ def test_cypress(mocker, respx_mock,
         tests=[SpecTest(title="my title",
                         context="my context",
                         status=TestResultStatus.failed,
-                        results=[
-                            TestResult(
-                                browser="chrome",
-                                status=TestResultStatus.failed,
-                                duration=12.5,
-                                retry=1,
-                                failure_screenshots=[img1_path, img1_path],
-                                started_at=started_at,
-                                finished_at=started_at + datetime.timedelta(minutes=3)
-                            )])])
+                        browser_results=[
+                            SpecTestBrowserResults(browser='chrome',
+                                                   results=[
+                                                       TestResult(
+                                                           browser="chrome",
+                                                           status=TestResultStatus.failed,
+                                                           duration=12.5,
+                                                           retry=1,
+                                                           failure_screenshots=[img1_path, img1_path],
+                                                           started_at=started_at,
+                                                           finished_at=started_at + datetime.timedelta(minutes=3)
+                                                       )])])])
     parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_cypress_results', return_value=spec_result)
     upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
         return_value=Response(200, json={'urls': ['https://api.cykubed.com/artifacts/foo.png',
@@ -87,20 +89,25 @@ def test_cypress(mocker, respx_mock,
                     "title": "my title",
                     "context": "my context",
                     "status": "failed",
-                    "results": [
+                    "line": None,
+                    "browser_results": [
                         {
-                            "browser" : "chrome",
-                            "status": "failed",
-                            "duration": 12,
-                            "error": None,
-                            "failure_screenshots": [
-                                "https://api.cykubed.com/artifacts/foo.png",
-                                "https://api.cykubed.com/artifacts/bah.png"
-                            ],
-                            "finished_at": "2022-04-03T14:14:00+00:00",
-                            "retry": 1,
-                            "started_at": "2022-04-03T14:11:00+00:00",
-                        }
+                            "browser": "chrome",
+                            "results": [
+                                {
+                                    "status": "failed",
+                                    "duration": 12,
+                                    "errors": None,
+                                    "failure_screenshots": [
+                                        "https://api.cykubed.com/artifacts/foo.png",
+                                        "https://api.cykubed.com/artifacts/bah.png"
+                                    ],
+                                    "finished_at": "2022-04-03T14:14:00+00:00",
+                                    "retry": 1,
+                                    "started_at": "2022-04-03T14:11:00+00:00",
+                                }
+                            ]
+                    }
                     ]
                 }
             ],

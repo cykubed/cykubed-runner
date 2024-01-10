@@ -148,5 +148,5 @@ cython_debug/
 /src/k8config/secrets.yaml
 
 .idea
-/tests/fixtures/project/node_modules/
-!/tests/fixtures/project/dist/
+/tests/fixtures/cypress/project/node_modules/
+!/tests/fixtures/cypress/project/dist/

@@ -24,8 +24,8 @@ def initdb():
 
 
 @pytest.fixture
-def fixturedir():
-    return os.path.join(os.path.dirname(__file__), 'fixtures')
+def cypress_fixturedir():
+    return os.path.join(os.path.dirname(__file__), 'fixtures', 'cypress')
 
 
 @pytest.fixture()
