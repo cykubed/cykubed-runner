@@ -12,7 +12,7 @@ from cykubedrunner.app import app
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.exceptions import RunFailedException
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, AgentSpecCompleted, \
-    NewTestRun, SpecTest, SpecTestBrowserResults
+    NewTestRun, SpecTest
 from cykubedrunner.common.utils import utcnow, get_hostname
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
@@ -38,13 +38,12 @@ def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecT
             title, context = test['title'], test['context']
 
             result = TestResult(status=TestResultStatus.failed if err else TestResultStatus.passed,
+                                browser=browser,
                                 retry=test['currentRetry'],
                                 duration=test['duration'],
                                 finished_at=datetime.datetime.now().isoformat())
 
-            browser_results = SpecTestBrowserResults(browser=browser,
-                                                     results=[result])
-            spectest = SpecTest(browser_results=[browser_results],
+            spectest = SpecTest(results=[result],
                                 title=title,
                                 context=context,
                                 status=result.status)
@@ -190,10 +189,9 @@ def upload_files(files) -> list[str]:
 
 def all_results_with_screenshots_generator(specresult: SpecTests):
     for test in specresult.tests:
-        for browser_results in test.browser_results:
-            for result in browser_results.results:
-                if result.failure_screenshots:
-                    yield result
+        for result in test.results:
+            if result.failure_screenshots:
+                yield result
 
 
 def upload_results(spec: str, specresult: SpecTests):

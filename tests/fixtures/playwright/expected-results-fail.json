@@ -4,239 +4,230 @@
             "title": "has title will fail",
             "line": 3,
             "context": null,
-            "status": "passed",
-            "browser_results": [
+            "status": "failed",
+            "results": [
                 {
                     "browser": "chromium",
-                    "results": [
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 29999,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium/test-failed-1.png"
+                    ],
+                    "started_at": "2024-01-10T14:08:57.474000+00:00",
+                    "finished_at": null,
+                    "errors": [
                         {
-                            "status": "failed",
-                            "retry": 0,
-                            "duration": 29999,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium/test-failed-1.png"
-                            ],
-                            "started_at": "2024-01-10T14:08:57.474000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
                         },
                         {
-                            "status": "failed",
-                            "retry": 1,
-                            "duration": 30000,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/test-failed-1.png",
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/trace.zip"
-                            ],
-                            "started_at": "2024-01-10T14:09:27.956000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "chromium",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 30000,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/test-failed-1.png",
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/trace.zip"
+                    ],
+                    "started_at": "2024-01-10T14:09:27.956000+00:00",
+                    "finished_at": null,
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
                         }
                     ]
                 },
                 {
                     "browser": "firefox",
-                    "results": [
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 29999,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox/test-failed-1.png"
+                    ],
+                    "started_at": "2024-01-10T14:09:59.704000+00:00",
+                    "finished_at": null,
+                    "errors": [
                         {
-                            "status": "failed",
-                            "retry": 0,
-                            "duration": 29999,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox/test-failed-1.png"
-                            ],
-                            "started_at": "2024-01-10T14:09:59.704000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
                         },
                         {
-                            "status": "failed",
-                            "retry": 1,
-                            "duration": 30000,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/test-failed-1.png",
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/trace.zip"
-                            ],
-                            "started_at": "2024-01-10T14:10:30.750000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 30000,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/test-failed-1.png",
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/trace.zip"
+                    ],
+                    "started_at": "2024-01-10T14:10:30.750000+00:00",
+                    "finished_at": null,
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
                         }
                     ]
                 },
                 {
                     "browser": "webkit",
-                    "results": [
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 30000,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit/test-failed-1.png"
+                    ],
+                    "started_at": "2024-01-10T14:11:05.585000+00:00",
+                    "finished_at": null,
+                    "errors": [
                         {
-                            "status": "failed",
-                            "retry": 0,
-                            "duration": 30000,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit/test-failed-1.png"
-                            ],
-                            "started_at": "2024-01-10T14:11:05.585000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
                         },
                         {
-                            "status": "failed",
-                            "retry": 1,
-                            "duration": 30000,
-                            "failure_screenshots": [
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/test-failed-1.png",
-                                "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/trace.zip"
-                            ],
-                            "started_at": "2024-01-10T14:11:36.385000+00:00",
-                            "finished_at": null,
-                            "errors": [
-                                {
-                                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": null,
-                                    "stack": null,
-                                    "code_frame": null,
-                                    "video": null
-                                },
-                                {
-                                    "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                                    "title": null,
-                                    "type": null,
-                                    "test_line": 8,
-                                    "stack": null,
-                                    "code_frame": {
-                                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                        "line": 8,
-                                        "column": 42,
-                                        "frame": null,
-                                        "language": null
-                                    },
-                                    "video": null
-                                }
-                            ]
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "webkit",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 30000,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/test-failed-1.png",
+                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/trace.zip"
+                    ],
+                    "started_at": "2024-01-10T14:11:36.385000+00:00",
+                    "finished_at": null,
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 8,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 8,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
                         }
                     ]
                 }
@@ -246,49 +237,37 @@
             "title": "get started link",
             "line": 12,
             "context": null,
-            "status": "failed",
-            "browser_results": [
+            "status": "passed",
+            "results": [
                 {
                     "browser": "chromium",
-                    "results": [
-                        {
-                            "status": "passed",
-                            "retry": 0,
-                            "duration": 816,
-                            "failure_screenshots": null,
-                            "started_at": "2024-01-10T14:09:58.505000+00:00",
-                            "finished_at": null,
-                            "errors": null
-                        }
-                    ]
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 816,
+                    "failure_screenshots": null,
+                    "started_at": "2024-01-10T14:09:58.505000+00:00",
+                    "finished_at": null,
+                    "errors": null
                 },
                 {
                     "browser": "firefox",
-                    "results": [
-                        {
-                            "status": "passed",
-                            "retry": 0,
-                            "duration": 1458,
-                            "failure_screenshots": null,
-                            "started_at": "2024-01-10T14:11:01.953000+00:00",
-                            "finished_at": null,
-                            "errors": null
-                        }
-                    ]
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1458,
+                    "failure_screenshots": null,
+                    "started_at": "2024-01-10T14:11:01.953000+00:00",
+                    "finished_at": null,
+                    "errors": null
                 },
                 {
                     "browser": "webkit",
-                    "results": [
-                        {
-                            "status": "passed",
-                            "retry": 0,
-                            "duration": 1030,
-                            "failure_screenshots": null,
-                            "started_at": "2024-01-10T14:12:07.210000+00:00",
-                            "finished_at": null,
-                            "errors": null
-                        }
-                    ]
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1030,
+                    "failure_screenshots": null,
+                    "started_at": "2024-01-10T14:12:07.210000+00:00",
+                    "finished_at": null,
+                    "errors": null
                 }
             ]
         }

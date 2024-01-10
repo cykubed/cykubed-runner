@@ -8,7 +8,7 @@ from pytz import utc
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
-from cykubedrunner.common.schemas import NewTestRun, SpecTests, TestResult, SpecTest, SpecTestBrowserResults
+from cykubedrunner.common.schemas import NewTestRun, SpecTests, TestResult, SpecTest
 from cykubedrunner.settings import settings
 
 
@@ -30,22 +30,19 @@ def test_cypress(mocker, respx_mock,
     cmdresult.returncode = 0
 
     started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
+    testresult = TestResult(browser='chrome',
+                            status=TestResultStatus.failed,
+                            duration=12.5,
+                            retry=1,
+                            failure_screenshots=[img1_path, img1_path], started_at=started_at,
+                            finished_at=started_at + datetime.timedelta(minutes=3))
+
     spec_result = SpecTests(
         tests=[SpecTest(title="my title",
                         context="my context",
                         status=TestResultStatus.failed,
-                        browser_results=[
-                            SpecTestBrowserResults(browser='chrome',
-                                                   results=[
-                                                       TestResult(
-                                                           browser="chrome",
-                                                           status=TestResultStatus.failed,
-                                                           duration=12.5,
-                                                           retry=1,
-                                                           failure_screenshots=[img1_path, img1_path],
-                                                           started_at=started_at,
-                                                           finished_at=started_at + datetime.timedelta(minutes=3)
-                                                       )])])])
+                        results=[testresult])])
+
     parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_cypress_results', return_value=spec_result)
     upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
         return_value=Response(200, json={'urls': ['https://api.cykubed.com/artifacts/foo.png',
@@ -90,24 +87,20 @@ def test_cypress(mocker, respx_mock,
                     "context": "my context",
                     "status": "failed",
                     "line": None,
-                    "browser_results": [
+                    "results": [
                         {
                             "browser": "chrome",
-                            "results": [
-                                {
-                                    "status": "failed",
-                                    "duration": 12,
-                                    "errors": None,
-                                    "failure_screenshots": [
-                                        "https://api.cykubed.com/artifacts/foo.png",
-                                        "https://api.cykubed.com/artifacts/bah.png"
-                                    ],
-                                    "finished_at": "2022-04-03T14:14:00+00:00",
-                                    "retry": 1,
-                                    "started_at": "2022-04-03T14:11:00+00:00",
-                                }
-                            ]
-                    }
+                            "status": "failed",
+                            "duration": 12,
+                            "errors": None,
+                            "failure_screenshots": [
+                                "https://api.cykubed.com/artifacts/foo.png",
+                                "https://api.cykubed.com/artifacts/bah.png"
+                            ],
+                            "finished_at": "2022-04-03T14:14:00+00:00",
+                            "retry": 1,
+                            "started_at": "2022-04-03T14:11:00+00:00"
+                        }
                     ]
                 }
             ],
@@ -115,4 +108,3 @@ def test_cypress(mocker, respx_mock,
             "video": None
         }
     }
-
