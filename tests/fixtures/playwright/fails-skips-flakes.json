@@ -1,0 +1,507 @@
+{
+  "config": {
+    "configFile": "/home/nick/projects/dummyui/playwright.config.ts",
+    "rootDir": "/home/nick/projects/dummyui/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/nick/projects/dummyui/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/nick/projects/dummyui/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/nick/projects/dummyui/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/nick/projects/dummyui/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.40.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "another.spec.ts",
+      "file": "another.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "has title will fail",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "timedOut",
+                  "duration": 29999,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                        "column": 42,
+                        "line": 8
+                      },
+                      "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:11:44.081Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium/test-failed-1.png"
+                    }
+                  ]
+                },
+                {
+                  "workerIndex": 1,
+                  "status": "timedOut",
+                  "duration": 29999,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                        "column": 42,
+                        "line": 8
+                      },
+                      "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2024-01-11T12:12:14.564Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-7dca6846e3505025382d",
+          "file": "another.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "skipped test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip"
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:12:44.866Z",
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-55a1522e8b21b013e600",
+          "file": "another.spec.ts",
+          "line": 12,
+          "column": 6
+        },
+        {
+          "title": "passing test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 498,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:12:45.091Z",
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-40bc8116d4c1adb1d7db",
+          "file": "another.spec.ts",
+          "line": 18,
+          "column": 1
+        },
+        {
+          "title": "flakey test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 429,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:12:45.748Z",
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-22c2a049f1fba1cff105",
+          "file": "another.spec.ts",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "has title will fail",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "status": "timedOut",
+                  "duration": 29999,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                        "column": 42,
+                        "line": 8
+                      },
+                      "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:12:46.418Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox/test-failed-1.png"
+                    }
+                  ]
+                },
+                {
+                  "workerIndex": 4,
+                  "status": "timedOut",
+                  "duration": 29999,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                        "column": 42,
+                        "line": 8
+                      },
+                      "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2024-01-11T12:13:17.437Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-e056f367b5fc29fd90e4",
+          "file": "another.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "skipped test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "skip"
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:13:48.381Z",
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-73b4c8f9c8c3f19351c5",
+          "file": "another.spec.ts",
+          "line": 12,
+          "column": 6
+        },
+        {
+          "title": "passing test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "status": "passed",
+                  "duration": 1180,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:13:48.611Z",
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-f18d4ddcb60d845a316b",
+          "file": "another.spec.ts",
+          "line": 18,
+          "column": 1
+        },
+        {
+          "title": "flakey test",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "status": "failed",
+                  "duration": 5416,
+                  "error": {
+                    "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: getByTestId('num')\nExpected string: \u001b[32m\"1\u001b[7m1\u001b[27m\"\u001b[39m\nReceived string: \u001b[31m\"1\u001b[7m0\u001b[27m\"\u001b[39m\nCall log:\n  \u001b[2m- expect.toContainText with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('num')\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n",
+                    "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: getByTestId('num')\nExpected string: \u001b[32m\"1\u001b[7m1\u001b[27m\"\u001b[39m\nReceived string: \u001b[31m\"1\u001b[7m0\u001b[27m\"\u001b[39m\nCall log:\n  \u001b[2m- expect.toContainText with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('num')\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\n    at /home/nick/projects/dummyui/tests/another.spec.ts:38:41",
+                    "location": {
+                      "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                      "column": 41,
+                      "line": 38
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 36 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 37 |\u001b[39m   \u001b[90m// this will fail sometimes\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'num'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'11'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 39 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 40 |\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                        "column": 41,
+                        "line": 38
+                      },
+                      "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: getByTestId('num')\nExpected string: \u001b[32m\"1\u001b[7m1\u001b[27m\"\u001b[39m\nReceived string: \u001b[31m\"1\u001b[7m0\u001b[27m\"\u001b[39m\nCall log:\n  \u001b[2m- expect.toContainText with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('num')\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 36 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 37 |\u001b[39m   \u001b[90m// this will fail sometimes\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'num'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'11'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 39 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 40 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:38:41\u001b[22m"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2024-01-11T12:13:50.189Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/home/nick/projects/dummyui/test-results/another-flakey-test-firefox/test-failed-1.png"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                    "column": 41,
+                    "line": 38
+                  }
+                },
+                {
+                  "workerIndex": 6,
+                  "status": "passed",
+                  "duration": 1299,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2024-01-11T12:13:56.212Z",
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/home/nick/projects/dummyui/test-results/another-flakey-test-firefox-retry1/trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "flaky"
+            }
+          ],
+          "id": "3d6a052f428319b31d65-3722c14c45745150f568",
+          "file": "another.spec.ts",
+          "line": 25,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2024-01-11T12:11:43.796Z",
+    "duration": 136127.348,
+    "expected": 3,
+    "skipped": 2,
+    "unexpected": 2,
+    "flaky": 1
+  }
+}

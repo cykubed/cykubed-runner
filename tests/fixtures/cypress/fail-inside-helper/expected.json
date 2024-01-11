@@ -1,0 +1,110 @@
+{
+    "tests": [
+        {
+            "title": "should show next when button clicked",
+            "line": null,
+            "context": "test1",
+            "status": "failed",
+            "failed": [
+                {
+                    "browser": "chrome",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 233,
+                    "failure_screenshots": null,
+                    "errors": [
+                        {
+                            "message": "`cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click",
+                            "title": "CypressError",
+                            "type": null,
+                            "test_line": 11,
+                            "stack": "CypressError: `cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click\n    at mouseAction (http://localhost:4200/__cypress/runner/cypress_runner.js:111447:68)\n    at Context.click (http://localhost:4200/__cypress/runner/cypress_runner.js:111611:14)\n    at wrapped (http://localhost:4200/__cypress/runner/cypress_runner.js:137583:19)\nFrom Your Spec Code:\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:11:21)",
+                            "code_frame": {
+                                "file": "cypress/e2e/stuff/test1.spec.ts",
+                                "line": 11,
+                                "column": 22,
+                                "frame": "   9 | \n  10 |   it('should show next when button clicked', () => {\n> 11 |     cy.get('button').click();\n     |                      ^\n  12 |     cy.get('#next-title').should('be.visible');\n  13 |   });\n  14 | ",
+                                "language": "ts"
+                            },
+                            "video": null
+                        }
+                    ]
+                }
+            ],
+            "flakey": [],
+            "passed": []
+        },
+        {
+            "title": "should have the correct title",
+            "line": null,
+            "context": "test1",
+            "status": "passed",
+            "failed": [],
+            "flakey": [],
+            "passed": [
+                {
+                    "browser": "chrome",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 89,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        },
+        {
+            "title": "this will fail inside a helper",
+            "line": null,
+            "context": "test1",
+            "status": "failed",
+            "failed": [
+                {
+                    "browser": "chrome",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 4205,
+                    "failure_screenshots": null,
+                    "errors": [
+                        {
+                            "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
+                            "title": "AssertionError",
+                            "type": null,
+                            "test_line": 21,
+                            "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at Object.shouldFail (webpack://dummyui/./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:21:4)",
+                            "code_frame": {
+                                "file": "cypress/e2e/helpers/helper.ts",
+                                "line": 6,
+                                "column": 16,
+                                "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
+                                "language": "ts"
+                            },
+                            "video": null
+                        }
+                    ]
+                }
+            ],
+            "flakey": [],
+            "passed": []
+        },
+        {
+            "title": "flakey test",
+            "line": null,
+            "context": "test1",
+            "status": "flakey",
+            "failed": [],
+            "flakey": [
+                {
+                    "browser": "chrome",
+                    "status": "flakey",
+                    "retry": 1,
+                    "duration": 236,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ],
+            "passed": []
+        }
+    ],
+    "video": null,
+    "timeout": false
+}

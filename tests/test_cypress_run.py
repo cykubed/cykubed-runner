@@ -1,10 +1,8 @@
-import datetime
 import json
 import os
 
 from freezegun import freeze_time
 from httpx import Response
-from pytz import utc
 
 from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
@@ -19,6 +17,7 @@ def test_cypress(mocker, respx_mock,
                  post_logs_mock,
                  cypress_fixturedir):
     settings.TEST = True
+    testrun.project.browsers = ['chrome']
 
     next_spec_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/next-spec').mock(side_effect=[
         Response(status_code=200, content='cypress/e2e/nonsense/test4.spec.ts'),
@@ -29,19 +28,19 @@ def test_cypress(mocker, respx_mock,
     cmdresult = mocker.Mock()
     cmdresult.returncode = 0
 
-    started_at = datetime.datetime(2022, 4, 3, 14, 11, 0, tzinfo=utc)
     testresult = TestResult(browser='chrome',
                             status=TestResultStatus.failed,
                             duration=12.5,
                             retry=1,
-                            failure_screenshots=[img1_path, img1_path], started_at=started_at,
-                            finished_at=started_at + datetime.timedelta(minutes=3))
+                            failure_screenshots=[img1_path, img1_path])
 
     spec_result = SpecTests(
         tests=[SpecTest(title="my title",
                         context="my context",
                         status=TestResultStatus.failed,
-                        results=[testresult])])
+                        passed=[],
+                        flakey=[],
+                        failed=[testresult])])
 
     parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_cypress_results', return_value=spec_result)
     upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
@@ -51,7 +50,7 @@ def test_cypress(mocker, respx_mock,
     server_thread_mock = mocker.Mock()
     start_server_mock = mocker.patch('cykubedrunner.cypress.start_server', return_valu=server_thread_mock)
 
-    def create_mock_output() -> bool:
+    def create_mock_output(browser: str = None) -> bool:
         with open(f'{settings.get_results_dir()}/out.json', 'w') as f:
             f.write(json.dumps({'passed': 1}))
         return True
@@ -77,34 +76,7 @@ def test_cypress(mocker, respx_mock,
     assert spec_completed_mock.call_count == 1
     payload = json.loads(spec_completed_mock.calls[0].request.content.decode())
 
-    assert payload == {
-        "file": "cypress/e2e/nonsense/test4.spec.ts",
-        "finished": "2022-04-03T14:10:00+00:00",
-        "result": {
-            "tests": [
-                {
-                    "title": "my title",
-                    "context": "my context",
-                    "status": "failed",
-                    "line": None,
-                    "results": [
-                        {
-                            "browser": "chrome",
-                            "status": "failed",
-                            "duration": 12,
-                            "errors": None,
-                            "failure_screenshots": [
-                                "https://api.cykubed.com/artifacts/foo.png",
-                                "https://api.cykubed.com/artifacts/bah.png"
-                            ],
-                            "finished_at": "2022-04-03T14:14:00+00:00",
-                            "retry": 1,
-                            "started_at": "2022-04-03T14:11:00+00:00"
-                        }
-                    ]
-                }
-            ],
-            "timeout": False,
-            "video": None
-        }
-    }
+    with open(os.path.join(cypress_fixturedir, 'expected-spec-completed-payload.json')) as f:
+        expected = json.loads(f.read())
+
+    assert expected == payload

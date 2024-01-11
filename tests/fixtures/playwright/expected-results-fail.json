@@ -5,7 +5,7 @@
             "line": 3,
             "context": null,
             "status": "failed",
-            "results": [
+            "failed": [
                 {
                     "browser": "chromium",
                     "status": "failed",
@@ -14,8 +14,6 @@
                     "failure_screenshots": [
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium/test-failed-1.png"
                     ],
-                    "started_at": "2024-01-10T14:08:57.474000+00:00",
-                    "finished_at": null,
                     "errors": [
                         {
                             "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
@@ -47,13 +45,11 @@
                     "browser": "chromium",
                     "status": "failed",
                     "retry": 1,
-                    "duration": 30000,
+                    "duration": 29999,
                     "failure_screenshots": [
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/test-failed-1.png",
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-chromium-retry1/trace.zip"
                     ],
-                    "started_at": "2024-01-10T14:09:27.956000+00:00",
-                    "finished_at": null,
                     "errors": [
                         {
                             "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
@@ -89,8 +85,6 @@
                     "failure_screenshots": [
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox/test-failed-1.png"
                     ],
-                    "started_at": "2024-01-10T14:09:59.704000+00:00",
-                    "finished_at": null,
                     "errors": [
                         {
                             "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
@@ -122,88 +116,11 @@
                     "browser": "firefox",
                     "status": "failed",
                     "retry": 1,
-                    "duration": 30000,
+                    "duration": 29999,
                     "failure_screenshots": [
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/test-failed-1.png",
                         "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-firefox-retry1/trace.zip"
                     ],
-                    "started_at": "2024-01-10T14:10:30.750000+00:00",
-                    "finished_at": null,
-                    "errors": [
-                        {
-                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                            "title": null,
-                            "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                            "title": null,
-                            "type": null,
-                            "test_line": 8,
-                            "stack": null,
-                            "code_frame": {
-                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                "line": 8,
-                                "column": 42,
-                                "frame": null,
-                                "language": null
-                            },
-                            "video": null
-                        }
-                    ]
-                },
-                {
-                    "browser": "webkit",
-                    "status": "failed",
-                    "retry": 0,
-                    "duration": 30000,
-                    "failure_screenshots": [
-                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit/test-failed-1.png"
-                    ],
-                    "started_at": "2024-01-10T14:11:05.585000+00:00",
-                    "finished_at": null,
-                    "errors": [
-                        {
-                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                            "title": null,
-                            "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m  6 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  7 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  8 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m  9 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 10 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 11 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:8:42\u001b[22m",
-                            "title": null,
-                            "type": null,
-                            "test_line": 8,
-                            "stack": null,
-                            "code_frame": {
-                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
-                                "line": 8,
-                                "column": 42,
-                                "frame": null,
-                                "language": null
-                            },
-                            "video": null
-                        }
-                    ]
-                },
-                {
-                    "browser": "webkit",
-                    "status": "failed",
-                    "retry": 1,
-                    "duration": 30000,
-                    "failure_screenshots": [
-                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/test-failed-1.png",
-                        "/home/nick/projects/dummyui/test-results/another-has-title-will-fail-webkit-retry1/trace.zip"
-                    ],
-                    "started_at": "2024-01-10T14:11:36.385000+00:00",
-                    "finished_at": null,
                     "errors": [
                         {
                             "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
@@ -231,42 +148,87 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "flakey": [],
+            "passed": []
         },
         {
-            "title": "get started link",
-            "line": 12,
+            "title": "passing test",
+            "line": 18,
             "context": null,
             "status": "passed",
-            "results": [
+            "failed": [],
+            "flakey": [],
+            "passed": [
                 {
                     "browser": "chromium",
                     "status": "passed",
                     "retry": 0,
-                    "duration": 816,
+                    "duration": 498,
                     "failure_screenshots": null,
-                    "started_at": "2024-01-10T14:09:58.505000+00:00",
-                    "finished_at": null,
                     "errors": null
                 },
                 {
                     "browser": "firefox",
                     "status": "passed",
                     "retry": 0,
-                    "duration": 1458,
+                    "duration": 1180,
                     "failure_screenshots": null,
-                    "started_at": "2024-01-10T14:11:01.953000+00:00",
-                    "finished_at": null,
+                    "errors": null
+                }
+            ]
+        },
+        {
+            "title": "flakey test",
+            "line": 25,
+            "context": null,
+            "status": "flakey",
+            "failed": [],
+            "flakey": [
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 5416,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-flakey-test-firefox/test-failed-1.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: getByTestId('num')\nExpected string: \u001b[32m\"1\u001b[7m1\u001b[27m\"\u001b[39m\nReceived string: \u001b[31m\"1\u001b[7m0\u001b[27m\"\u001b[39m\nCall log:\n  \u001b[2m- expect.toContainText with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('num')\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-rie-c45=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 36 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 37 |\u001b[39m   \u001b[90m// this will fail sometimes\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'num'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'11'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 39 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 40 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /home/nick/projects/dummyui/tests/another.spec.ts:38:41\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 38,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui/tests/another.spec.ts",
+                                "line": 38,
+                                "column": 41,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                }
+            ],
+            "passed": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 429,
+                    "failure_screenshots": null,
                     "errors": null
                 },
                 {
-                    "browser": "webkit",
+                    "browser": "firefox",
                     "status": "passed",
-                    "retry": 0,
-                    "duration": 1030,
-                    "failure_screenshots": null,
-                    "started_at": "2024-01-10T14:12:07.210000+00:00",
-                    "finished_at": null,
+                    "retry": 1,
+                    "duration": 1299,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui/test-results/another-flakey-test-firefox-retry1/trace.zip"
+                    ],
                     "errors": null
                 }
             ]

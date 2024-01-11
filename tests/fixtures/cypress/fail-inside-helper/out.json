@@ -1,28 +1,85 @@
 {
   "stats": {
     "suites": 1,
-    "tests": 4,
+    "tests": 5,
     "passes": 2,
     "pending": 1,
-    "failures": 1,
-    "start": "2023-05-18T11:02:46.353Z",
-    "end": "2023-05-18T11:02:55.544Z",
-    "duration": 9191
+    "failures": 2,
+    "start": "2024-01-11T13:17:45.075Z",
+    "end": "2024-01-11T13:17:59.081Z",
+    "duration": 14006
   },
   "tests": [
     {
       "title": "should show next when button clicked",
       "context": "test1",
       "file": null,
-      "duration": 547,
-      "currentRetry": 0,
-      "err": {}
+      "duration": 233,
+      "currentRetry": 1,
+      "err": {
+        "message": "`cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click",
+        "name": "CypressError",
+        "stack": "CypressError: `cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click\n    at mouseAction (http://localhost:4200/__cypress/runner/cypress_runner.js:111447:68)\n    at Context.click (http://localhost:4200/__cypress/runner/cypress_runner.js:111611:14)\n    at wrapped (http://localhost:4200/__cypress/runner/cypress_runner.js:137583:19)\nFrom Your Spec Code:\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:11:21)",
+        "parsedStack": [
+          {
+            "message": "CypressError: `cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.",
+            "whitespace": ""
+          },
+          {
+            "function": "mouseAction",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 111447,
+            "column": 68,
+            "whitespace": "    "
+          },
+          {
+            "function": "Context.click",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 111611,
+            "column": 14,
+            "whitespace": "    "
+          },
+          {
+            "function": "wrapped",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 137583,
+            "column": 19,
+            "whitespace": "    "
+          },
+          {
+            "message": "From Your Spec Code:",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 11,
+            "column": 21,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 11,
+          "column": 22,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "   9 | \n  10 |   it('should show next when button clicked', () => {\n> 11 |     cy.get('button').click();\n     |                      ^\n  12 |     cy.get('#next-title').should('be.visible');\n  13 |   });\n  14 | ",
+          "language": "ts"
+        }
+      }
     },
     {
       "title": "should have the correct title",
       "context": "test1",
       "file": null,
-      "duration": 112,
+      "duration": 89,
       "currentRetry": 0,
       "err": {}
     },
@@ -30,12 +87,12 @@
       "title": "this will fail inside a helper",
       "context": "test1",
       "file": null,
-      "duration": 4180,
+      "duration": 4205,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
         "name": "AssertionError",
-        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at Object.shouldFail (webpack:///./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:21:4)",
+        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at Object.shouldFail (webpack://dummyui/./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:21:4)",
         "parsedStack": [
           {
             "message": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
@@ -44,9 +101,9 @@
           {
             "function": "Object.shouldFail",
             "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
-            "originalFile": "webpack:///./cypress/e2e/helpers/helper.ts",
-            "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
-            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/helpers/helper.ts",
+            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
             "line": 6,
             "column": 15,
             "whitespace": "    "
@@ -54,9 +111,9 @@
           {
             "function": "Context.eval",
             "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
-            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
-            "relativeFile": "/build/cypress/e2e/stuff/test1.spec.ts",
-            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
             "line": 21,
             "column": 4,
             "whitespace": "    "
@@ -69,12 +126,20 @@
           "line": 6,
           "column": 16,
           "originalFile": "cypress/e2e/helpers/helper.ts",
-          "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
-          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
+          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
           "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
           "language": "ts"
         }
       }
+    },
+    {
+      "title": "flakey test",
+      "context": "test1",
+      "file": null,
+      "duration": 236,
+      "currentRetry": 1,
+      "err": {}
     },
     {
       "title": "this will be skipped",
@@ -95,15 +160,80 @@
   ],
   "failures": [
     {
+      "title": "should show next when button clicked",
+      "context": "test1",
+      "file": null,
+      "duration": 598,
+      "currentRetry": 1,
+      "err": {
+        "message": "`cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click",
+        "name": "CypressError",
+        "stack": "CypressError: `cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.\n\nhttps://on.cypress.io/click\n    at mouseAction (http://localhost:4200/__cypress/runner/cypress_runner.js:111447:68)\n    at Context.click (http://localhost:4200/__cypress/runner/cypress_runner.js:111611:14)\n    at wrapped (http://localhost:4200/__cypress/runner/cypress_runner.js:137583:19)\nFrom Your Spec Code:\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:11:21)",
+        "parsedStack": [
+          {
+            "message": "CypressError: `cy.click()` can only be called on a single element. Your subject contained 2 elements. Pass `{ multiple: true }` if you want to serially click each element.",
+            "whitespace": ""
+          },
+          {
+            "function": "mouseAction",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 111447,
+            "column": 68,
+            "whitespace": "    "
+          },
+          {
+            "function": "Context.click",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 111611,
+            "column": 14,
+            "whitespace": "    "
+          },
+          {
+            "function": "wrapped",
+            "fileUrl": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "originalFile": "http://localhost:4200/__cypress/runner/cypress_runner.js",
+            "line": 137583,
+            "column": 19,
+            "whitespace": "    "
+          },
+          {
+            "message": "From Your Spec Code:",
+            "whitespace": ""
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 11,
+            "column": 21,
+            "whitespace": "    "
+          }
+        ],
+        "codeFrame": {
+          "line": 11,
+          "column": 22,
+          "originalFile": "cypress/e2e/stuff/test1.spec.ts",
+          "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+          "frame": "   9 | \n  10 |   it('should show next when button clicked', () => {\n> 11 |     cy.get('button').click();\n     |                      ^\n  12 |     cy.get('#next-title').should('be.visible');\n  13 |   });\n  14 | ",
+          "language": "ts"
+        }
+      }
+    },
+    {
       "title": "this will fail inside a helper",
       "context": "test1",
       "file": null,
-      "duration": 4266,
+      "duration": 4225,
       "currentRetry": 1,
       "err": {
         "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
         "name": "AssertionError",
-        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at Object.shouldFail (webpack:///./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack:///./cypress/e2e/stuff/test1.spec.ts:21:4)",
+        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at Object.shouldFail (webpack://dummyui/./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:21:4)",
         "parsedStack": [
           {
             "message": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
@@ -112,9 +242,9 @@
           {
             "function": "Object.shouldFail",
             "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
-            "originalFile": "webpack:///./cypress/e2e/helpers/helper.ts",
-            "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
-            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/helpers/helper.ts",
+            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
             "line": 6,
             "column": 15,
             "whitespace": "    "
@@ -122,9 +252,9 @@
           {
             "function": "Context.eval",
             "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
-            "originalFile": "webpack:///./cypress/e2e/stuff/test1.spec.ts",
-            "relativeFile": "/build/cypress/e2e/stuff/test1.spec.ts",
-            "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
             "line": 21,
             "column": 4,
             "whitespace": "    "
@@ -137,8 +267,8 @@
           "line": 6,
           "column": 16,
           "originalFile": "cypress/e2e/helpers/helper.ts",
-          "relativeFile": "/build/cypress/e2e/helpers/helper.ts",
-          "absoluteFile": "/home/nick/myprojects/dummyui/cypress/e2e/helpers/helper.ts",
+          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
           "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
           "language": "ts"
         }
@@ -147,19 +277,19 @@
   ],
   "passes": [
     {
-      "title": "should show next when button clicked",
+      "title": "should have the correct title",
       "context": "test1",
       "file": null,
-      "duration": 547,
+      "duration": 89,
       "currentRetry": 0,
       "err": {}
     },
     {
-      "title": "should have the correct title",
+      "title": "flakey test",
       "context": "test1",
       "file": null,
-      "duration": 112,
-      "currentRetry": 0,
+      "duration": 236,
+      "currentRetry": 1,
       "err": {}
     }
   ]

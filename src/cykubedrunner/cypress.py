@@ -43,10 +43,23 @@ def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecT
                                 duration=test['duration'],
                                 finished_at=datetime.datetime.now().isoformat())
 
-            spectest = SpecTest(results=[result],
+            if result.status == TestResultStatus.passed and result.retry:
+                # flakey
+                result.status = TestResultStatus.flakey
+
+            spectest = SpecTest(passed=[],
+                                failed=[],
+                                flakey=[],
                                 title=title,
                                 context=context,
                                 status=result.status)
+
+            if result.status == TestResultStatus.passed:
+                spectest.passed.append(result)
+            elif result.status == TestResultStatus.failed:
+                spectest.failed.append(result)
+            else:
+                spectest.flakey.append(result)
 
             # check for screenshots
             prefix = f'{context} -- {title} (failed)'
@@ -112,13 +125,13 @@ class CypressSpecRunner(object):
         os.makedirs(self.results_dir)
         self.started = None
 
-    def get_args(self):
+    def get_args(self, browser=None):
         base_url = f'http://localhost:{self.server.port}'
         json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
 
         return ['cypress', 'run',
                 '-q',
-                '--browser', self.testrun.project.docker_image.browser or 'electron',
+                '--browser', browser or 'electron',
                 '-s', self.file,
                 '--reporter', json_reporter,
                 '-o', f'output={self.results_file}',
@@ -138,20 +151,27 @@ class CypressSpecRunner(object):
         self.started = utcnow()
         logger.debug(f'Run Cypress for {self.file}')
         try:
-            proc = self.create_cypress_process()
-            if not os.path.exists(self.results_file):
-                if proc.returncode == 1:
-                    # there was a problem with the run - log output
-                    logger.error(f"Cypress run failed to produce any results:\n {proc.stdout}\n{proc.stderr}")
-                raise RunFailedException(f'Missing results file')
+            spectests = None
+            for browser in self.testrun.project.browsers or ['electron']:
+                proc = self.create_cypress_process(browser)
+                if not os.path.exists(self.results_file):
+                    if proc.returncode == 1:
+                        # there was a problem with the run - log output
+                        logger.error(f"Cypress run failed to produce any results:\n {proc.stdout}\n{proc.stderr}")
+                    raise RunFailedException(f'Missing results file')
 
-            # parse and upload the results
-            json_file = os.path.join(settings.get_results_dir(), 'out.json')
-            result = parse_cypress_results(json_file,
-                                           self.testrun.project.docker_image.browser,
-                                           self.file)
-
-            upload_results(self.file, result)
+                # parse the results
+                json_file = os.path.join(settings.get_results_dir(), 'out.json')
+                result = parse_cypress_results(json_file,
+                                               browser,
+                                               self.file)
+                if not spectests:
+                    spectests = result
+                else:
+                    # merge
+                    spectests.merge(result)
+            if spectests:
+                upload_results(self.file, spectests)
         except subprocess.TimeoutExpired:
             logger.info(f'Exceeded deadline for spec {self.file}')
 
@@ -163,8 +183,8 @@ class CypressSpecRunner(object):
             if r.status_code != 200:
                 raise RunFailedException(f'Failed to set spec completed: {r.status_code}: {r.text}')
 
-    def create_cypress_process(self) -> subprocess.CompletedProcess:
-        args = self.get_args()
+    def create_cypress_process(self, browser=None) -> subprocess.CompletedProcess:
+        args = self.get_args(browser)
         fullcmd = ' '.join(args)
         logger.debug(f'Calling cypress with args: "{fullcmd}"')
 
@@ -189,7 +209,7 @@ def upload_files(files) -> list[str]:
 
 def all_results_with_screenshots_generator(specresult: SpecTests):
     for test in specresult.tests:
-        for result in test.results:
+        for result in test.failed:
             if result.failure_screenshots:
                 yield result
 
@@ -208,14 +228,16 @@ def upload_results(spec: str, specresult: SpecTests):
             result.failure_screenshots = urls[:num]
             urls = urls[num:]
 
+    msg = AgentSpecCompleted(
+        result=specresult.tests[0],
+        file=spec,
+        finished=utcnow())
+
     if specresult.video:
         urls = upload_files([('files', open(specresult.video, 'rb'))])
-        specresult.video = urls[0]
+        msg.video = urls[0]
 
-    app.post('spec-completed', content=AgentSpecCompleted(
-        result=specresult,
-        file=spec,
-        finished=utcnow()).json())
+    app.post('spec-completed', content=msg.json())
 
 
 def default_sigterm_runner(signum, frame):

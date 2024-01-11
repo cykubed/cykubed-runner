@@ -1,0 +1,26 @@
+{
+    "file": "cypress/e2e/nonsense/test4.spec.ts",
+    "finished": "2022-04-03T14:10:00+00:00",
+    "result": {
+        "title": "my title",
+        "line": null,
+        "context": "my context",
+        "status": "failed",
+        "failed": [
+            {
+                "browser": "chrome",
+                "status": "failed",
+                "retry": 1,
+                "duration": 12,
+                "failure_screenshots": [
+                    "https://api.cykubed.com/artifacts/foo.png",
+                    "https://api.cykubed.com/artifacts/bah.png"
+                ],
+                "errors": null
+            }
+        ],
+        "flakey": [],
+        "passed": []
+    },
+    "video": null
+}
