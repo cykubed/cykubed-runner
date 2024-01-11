@@ -6,7 +6,7 @@ NODE_MAJOR_VERSIONS = ['16', '18', '20']
 BROWSERS = ['firefox', 'chrome', 'edge']
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 GENERATION_DIR = os.path.join(os.path.dirname(__file__), 'generated')
-BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/Dockerfile')
+BASE_DOCKERFILE = os.path.join(os.path.dirname(__file__), 'base/cypress/Dockerfile')
 
 
 def read_base_image_details():

@@ -1,15 +1,22 @@
-timeout: 3600s
+timeout: 600s
 availableSecrets:
   secretManager:
   - versionName: projects/cykubed/secrets/SLACK_HOOK_URL/versions/1
     env: 'SLACK_HOOK_URL'
+substitutions:
+  _BASE_TAG: 2.0.0
 steps:
 - name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/generated/base/cypress/Dockerfile",
-          "--destination=${region}-docker.pkg.dev/cykubed/public/cypress-base:${tag}",
+  args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/cypress:${_BASE_TAG}",
           "--cache=true"]
 
-$steps
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-16:${_BASE_TAG}",
+          "--build-arg=node=16"
+          "--build-arg=basetag=${_BASE_TAG}"
+          "--cache=true"]
 
 - name: gcr.io/cloud-builders/curl
   id: Notify Slack

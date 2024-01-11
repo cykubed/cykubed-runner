@@ -1,4 +1,5 @@
 FROM python:3.10-slim-bullseye
+ARG firefox_version=117.0
 
 RUN apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -37,10 +38,19 @@ RUN apt-get update && \
   bash \
   git-core \
   wget \
-  libsoup-3.0-0 \
   # clean up
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean
+
+WORKDIR /usr/app
+
+RUN mkdir /node /build
+
+RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
+# Note: derived images should switch to cukubed user to avoid running as root
+
+ENV PATH="/home/cykubed/.local/bin:$PATH"
+ENV TZ=UTC
 
 # install Chrome browser
 RUN wget --no-verbose -O /usr/src/google-chrome-stable_current_amd64.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && \
@@ -66,14 +76,3 @@ RUN wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.moz
   rm /tmp/firefox.tar.bz2 && \
   ln -fs /opt/firefox/firefox /usr/bin/firefox
 
-WORKDIR /usr/app
-
-RUN mkdir /node /build
-
-RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
-# Note: derived images should switch to cukubed user to avoid running as root
-
-ENV PATH="/home/cykubed/.local/bin:$PATH"
-ENV TZ=UTC
-
-RUN pip install poetry==1.3.1

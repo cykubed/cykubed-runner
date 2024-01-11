@@ -1,3 +1,4 @@
+ARG tag=1.0
 FROM $region-docker.pkg.dev/cykubed/public/base:$tag
 
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
