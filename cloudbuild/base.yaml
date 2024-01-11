@@ -22,5 +22,6 @@ steps:
   id: Notify Slack
   secretEnv: ['SLACK_HOOK_URL']
   script: |
+    echo "$$SLACK_HOOK_URL"
     echo "{\"text\":\"Cykubed runner *base* images created with tag ${tag}\"}" > payload.json
     /usr/bin/curl -X POST -H 'Content-type: application/json' --data "@payload.json" $$SLACK_HOOK_URL
