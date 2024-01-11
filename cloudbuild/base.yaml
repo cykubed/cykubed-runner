@@ -5,6 +5,8 @@ availableSecrets:
     env: 'SLACK_HOOK_URL'
 substitutions:
   _BASE_TAG: 2.0.0
+options:
+  automapSubstitutions: true
 steps:
 #- name: gcr.io/kaniko-project/executor:latest
 #  args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
@@ -24,4 +26,5 @@ steps:
   script: |
     echo "{\"text\":\"Cykubed runner *base* images created with tag ${_BASE_TAG}\"}" > payload.json
     cat payload.json
+    echo $$SLACK_HOOK_URL
     http POST $$SLACK_HOOK_URL < payload.json
