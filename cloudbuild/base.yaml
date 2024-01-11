@@ -14,8 +14,8 @@ steps:
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
           "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-16:${_BASE_TAG}",
-          "--build-arg=node=16"
-          "--build-arg=basetag=${_BASE_TAG}"
+          "--build-arg=node=16",
+          "--build-arg=basetag=${_BASE_TAG}",
           "--cache=true"]
 
 - name: gcr.io/cloud-builders/curl
