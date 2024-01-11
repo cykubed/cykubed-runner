@@ -25,8 +25,4 @@ steps:
   secretEnv: ['SLACK_HOOK_URL']
   script: |
     echo "{\"text\":\"Cykubed runner *base* images created with tag ${_BASE_TAG}\"}" > payload.json
-    cat payload.json
-    echo $$SLACK_HOOK_URL
-    echo ${_SLACK_HOOK_URL}
-    echo $SLACK_HOOK_URL
-    http POST $$SLACK_HOOK_URL < payload.json
+    http POST $SLACK_HOOK_URL < payload.json
