@@ -1,8 +1,6 @@
 ARG region=us
-ARG base=cypress-node-16:1.0.0
+ARG base=cypress-node-18:1.0.0
 FROM ${region}-docker.pkg.dev/cykubed/public/${base}
-ARG region=us
-ARG runner_tag=1.0.0
 
 USER cykubed
 

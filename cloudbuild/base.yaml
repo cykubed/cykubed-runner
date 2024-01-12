@@ -20,6 +20,20 @@ steps:
           "--build-arg=basetag=${_BASE_TAG}",
           "--cache=true"]
 
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-18:${_BASE_TAG}",
+          "--build-arg=node=18",
+          "--build-arg=basetag=${_BASE_TAG}",
+          "--cache=true"]
+
+- name: gcr.io/kaniko-project/executor:latest
+  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-20:${_BASE_TAG}",
+          "--build-arg=node=20",
+          "--build-arg=basetag=${_BASE_TAG}",
+          "--cache=true"]
+
 - name: alpine/httpie
   id: Notify Slack
   secretEnv: ['SLACK_HOOK_URL']
