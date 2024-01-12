@@ -4,12 +4,13 @@ availableSecrets:
   - versionName: projects/1029845047729/secrets/SLACK_HOOK_URL/versions/1
     env: 'SLACK_HOOK_URL'
 substitutions:
-  _BASE_TAG: cypress:2.0.0
+  _BASE_TAG: 2.0.0
 options:
   automapSubstitutions: true
 steps:
 - name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
+  args: [ "--dockerfile=dockerfiles/full/Dockerfile",
+          "--build-arg=base=cypres-node-16:${_BASE_TAG}",
           "--destination=us-docker.pkg.dev/cykubed/public/cypress:${_BASE_TAG}",
           "--cache=true"]
 
@@ -17,20 +18,6 @@ steps:
   args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
           "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-16:${_BASE_TAG}",
           "--build-arg=node=16",
-          "--build-arg=basetag=${_BASE_TAG}",
-          "--cache=true"]
-
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-18:${_BASE_TAG}",
-          "--build-arg=node=18",
-          "--build-arg=basetag=${_BASE_TAG}",
-          "--cache=true"]
-
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-20:${_BASE_TAG}",
-          "--build-arg=node=20",
           "--build-arg=basetag=${_BASE_TAG}",
           "--cache=true"]
 
