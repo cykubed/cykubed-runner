@@ -5,7 +5,7 @@ availableSecrets:
     env: 'SLACK_HOOK_URL'
 substitutions:
   _BASE_TAG: 2.0.0
-  _TAG: 3.0.0
+  _TAG: 4.0.0
   _REGION: us
 options:
   automapSubstitutions: true
@@ -24,6 +24,31 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:${_TAG}',
+          '--build-arg', 'base=cypress-base-node-16:${_BASE_TAG}',
+          '--build-arg', 'tag=${_TAG}',
+          '-f', 'dockerfiles/full/runner/Dockerfile',
+          '.' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16' ]
+
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:${_TAG}',
+          '--build-arg', 'base=cypress-base-node-18:${_BASE_TAG}',
+          '--build-arg', 'tag=${_TAG}',
+          '-f', 'dockerfiles/full/runner/Dockerfile',
+          '.' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18' ]
 
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build',
