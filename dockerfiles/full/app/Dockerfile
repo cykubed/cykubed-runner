@@ -1,7 +1,7 @@
 FROM python:3.10-slim-bullseye
 
-RUN mkdir /node /build /usr/app
-RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
+RUN mkdir /usr/app
+RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app
 USER cykubed
 
 WORKDIR /usr/app
