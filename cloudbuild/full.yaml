@@ -5,18 +5,27 @@ availableSecrets:
     env: 'SLACK_HOOK_URL'
 substitutions:
   _BASE_TAG: 2.0.0
+  _TAG: 3.0.0
+  _REGION: us
 options:
   automapSubstitutions: true
 steps:
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/full/Dockerfile",
-          "--build-arg=base=cypress-base-node-20:${_BASE_TAG}",
-          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-20:${_BASE_TAG}",
-          "--cache=true"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:latest',
+                   '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:${_TAG}',
+          '.' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:${_TAG}',
+          '--build-arg=base=cypress-base-node-20:${_BASE_TAG}'
+          '.' ]
 
 - name: alpine/httpie
   id: Notify Slack
   secretEnv: ['SLACK_HOOK_URL']
   script: |
-    echo "{\"text\":\"Cykubed runner *base* images created with tag ${_BASE_TAG}\"}" > payload.json
+    echo "{\"text\":\"Cykubed *full* runner images created with tag ${_TAG}\"}" > payload.json
     http POST $SLACK_HOOK_URL < payload.json

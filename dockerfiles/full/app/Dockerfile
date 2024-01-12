@@ -17,5 +17,4 @@ COPY src/cykubedrunner cykubedrunner
 COPY ["pyproject.toml", "poetry.lock", "./"]
 
 RUN poetry install --no-root --only main --no-interaction
-ENV PYTHONPATH=/usr/app:.
-ENTRYPOINT ["poetry", "run", "python", "cykubedrunner/main.py"]
+
