@@ -11,11 +11,11 @@ options:
   automapSubstitutions: true
 steps:
 
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:latest',
-                   '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:${_TAG}',
-          '-f', 'dockerfiles/full/app/Dockerfile',
-          '.' ]
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:latest',
+#                   '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:${_TAG}',
+#          '-f', 'dockerfiles/full/app/Dockerfile',
+#          '.' ]
 
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build',
