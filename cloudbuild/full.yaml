@@ -10,15 +10,8 @@ options:
 steps:
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/full/Dockerfile",
-          "--build-arg=base=cypres-node-16:${_BASE_TAG}",
-          "--destination=us-docker.pkg.dev/cykubed/public/cypress:${_BASE_TAG}",
-          "--cache=true"]
-
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-16:${_BASE_TAG}",
-          "--build-arg=node=16",
-          "--build-arg=basetag=${_BASE_TAG}",
+          "--build-arg=base=cypress-base-node-20:${_BASE_TAG}",
+          "--destination=us-docker.pkg.dev/cykubed/public/cypress-node-20:${_BASE_TAG}",
           "--cache=true"]
 
 - name: alpine/httpie
