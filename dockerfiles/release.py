@@ -3,9 +3,7 @@ import os
 import subprocess
 
 import click
-
-from cykubedrunner.common import schemas
-from dockerfiles.common import GENERATION_DIR, render, read_base_image_details
+import semver
 
 BRANCH = "master"
 
@@ -19,73 +17,58 @@ def cmd(args: str, silent=False) -> str:
     return p.stdout.strip()
 
 
+VERSION_FILE = os.path.join(os.path.dirname(__file__), 'versions.json')
+
+
 @click.command(help='Generate a new release of the runner')
-@click.option('--region', default='us', help='GCP region')
-@click.option('-b', '--bump', type=click.Choice(['major', 'minor', 'patch']),
-              default='patch',
+@click.option('--releasetype', type=click.Choice(['base', 'full']), help='Release type',
+              default='full')
+@click.option('-b', '--bump', type=click.Choice(['major', 'minor']),
+              default='minor',
               help='Type of version bump')
-@click.option('-g', '--generate_only', is_flag=True, help='Generate only')
-@click.option('-n', '--notes', type=str, required=True, help='Release notes')
-def generate(region: str, bump: str, notes: str, generate_only: bool):
+@click.option('-n', '--notes', type=str, required=True, help='Release notes', default='New release')
+def generate(bump: str, releasetype: str, notes: str):
 
-    if not generate_only and cmd('git branch --show-current') != 'master':
-        raise click.BadParameter('Not on master branch')
+    branch = cmd('git branch --show-current')
+    # if branch != 'master':
+    #     raise click.BadParameter('Not on master branch')
 
-    # run the tests first as a sanity check
-    if not generate_only:
-        cmd('py.test', True)
+    with open(VERSION_FILE) as f:
+        versions = json.loads(f.read())
 
     # bump and get the tag
-    tag = cmd(f"poetry version {bump} -s")
+    oldtag = versions[releasetype]
+    ver = semver.Version.parse(oldtag)
+    if bump == 'major':
+        ver = ver.bump_major()
+    else:
+        ver = ver.bump_minor()
+    newtag = versions[releasetype] = str(ver)
 
-    base_image_details = read_base_image_details()
-    base_tag = base_image_details['tag']
+    if releasetype == 'full':
+        cmd(f"poetry version {newtag}")
 
-    steps = [render('full/base-runner-cloudbuild-step', dict(tag=tag, region=region))]
-    bash_steps = [render('full/base-runner-shell-step', dict(tag=tag, region=region))]
+    with open(VERSION_FILE, 'w') as f:
+        f.write(json.dumps(versions, indent=4))
 
-    new_runner_images = []
-    base_context = dict(base_tag=base_tag, region=region, tag=tag)
-    # now generate full images for all variants
-    for details in base_image_details['bases']:
-        base_image = details['image']
-        path = base_image[5:]
-        render('full/dockerfile',
-               dict(base_image=f'{base_image}:{base_tag}', **base_context),
-               f'full/{path}')
-        context = dict(path=path, **base_context)
-        steps.append(render('full/cloudbuild-step', context))
-        bash_steps.append(render('full/shell-step', context))
+    cmd(f'git add dockerfiles/versions.json')
 
-        new_runner_images.append(
-            schemas.DockerImage(image=f'{region}-docker.pkg.dev/cykubed/public/{path}:{tag}',
-                                description=notes,
-                                node_major_version=details['node_major'],
-                                browser=details.get('browser')))
-
-    payload_obj = [i.dict() for i in new_runner_images]
-    with open(os.path.join(GENERATION_DIR, 'full/cykubed-payload.json'), 'w') as f:
-        f.write(json.dumps(payload_obj, indent=4))
-
-    # generate cloudbuild.yaml for the base image build
-    render('full/cloudbuild', dict(steps="\n".join(steps), tag=tag, region=region),
-           output_file='full/cloudbuild.yaml')
-
-    # generate build.sh for the base image build
-    render('full/shell', dict(steps="\n".join(bash_steps), tag=tag, region=region,
-                              cykubed_api_url=os.environ.get('MAIN_API_URL', 'https://api.cykubed.com')),
-           output_file='full/build.sh')
-
-    # slack payload
-    render('full/slack', dict(tag=tag), output_file='full/slack-payload.json')
-
-    if not generate_only:
-        # all done: commit and tag
-        cmd(f'git add dockerfiles/generated')
+    if releasetype == 'full':
         cmd(f'git add pyproject.toml')
         cmd(f'git commit -m "{notes}"')
-        cmd(f'git tag -a {tag} -m "New release:\n{notes}"')
-        cmd(f'git push origin {tag}')
+        cmd(f'git tag -a {newtag} -m "New release:\n{notes}"')
+
+    cmd(f'git push origin {branch} --tags')
+
+    # now trigger the build
+    if releasetype == 'base':
+        cmd(f'gcloud builds triggers run cykubed-runner-base --substitutions=_BASE_TAG={newtag}'
+            f' --branch={branch}')
+    else:
+        basetag=versions['base']
+        cmd(f'gcloud builds triggers run cykubed-runners'
+            f' --substitutions=_BASE_TAG={basetag},_TAG={newtag} --branch={branch}')
+
 
 
 if __name__ == '__main__':
