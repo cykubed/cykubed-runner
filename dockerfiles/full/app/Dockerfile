@@ -1,7 +1,6 @@
-ARG region=us
-ARG base=cypress-node-18:1.0.0
-FROM ${region}-docker.pkg.dev/cykubed/public/${base}
+FROM python:3.10-slim-bullseye
 
+RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
 USER cykubed
 
 WORKDIR /usr/app
