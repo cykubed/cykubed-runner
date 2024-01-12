@@ -55,8 +55,9 @@ def generate(bump: str, releasetype: str, notes: str):
 
     if releasetype == 'full':
         cmd(f'git add pyproject.toml')
-        cmd(f'git commit -m "{notes}"')
         cmd(f'git tag -a {newtag} -m "New release:\n{notes}"')
+
+    cmd(f'git commit -m "{notes}"')
 
     cmd(f'git push origin {branch} --tags')
 
