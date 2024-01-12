@@ -229,7 +229,7 @@ def upload_results(spec: str, specresult: SpecTests):
             urls = urls[num:]
 
     msg = AgentSpecCompleted(
-        result=specresult.tests[0],
+        result=specresult,
         file=spec,
         finished=utcnow())
 
