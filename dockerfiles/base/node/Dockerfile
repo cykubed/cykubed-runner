@@ -1,6 +1,6 @@
 ARG region=us
 ARG basetag="1.0.0"
-FROM $region-docker.pkg.dev/cykubed/public/cypress:$basetag
+FROM $region-docker.pkg.dev/cykubed/public/$basetag
 ARG node=16
 
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
