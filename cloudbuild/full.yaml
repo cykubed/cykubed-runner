@@ -23,7 +23,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:${_TAG}',
           '--build-arg=base=cypress-base-node-20:${_BASE_TAG}',
           '--build-arg=tag=${_TAG}',
-          '-f', 'dockerfiles/full/runner/Dockerfile'
+          '-f', 'dockerfiles/full/runner/Dockerfile',
           '.' ]
 
 - name: alpine/httpie
