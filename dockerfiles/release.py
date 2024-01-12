@@ -66,10 +66,9 @@ def generate(bump: str, releasetype: str, notes: str):
         cmd(f'gcloud builds triggers run cykubed-runner-base --substitutions=_BASE_TAG={newtag}'
             f' --branch={branch}')
     else:
-        basetag=versions['base']
+        basetag = versions['base']
         cmd(f'gcloud builds triggers run cykubed-runners'
             f' --substitutions=_BASE_TAG={basetag},_TAG={newtag} --branch={branch}')
-
 
 
 if __name__ == '__main__':
