@@ -8,7 +8,7 @@
                 "line": null,
                 "context": "my context",
                 "status": "failed",
-                "failed": [
+                "results": [
                     {
                         "browser": "chrome",
                         "status": "failed",
@@ -20,9 +20,7 @@
                         ],
                         "errors": null
                     }
-                ],
-                "flakey": [],
-                "passed": []
+                ]
             }
         ],
         "video": null,

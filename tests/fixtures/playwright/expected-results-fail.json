@@ -5,7 +5,7 @@
             "line": 3,
             "context": null,
             "status": "failed",
-            "failed": [
+            "results": [
                 {
                     "browser": "chromium",
                     "status": "failed",
@@ -148,18 +148,14 @@
                         }
                     ]
                 }
-            ],
-            "flakey": [],
-            "passed": []
+            ]
         },
         {
             "title": "passing test",
             "line": 18,
             "context": null,
             "status": "passed",
-            "failed": [],
-            "flakey": [],
-            "passed": [
+            "results": [
                 {
                     "browser": "chromium",
                     "status": "passed",
@@ -183,8 +179,15 @@
             "line": 25,
             "context": null,
             "status": "flakey",
-            "failed": [],
-            "flakey": [
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 429,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
                 {
                     "browser": "firefox",
                     "status": "failed",
@@ -210,16 +213,6 @@
                             "video": null
                         }
                     ]
-                }
-            ],
-            "passed": [
-                {
-                    "browser": "chromium",
-                    "status": "passed",
-                    "retry": 0,
-                    "duration": 429,
-                    "failure_screenshots": null,
-                    "errors": null
                 },
                 {
                     "browser": "firefox",

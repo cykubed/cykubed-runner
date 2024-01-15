@@ -5,7 +5,7 @@
             "line": null,
             "context": "test1",
             "status": "failed",
-            "failed": [
+            "results": [
                 {
                     "browser": "chrome",
                     "status": "failed",
@@ -30,18 +30,14 @@
                         }
                     ]
                 }
-            ],
-            "flakey": [],
-            "passed": []
+            ]
         },
         {
             "title": "should have the correct title",
             "line": null,
             "context": "test1",
             "status": "passed",
-            "failed": [],
-            "flakey": [],
-            "passed": [
+            "results": [
                 {
                     "browser": "chrome",
                     "status": "passed",
@@ -57,7 +53,7 @@
             "line": null,
             "context": "test1",
             "status": "failed",
-            "failed": [
+            "results": [
                 {
                     "browser": "chrome",
                     "status": "failed",
@@ -82,17 +78,14 @@
                         }
                     ]
                 }
-            ],
-            "flakey": [],
-            "passed": []
+            ]
         },
         {
             "title": "flakey test",
             "line": null,
             "context": "test1",
             "status": "flakey",
-            "failed": [],
-            "flakey": [
+            "results": [
                 {
                     "browser": "chrome",
                     "status": "flakey",
@@ -101,8 +94,7 @@
                     "failure_screenshots": null,
                     "errors": null
                 }
-            ],
-            "passed": []
+            ]
         }
     ],
     "video": null,

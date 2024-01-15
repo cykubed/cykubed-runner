@@ -38,9 +38,7 @@ def test_cypress(mocker, respx_mock,
         tests=[SpecTest(title="my title",
                         context="my context",
                         status=TestResultStatus.failed,
-                        passed=[],
-                        flakey=[],
-                        failed=[testresult])])
+                        results=[testresult])])
 
     parse_results_mock = mocker.patch('cykubedrunner.cypress.parse_cypress_results', return_value=spec_result)
     upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(

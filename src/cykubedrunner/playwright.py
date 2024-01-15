@@ -22,9 +22,7 @@ def parse_playwright_results(json_file: str) -> SpecTests:
         # these will all have the same title
         spectest = SpecTest(title=specs[0]['title'],
                             line=specs[0]['line'],
-                            failed=[],
-                            flakey=[],
-                            passed=[],
+                            results=[],
                             status=TestResultStatus.passed)
         specresult.tests.append(spectest)
         for spec in specs:
@@ -48,13 +46,7 @@ def parse_playwright_results(json_file: str) -> SpecTests:
                         browser=test['projectName'],
                         status=status)
 
-                    if status == TestResultStatus.failed:
-                        if spectest.status == TestResultStatus.flakey:
-                            spectest.flakey.append(testresult)
-                        else:
-                            spectest.failed.append(testresult)
-                    else:
-                        spectest.passed.append(testresult)
+                    spectest.results.append(testresult)
 
                     testresult.retry = pwresult['retry']
                     testresult.duration = pwresult['duration']

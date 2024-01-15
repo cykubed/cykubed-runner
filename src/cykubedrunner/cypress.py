@@ -47,19 +47,10 @@ def parse_cypress_results(json_file: str, browser: str, spec_file: str) -> SpecT
                 # flakey
                 result.status = TestResultStatus.flakey
 
-            spectest = SpecTest(passed=[],
-                                failed=[],
-                                flakey=[],
+            spectest = SpecTest(results=[result],
                                 title=title,
                                 context=context,
                                 status=result.status)
-
-            if result.status == TestResultStatus.passed:
-                spectest.passed.append(result)
-            elif result.status == TestResultStatus.failed:
-                spectest.failed.append(result)
-            else:
-                spectest.flakey.append(result)
 
             # check for screenshots
             prefix = f'{context} -- {title} (failed)'
@@ -209,7 +200,7 @@ def upload_files(files) -> list[str]:
 
 def all_results_with_screenshots_generator(specresult: SpecTests):
     for test in specresult.tests:
-        for result in test.failed:
+        for result in test.results:
             if result.failure_screenshots:
                 yield result
 
