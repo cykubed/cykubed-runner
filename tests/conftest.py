@@ -41,10 +41,10 @@ def project() -> Project:
                    default_branch='master',
                    agent_id=1,
                    browser='chrome',
-                   platform=PlatformEnum.GITHUB,
+                   app_framework='angular',
+                   test_framework='cypress',
                    url='git@github.org/dummy.git',
-                   docker_image=dict(image='cykubed-runner:1234', browser='chrome',
-                                     node_major_version=16),
+                   platform=PlatformEnum.GITHUB,
                    start_runners_first=False,
                    build_cmd='ng build --output-path=dist',
                    organisation_id=5)
@@ -57,6 +57,7 @@ def testrun(mocker, project: Project) -> NewTestRun:
                     local_id=1,
                     sha='deadbeef0101',
                     project=project,
+                    image='us-docker.pkg.dev/cykubed/public/runner/cypress-node-20:1.0.0',
                     status='started',
                     branch='master',
                     buildstate=TestRunBuildState(testrun_id=20))

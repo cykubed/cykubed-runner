@@ -1,5 +1,6 @@
 import json
 
+from cykubedrunner.baserunner import BaseSpecRunner
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, SpecTest
 
@@ -68,3 +69,10 @@ def parse_playwright_results(json_file: str) -> SpecTests:
                                                              column=loc['column'])
                             testresult.errors.append(trerr)
     return specresult
+
+
+class PlaywrightSpecRunner(BaseSpecRunner):
+
+    def get_env(self):
+        pass
+

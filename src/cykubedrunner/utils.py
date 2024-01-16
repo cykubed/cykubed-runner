@@ -1,16 +1,19 @@
 import os
 import shlex
 import subprocess
+import sys
 import traceback
 
 import httpx
 import loguru
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_fixed, wait_random
 
 from cykubedrunner.app import app
 from cykubedrunner.common import schemas
 from cykubedrunner.common.enums import loglevelToInt, LogLevel, AgentEventType
-from cykubedrunner.common.exceptions import BuildFailedException
-from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, TestRunErrorReport
+from cykubedrunner.common.exceptions import BuildFailedException, RunFailedException
+from cykubedrunner.common.schemas import NewTestRun, AgentEvent, AppLogMessage, TestRunErrorReport, SpecTests, \
+    AgentSpecCompleted
 from cykubedrunner.common.utils import utcnow
 from cykubedrunner.settings import settings
 
@@ -156,3 +159,54 @@ logger = TestRunLogger()
 
 def root_file_exists(name):
     return os.path.exists(os.path.join(settings.src_dir, name))
+
+
+@retry(retry=retry_if_not_exception_type(RunFailedException),
+       stop=stop_after_attempt(settings.MAX_HTTP_RETRIES if not settings.TEST else 1),
+       wait=wait_fixed(2) + wait_random(0, 4))
+def upload_files(files) -> list[str]:
+    resp = app.post('upload-artifacts', files=files)
+    return resp.json()['urls']
+
+
+def all_results_with_screenshots_generator(specresult: SpecTests):
+    for test in specresult.tests:
+        for result in test.results:
+            if result.failure_screenshots:
+                yield result
+
+
+def upload_results(spec: str, specresult: SpecTests):
+    files = []
+
+    for result in all_results_with_screenshots_generator(specresult):
+        for sshot in result.failure_screenshots:
+            files.append(('files', open(sshot, 'rb')))
+
+    if files:
+        urls = upload_files(files)
+        for result in all_results_with_screenshots_generator(specresult):
+            num = len(result.failure_screenshots)
+            result.failure_screenshots = urls[:num]
+            urls = urls[num:]
+
+    msg = AgentSpecCompleted(
+        result=specresult,
+        file=spec,
+        finished=utcnow())
+
+    if specresult.video:
+        urls = upload_files([('files', open(specresult.video, 'rb'))])
+        msg.video = urls[0]
+
+    app.post('spec-completed', content=msg.json())
+
+
+def default_sigterm_runner(signum, frame):
+    """
+    Default behaviour is just to log and quit with error code
+    """
+    logger.warning(f"SIGTERM/SIGINT caught: bailing out")
+    sys.exit(1)
+
+

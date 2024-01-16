@@ -7,7 +7,7 @@ import time
 import sentry_sdk
 from sentry_sdk.integrations.httpx import HttpxIntegration
 
-from cykubedrunner import builder, cypress
+from cykubedrunner import builder
 from cykubedrunner.app import app
 from cykubedrunner.common.cloudlogging import configure_stackdriver_logging
 from cykubedrunner.common.exceptions import BuildFailedException

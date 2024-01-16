@@ -4,9 +4,9 @@ import os
 from freezegun import freeze_time
 from httpx import Response
 
-from cykubedrunner import cypress
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.schemas import NewTestRun, SpecTests, TestResult, SpecTest
+from cykubedrunner.runner import run
 from cykubedrunner.settings import settings
 
 
@@ -46,21 +46,21 @@ def test_cypress(mocker, respx_mock,
                                                   'https://api.cykubed.com/artifacts/bah.png',
                                                   ]}))
     server_thread_mock = mocker.Mock()
-    start_server_mock = mocker.patch('cykubedrunner.cypress.start_server', return_valu=server_thread_mock)
+    start_server_mock = mocker.patch('cykubedrunner.runner.start_server', return_valu=server_thread_mock)
 
     def create_mock_output(browser: str = None) -> bool:
         with open(f'{settings.get_results_dir()}/out.json', 'w') as f:
             f.write(json.dumps({'passed': 1}))
         return True
 
-    subprocess_mock = mocker.patch('cykubedrunner.cypress.CypressSpecRunner.create_cypress_process',
+    subprocess_mock = mocker.patch('cykubedrunner.cypress.CypressSpecRunner.create_process',
                                    side_effect=create_mock_output)
 
     # we'll need dummy node_modules and cypress_cache directories to pass the checks
     os.makedirs(os.path.join(settings.src_dir, 'node_modules'))
     os.mkdir(os.path.join(settings.BUILD_DIR, 'cypress_cache'))
 
-    cypress.run(testrun.id)
+    run(testrun.id)
 
     start_server_mock.assert_called_once()
 
