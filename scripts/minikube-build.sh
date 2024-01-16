@@ -1,31 +1,25 @@
 #!/bin/bash
 set -e
-python dockerfiles/release.py -g -b patch -n "Local build"
 
-APITOKEN=$(mysql -sNe "select token from user where email='nick@cykube.net'" cykubedmain)
-BASETAG=$(jq -r '.[0].image' dockerfiles/generated/full/cykubed-payload.json | sed 's/:/\n/g' | tail -n 1
-)
+REGION=us
+APITOKEN=$(mysql -sNe "select token from user where email='nick@cykubed.com'" cykubedmain)
+BASETAG=$(jq -r '.base' dockerfiles/versions.json)
+TAG=$(jq -r '.full' dockerfiles/versions.json)
 
+echo "Using base tag $BASETAG and tag $TAG"
 
-TAG=${1:-$BASETAG}
+docker build -f dockerfiles/full/app/Dockerfile -t $REGION-docker.pkg.dev/cykubed/public/runner/app-base:$TAG .
 
-echo "Using base tag $TAG"
-
-BASE_RUNNER_IMAGE="us-docker.pkg.dev/cykubed/public/node-18:$TAG"
-
-echo "Build images"
-
-head -n 3 dockerfiles/generated/full/build.sh | sh
-grep node-16 dockerfiles/generated/full/build.sh | head -n 3 | sh
-grep node-18 dockerfiles/generated/full/build.sh | head -n 3 | sh
-
-echo "Load images into Minikube"
-
-minikube image load us-docker.pkg.dev/cykubed/public/node-16:$TAG
-minikube image load us-docker.pkg.dev/cykubed/public/node-16-chrome:$TAG
-minikube image load us-docker.pkg.dev/cykubed/public/node-18:$TAG
-minikube image load us-docker.pkg.dev/cykubed/public/node-18-chrome:$TAG
+for nodever in 16 18 20
+do
+echo "Build app Cypress image for Node $nodever"
+image=$REGION-docker.pkg.dev/cykubed/public/runner/cypress-node-$nodever:$TAG
+docker build -f dockerfiles/full/runner/Dockerfile --build-arg tag=$TAG --build-arg base=cypress-base-node-$nodever:$BASETAG \
+             -t $image .
+echo " loading image $image"
+minikube image load $image
+done
 
 echo "Update projects to use Electron base image"
 
-http POST http://localhost:5002/admin/docker/image -A bearer -a $APITOKEN  < dockerfiles/generated/full/cykubed-payload.json
+http POST http://localhost:5002/admin/image/runner/current-version/$TAG -A bearer -a $APITOKEN
