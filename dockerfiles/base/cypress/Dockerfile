@@ -76,3 +76,4 @@ RUN wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.moz
   rm /tmp/firefox.tar.bz2 && \
   ln -fs /opt/firefox/firefox /usr/bin/firefox
 
+RUN pip install poetry==1.3.1

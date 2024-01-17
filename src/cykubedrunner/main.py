@@ -11,6 +11,7 @@ from cykubedrunner import builder
 from cykubedrunner.app import app
 from cykubedrunner.common.cloudlogging import configure_stackdriver_logging
 from cykubedrunner.common.exceptions import BuildFailedException
+from cykubedrunner.runner import run
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import logger, log_build_failed_exception
 
@@ -52,7 +53,7 @@ def main() -> int:
         elif cmd == 'prepare_cache':
             builder.prepare_cache(trid)
         else:
-            cypress.run(trid)
+            run(trid)
 
     except BuildFailedException as ex:
         logger.error(f'{cmd.capitalize()} failed: {ex}')

@@ -1,20 +1,17 @@
-FROM python:3.10-slim-bullseye
+ARG region=us
+ARG tag=3.0.0
+ARG base=cypress-node-base-20:1.0.0
+FROM ${region}-docker.pkg.dev/cykubed/public/runner/${base}
 
-RUN mkdir /usr/app
-RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app
 USER cykubed
-
-WORKDIR /usr/app
-
 RUN python -m venv .venv
 ENV VIRTUAL_ENV=/usr/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV TZ=UTC
-
-RUN pip install poetry==1.3.1
+ENV PYTHONPATH=/usr/app:.
 
 COPY src/cykubedrunner cykubedrunner
 COPY ["pyproject.toml", "poetry.lock", "./"]
 
 RUN poetry install --no-root --only main --no-interaction
 
+ENTRYPOINT ["poetry", "run", "python", "cykubedrunner/main.py"]

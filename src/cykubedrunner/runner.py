@@ -11,7 +11,7 @@ from cykubedrunner.cypress import CypressSpecRunner
 from cykubedrunner.playwright import PlaywrightSpecRunner
 from cykubedrunner.server import start_server, ServerThread
 from cykubedrunner.settings import settings
-from cykubedrunner.utils import logger, log_build_failed_exception, default_sigterm_runner
+from cykubedrunner.utils import logger, log_build_failed_exception, default_sigterm_runner, upload_results
 
 
 def run_tests(server: ServerThread, testrun: NewTestRun):
@@ -48,13 +48,25 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
             signal.signal(signal.SIGTERM, handle_sigterm_runner)
             signal.signal(signal.SIGINT, handle_sigterm_runner)
 
-        # run cypress for this spec
-        if testrun.project.test_framework == TestFramework.cypress:
-            runner = CypressSpecRunner(server, testrun, spec)
-        else:
-            runner = PlaywrightSpecRunner(server, testrun, spec)
         try:
-            runner.run()
+            spectests = None
+            if testrun.project.test_framework == TestFramework.cypress:
+                # Cypress needs to be run explicitly for each required browser
+                browsers = testrun.project.browsers or ['electron']
+                for browser in browsers:
+                    browser_spectests = CypressSpecRunner(server, testrun, spec,
+                                                          browser=browser).run()
+                    if not spectests:
+                        spectests = browser_spectests
+                    else:
+                        spectests.merge(browser_spectests)
+            else:
+                # Playwright handles browser support natively
+                spectests = PlaywrightSpecRunner(server, testrun, spec).run()
+
+            if spectests:
+                upload_results(spec, spectests)
+
         except RunFailedException as ex:
             log_build_failed_exception(ex)
             return

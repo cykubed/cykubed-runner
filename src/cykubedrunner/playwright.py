@@ -3,6 +3,7 @@ import json
 from cykubedrunner.baserunner import BaseSpecRunner
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, SpecTest
+from cykubedrunner.settings import settings
 
 
 def parse_playwright_results(json_file: str) -> SpecTests:
@@ -54,7 +55,7 @@ def parse_playwright_results(json_file: str) -> SpecTests:
 
                     attachments = pwresult.get('attachments')
                     if attachments:
-                        testresult.failure_screenshots = [x['path'] for x in attachments]
+                        testresult.failure_screenshots = [x['path'] for x in attachments if x['name'] == 'screenshot']
 
                     errors = pwresult.get('errors')
                     if errors:
@@ -74,5 +75,17 @@ def parse_playwright_results(json_file: str) -> SpecTests:
 class PlaywrightSpecRunner(BaseSpecRunner):
 
     def get_env(self):
-        pass
+        return dict(PLAYWRIGHT_JSON_OUTPUT_NAME=self.results_file)
+
+    def get_args(self, **kwargs):
+        args = ['npx', 'playwright', 'test',
+                '--reporter', 'json',
+                '-j', '1',
+                '--quiet',
+                '--forbid-only',
+                '--output', settings.get_screenshots_folder()]
+        if self.testrun.project.runner_retries:
+            args += ['--retries', self.testrun.project.runner_retries]
+        args.append(self.file)
+        return args
 

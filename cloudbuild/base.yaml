@@ -9,30 +9,35 @@ options:
   automapSubstitutions: true
 steps:
 - name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base:${_BASE_TAG}",
+  args: [ "--dockerfile=dockerfiles/base/playwright/Dockerfile",
+          "--destination=us-docker.pkg.dev/cykubed/public/runner/playwright-base-node-20:${_BASE_TAG}",
           "--cache=true"]
 
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-16:${_BASE_TAG}",
-          "--build-arg=node=16",
-          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
-          "--cache=true"]
-
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-18:${_BASE_TAG}",
-          "--build-arg=node=18",
-          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
-          "--cache=true"]
-
-- name: gcr.io/kaniko-project/executor:latest
-  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-20:${_BASE_TAG}",
-          "--build-arg=node=20",
-          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
-          "--cache=true"]
+#- name: gcr.io/kaniko-project/executor:latest
+#  args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
+#          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base:${_BASE_TAG}",
+#          "--cache=true"]
+#
+#- name: gcr.io/kaniko-project/executor:latest
+#  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+#          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-16:${_BASE_TAG}",
+#          "--build-arg=node=16",
+#          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
+#          "--cache=true"]
+#
+#- name: gcr.io/kaniko-project/executor:latest
+#  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+#          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-18:${_BASE_TAG}",
+#          "--build-arg=node=18",
+#          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
+#          "--cache=true"]
+#
+#- name: gcr.io/kaniko-project/executor:latest
+#  args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
+#          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-20:${_BASE_TAG}",
+#          "--build-arg=node=20",
+#          "--build-arg=basetag=cypress-base:${_BASE_TAG}",
+#          "--cache=true"]
 
 - name: alpine/httpie
   id: Notify Slack

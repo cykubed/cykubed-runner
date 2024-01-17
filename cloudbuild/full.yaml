@@ -20,50 +20,55 @@ steps:
     git submodule update
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:latest',
-                   '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base:${_TAG}',
-          '-f', 'dockerfiles/full/app/Dockerfile',
-          '.' ]
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/app-base' ]
-
-- name: 'gcr.io/cloud-builders/docker'
   args: [ 'build',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:latest',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:${_TAG}',
-          '--build-arg', 'base=cypress-base-node-16:${_BASE_TAG}',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20:${_TAG}',
+          '--build-arg', 'base=playwright-base-node-20:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
-          '-f', 'dockerfiles/full/runner/Dockerfile',
+          '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16' ]
+  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20' ]
 
+#
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'build',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:latest',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:${_TAG}',
+#          '--build-arg', 'base=cypress-base-node-16:${_BASE_TAG}',
+#          '--build-arg', 'tag=${_TAG}',
+#          '-f', 'dockerfiles/full/Dockerfile',
+#          '.' ]
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16' ]
+#
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'build',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:latest',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:${_TAG}',
+#          '--build-arg', 'base=cypress-base-node-18:${_BASE_TAG}',
+#          '--build-arg', 'tag=${_TAG}',
+#          '-f', 'dockerfiles/full/Dockerfile',
+#          '.' ]
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18' ]
+#
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'build',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:latest',
+#          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:${_TAG}',
+#          '--build-arg', 'base=cypress-base-node-20:${_BASE_TAG}',
+#          '--build-arg', 'tag=${_TAG}',
+#          '-f', 'dockerfiles/full/Dockerfile',
+#          '.' ]
 
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:latest',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:${_TAG}',
-          '--build-arg', 'base=cypress-base-node-18:${_BASE_TAG}',
-          '--build-arg', 'tag=${_TAG}',
-          '-f', 'dockerfiles/full/runner/Dockerfile',
-          '.' ]
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18' ]
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:latest',
-          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:${_TAG}',
-          '--build-arg', 'base=cypress-base-node-20:${_BASE_TAG}',
-          '--build-arg', 'tag=${_TAG}',
-          '-f', 'dockerfiles/full/runner/Dockerfile',
-          '.' ]
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20' ]
+#- name: 'gcr.io/cloud-builders/docker'
+#  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20' ]
 
 
 - name: alpine/httpie

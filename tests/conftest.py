@@ -43,6 +43,7 @@ def project() -> Project:
                    browser='chrome',
                    app_framework='angular',
                    test_framework='cypress',
+                   server_port=4200,
                    url='git@github.org/dummy.git',
                    platform=PlatformEnum.GITHUB,
                    start_runners_first=False,
