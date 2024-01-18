@@ -8,7 +8,7 @@ TAG=$(jq -r '.full' dockerfiles/versions.json)
 
 echo "Using base tag $BASETAG and tag $TAG"
 
-for nodever in 20 #16 18 20
+for nodever in 16 18 20
 do
 echo "Build app Cypress image for Node $nodever"
 image=$REGION-docker.pkg.dev/cykubed/public/runner/cypress-node-$nodever:$TAG
