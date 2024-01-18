@@ -9,15 +9,15 @@ from cykubedrunner.settings import settings
 
 
 def test_cypress_run(respx_mock,
-                        mocker,
-                        cypress_fixturedir,
-                        json_fixture_fetcher,
-                        testrun: NewTestRun,
-                        json_formatter,
-                        mock_uploader,
-                        multipart_parser,
-                        post_logs_mock
-                        ):
+                     mocker,
+                     cypress_fixturedir,
+                     json_fixture_fetcher,
+                     testrun: NewTestRun,
+                     json_formatter,
+                     mock_uploader,
+                     multipart_parser,
+                     post_logs_mock
+                     ):
     settings.TEST = True
     testrun.project.browsers = ['electron', 'firefox']
     os.makedirs(os.path.join(settings.src_dir, 'node_modules'))
@@ -76,6 +76,3 @@ def test_cypress_run(respx_mock,
     # 5 image uploads in a single upload POST
     assert upload_mock.call_count == 1
     assert len(multipart_parser(upload_mock.calls[0].request)) == 5
-
-
-
