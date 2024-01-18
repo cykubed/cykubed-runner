@@ -1,0 +1,30 @@
+{
+    "tests": [
+        {
+            "title": "should pass (trivial)",
+            "line": null,
+            "context": "test4",
+            "status": "passed",
+            "results": [
+                {
+                    "browser": "electron",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 401,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 402,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        }
+    ],
+    "video": null,
+    "timeout": false
+}

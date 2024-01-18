@@ -2,7 +2,9 @@ import json
 import os
 import shutil
 import tempfile
+from io import BytesIO
 
+import multipart
 import pytest
 from httpx import Response
 from loguru import logger
@@ -57,6 +59,24 @@ def json_fixture_fetcher(fixture_fetcher, json_formatter):
     def fetch(name):
         return json_formatter(fixture_fetcher(name))
     return fetch
+
+
+@pytest.fixture
+def multipart_parser():
+    def parse(request):
+        uploaded_content = request.content
+        boundary = request.headers['Content-Type'].split(';')[1].split('=')[1]
+        return list(multipart.MultipartParser(BytesIO(uploaded_content), boundary))
+    return parse
+
+
+@pytest.fixture()
+def mock_uploader(respx_mock, testrun):
+    def upload(count: int):
+        return respx_mock.post(f'https://api.cykubed.com/agent/testrun/{testrun.id}/upload-artifacts').mock(
+            return_value=Response(200, json=
+            {'urls': [f'https://api.cykubed.com/artifacts/image{i}.png' for i in range(0, count)]}))
+    return upload
 
 
 @pytest.fixture()

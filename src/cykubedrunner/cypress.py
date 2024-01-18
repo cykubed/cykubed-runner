@@ -125,3 +125,4 @@ class CypressSpecRunner(BaseSpecRunner):
         if self.testrun.project.runner_retries:
             env['CYPRESS_RETRIES'] = str(self.testrun.project.runner_retries)
         return env
+

@@ -1,0 +1,34 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 1,
+    "pending": 0,
+    "failures": 0,
+    "start": "2024-01-18T12:24:03.421Z",
+    "end": "2024-01-18T12:24:03.841Z",
+    "duration": 420
+  },
+  "tests": [
+    {
+      "title": "should pass (trivial)",
+      "context": "test4",
+      "file": null,
+      "duration": 401,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
+  "pending": [],
+  "failures": [],
+  "passes": [
+    {
+      "title": "should pass (trivial)",
+      "context": "test4",
+      "file": null,
+      "duration": 401,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ]
+}

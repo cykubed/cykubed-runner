@@ -1,8 +1,6 @@
 import os
 import shutil
-from io import BytesIO
 
-import multipart
 from httpx import Response
 
 from cykubedrunner.common.enums import TestFramework
@@ -30,13 +28,15 @@ def test_playwright_run(respx_mock,
                         json_fixture_fetcher,
                         testrun: NewTestRun,
                         json_formatter,
-                        post_logs_mock
+                        post_logs_mock,
+                        mock_uploader,
+                        multipart_parser,
                         ):
     settings.TEST = True
     testrun.project.browsers = ['chrome']
     testrun.project.test_framework = TestFramework.playwright
 
-    respx_mock.get(f'https://api.cykubed.com/agent/testrun/{testrun.id}').mock(
+    fetch_testrun_mock = respx_mock.get(f'https://api.cykubed.com/agent/testrun/{testrun.id}').mock(
         return_value=Response(200, content=testrun.json()))
 
     next_spec_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/next-spec').mock(side_effect=[
@@ -52,9 +52,7 @@ def test_playwright_run(respx_mock,
                      Response(status_code=200)
                      ])
 
-    upload_mock = respx_mock.post('https://api.cykubed.com/agent/testrun/20/upload-artifacts').mock(
-        return_value=Response(200, json=
-        {'urls': [f'https://api.cykubed.com/artifacts/image{i}.png' for i in range(0, 5)]}))
+    upload_mock = mock_uploader(5)
 
     def create_process_side_effects(runner):
         # copy results from fixture dir
@@ -75,6 +73,8 @@ def test_playwright_run(respx_mock,
 
     run(20)
 
+    assert fetch_testrun_mock.call_count == 1
+
     # we asked for 3 specs - we got 2 and a 204
     assert next_spec_mock.call_count == 3
 
@@ -94,9 +94,4 @@ def test_playwright_run(respx_mock,
 
     # 5 image uploads in a single upload POST
     assert upload_mock.call_count == 1
-    request = upload_mock.calls[0].request
-    uploaded_content = request.content
-
-    boundary = request.headers['Content-Type'].split(';')[1].split('=')[1]
-    parts = list(multipart.MultipartParser(BytesIO(uploaded_content), boundary))
-    assert len(parts) == 5
+    assert len(multipart_parser(upload_mock.calls[0].request)) == 5

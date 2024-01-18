@@ -1,0 +1,166 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 4,
+    "passes": 2,
+    "pending": 1,
+    "failures": 1,
+    "start": "2024-01-18T12:24:50.284Z",
+    "end": "2024-01-18T12:24:59.517Z",
+    "duration": 9233
+  },
+  "tests": [
+    {
+      "title": "should show next when button clicked",
+      "context": "test1",
+      "file": null,
+      "duration": 472,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "should have the correct title",
+      "context": "test1",
+      "file": null,
+      "duration": 4209,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at shouldFail (webpack://dummyui/./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:17:14)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
+            "whitespace": ""
+          },
+          {
+            "function": "shouldFail",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/helpers/helper.ts",
+            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
+            "line": 6,
+            "column": 15,
+            "whitespace": "    "
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 17,
+            "column": 14,
+            "whitespace": "    "
+          }
+        ],
+        "actual": "'Dummy UI'",
+        "expected": "'Fish'",
+        "showDiff": true,
+        "codeFrame": {
+          "line": 6,
+          "column": 16,
+          "originalFile": "cypress/e2e/helpers/helper.ts",
+          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
+          "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
+          "language": "ts"
+        }
+      }
+    },
+    {
+      "title": "flakey test",
+      "context": "test1",
+      "file": null,
+      "duration": 172,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "this will be skipped",
+      "context": "test1",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
+  "pending": [
+    {
+      "title": "this will be skipped",
+      "context": "test1",
+      "file": null,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ],
+  "failures": [
+    {
+      "title": "should have the correct title",
+      "context": "test1",
+      "file": null,
+      "duration": 4253,
+      "currentRetry": 1,
+      "err": {
+        "message": "Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
+        "name": "AssertionError",
+        "stack": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'\n    at shouldFail (webpack://dummyui/./cypress/e2e/helpers/helper.ts:6:15)\n    at Context.eval (webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts:17:14)",
+        "parsedStack": [
+          {
+            "message": "AssertionError: Timed out retrying after 4000ms: expected '<h1>' to contain text 'Fish', but the text was 'Dummy UI'",
+            "whitespace": ""
+          },
+          {
+            "function": "shouldFail",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/helpers/helper.ts",
+            "relativeFile": "cypress/e2e/helpers/helper.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
+            "line": 6,
+            "column": 15,
+            "whitespace": "    "
+          },
+          {
+            "function": "Context.eval",
+            "fileUrl": "http://localhost:4200/__cypress/tests?p=cypress/e2e/stuff/test1.spec.ts",
+            "originalFile": "webpack://dummyui/./cypress/e2e/stuff/test1.spec.ts",
+            "relativeFile": "cypress/e2e/stuff/test1.spec.ts",
+            "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/stuff/test1.spec.ts",
+            "line": 17,
+            "column": 14,
+            "whitespace": "    "
+          }
+        ],
+        "actual": "'Dummy UI'",
+        "expected": "'Fish'",
+        "showDiff": true,
+        "codeFrame": {
+          "line": 6,
+          "column": 16,
+          "originalFile": "cypress/e2e/helpers/helper.ts",
+          "relativeFile": "cypress/e2e/helpers/helper.ts",
+          "absoluteFile": "/home/nick/projects/dummyui/cypress/e2e/helpers/helper.ts",
+          "frame": "  4 | \n  5 | export function shouldFail() {\n> 6 |   cy.get('h1').should('contain.text', 'Fish');\n    |                ^\n  7 | }\n  8 | ",
+          "language": "ts"
+        }
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "should show next when button clicked",
+      "context": "test1",
+      "file": null,
+      "duration": 472,
+      "currentRetry": 0,
+      "err": {}
+    },
+    {
+      "title": "flakey test",
+      "context": "test1",
+      "file": null,
+      "duration": 172,
+      "currentRetry": 0,
+      "err": {}
+    }
+  ]
+}
