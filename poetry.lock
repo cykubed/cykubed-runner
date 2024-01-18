@@ -1236,6 +1236,18 @@ files = [
 ]
 
 [[package]]
+name = "multipart"
+version = "0.2.4"
+description = "Parser for multipart/form-data."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "multipart-0.2.4-py3-none-any.whl", hash = "sha256:5aec990820b8a9e94f9c164fbeb58cf118cfbde2854865b67a9a730edd1fb9d1"},
+    {file = "multipart-0.2.4.tar.gz", hash = "sha256:06ba205360bc7096fefe618e4f1e9b2cdb890b4f2157053a81f386912a2522cb"},
+]
+
+[[package]]
 name = "nodeenv"
 version = "1.8.0"
 description = "Node.js virtual environment builder"
@@ -2226,4 +2238,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "b029c2575c3dab51b98e733087f967f698d8f1747fa55ea6b25ba16421774450"
+content-hash = "3980bc2b052823b63802e90981b39c9f94be537eab13b523f2446ece9484a790"

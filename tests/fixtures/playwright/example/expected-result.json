@@ -1,0 +1,54 @@
+{
+    "tests": [
+        {
+            "title": "has title",
+            "line": 3,
+            "context": null,
+            "status": "passed",
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1085,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1873,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        },
+        {
+            "title": "get started link",
+            "line": 14,
+            "context": null,
+            "status": "passed",
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 505,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 556,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        }
+    ],
+    "video": null,
+    "timeout": false
+}

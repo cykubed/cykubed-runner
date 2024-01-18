@@ -45,6 +45,7 @@ freezegun = "^1.2.2"
 click = "^8.1.7"
 semver = "^3.0.1"
 jq = "^1.6.0"
+multipart = "^0.2.4"
 
 [build-system]
 requires = ["poetry-core"]

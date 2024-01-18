@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import tempfile
@@ -15,22 +16,47 @@ from cykubedrunner.settings import settings
 @pytest.fixture(autouse=True)
 def initdb():
     settings.TEST = True
-    settings.SCRATCH_DIR = tempfile.mkdtemp()
-    settings.BUILD_DIR = os.path.join(settings.SCRATCH_DIR, 'build')
-    os.mkdir(settings.BUILD_DIR)
+    settings.BUILD_DIR = tempfile.mkdtemp()
     logger.remove()
     yield
-    shutil.rmtree(settings.SCRATCH_DIR)
+    shutil.rmtree(settings.BUILD_DIR)
 
 
 @pytest.fixture
-def cypress_fixturedir():
-    return os.path.join(os.path.dirname(__file__), 'fixtures', 'cypress')
+def fixturedir():
+    return os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
 @pytest.fixture
-def playwright_fixturedir():
-    return os.path.join(os.path.dirname(__file__), 'fixtures', 'playwright')
+def cypress_fixturedir(fixturedir):
+    return os.path.join(fixturedir, 'cypress')
+
+
+@pytest.fixture
+def playwright_fixturedir(fixturedir):
+    return os.path.join(fixturedir, 'playwright')
+
+
+@pytest.fixture
+def fixture_fetcher(fixturedir):
+    def fetch(name):
+        with open(os.path.join(fixturedir, name)) as f:
+            return f.read()
+    return fetch
+
+
+@pytest.fixture
+def json_formatter():
+    def fmt(src):
+        return json.dumps(json.loads(src), indent=4)
+    return fmt
+
+
+@pytest.fixture
+def json_fixture_fetcher(fixture_fetcher, json_formatter):
+    def fetch(name):
+        return json_formatter(fixture_fetcher(name))
+    return fetch
 
 
 @pytest.fixture()

@@ -97,10 +97,6 @@ def run(testrun_id: int):
     if not os.path.exists(srcnode):
         raise RunFailedException("Missing node_modules")
 
-    srccypress = os.path.join(settings.BUILD_DIR, 'cypress_cache')
-    if not os.path.exists(srccypress):
-        raise RunFailedException("Missing cypress cache folder")
-
     # start the server
     server = start_server(testrun.project)
     logger.debug(f"Server running on port {server.port}")

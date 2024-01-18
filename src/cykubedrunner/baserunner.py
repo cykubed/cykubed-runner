@@ -1,6 +1,6 @@
 import os
-import shutil
 import subprocess
+import tempfile
 from abc import ABC, abstractmethod
 
 from cykubedrunner.app import app
@@ -18,11 +18,10 @@ class BaseSpecRunner(ABC):
         self.server = server
         self.testrun = testrun
         self.file = file
-        self.results_dir = settings.get_results_dir()
+        self.results_dir = tempfile.mkdtemp()
         self.results_file = os.path.join(self.results_dir, 'out.json')
-        if os.path.exists(self.results_dir):
-            shutil.rmtree(self.results_dir)
-        os.makedirs(self.results_dir)
+        self.screenshots_folder = os.path.join(self.results_dir, 'screenshots')
+        self.videos_folder = os.path.join(self.results_dir, 'videos')
         self.started = None
         if self.server:
             self.base_url = f'http://localhost:{self.server.port}'

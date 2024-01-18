@@ -1,0 +1,228 @@
+{
+    "tests": [
+        {
+            "title": "passing test",
+            "line": 3,
+            "context": null,
+            "status": "passed",
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1047,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1870,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        },
+        {
+            "title": "has title will fail",
+            "line": 9,
+            "context": null,
+            "status": "failed",
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 5000,
+                    "failure_screenshots": [
+                        "https://api.cykubed.com/artifacts/image0.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 5000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 13 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 15 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 16 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 17 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /playwright/tests/another.spec.ts:14:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 14,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/playwright/tests/another.spec.ts",
+                                "line": 14,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "chromium",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 5000,
+                    "failure_screenshots": [
+                        "https://api.cykubed.com/artifacts/image1.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 5000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 13 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 15 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 16 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 17 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /playwright/tests/another.spec.ts:14:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 14,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/playwright/tests/another.spec.ts",
+                                "line": 14,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 4999,
+                    "failure_screenshots": [
+                        "https://api.cykubed.com/artifacts/image2.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 5000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 13 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 15 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 16 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 17 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /playwright/tests/another.spec.ts:14:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 14,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/playwright/tests/another.spec.ts",
+                                "line": 14,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 1,
+                    "duration": 5000,
+                    "failure_screenshots": [
+                        "https://api.cykubed.com/artifacts/image3.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "\u001b[31mTest timeout of 5000ms exceeded.\u001b[39m",
+                            "title": null,
+                            "type": null,
+                            "test_line": null,
+                            "stack": null,
+                            "code_frame": null,
+                            "video": null
+                        },
+                        {
+                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  \u001b[2m- waiting for getByTestId('back-buttonX')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m {name\u001b[33m:\u001b[39m \u001b[32m'Show'\u001b[39m})\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 13 |\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'back-buttonX'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 15 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 16 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 17 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /playwright/tests/another.spec.ts:14:42\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 14,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/playwright/tests/another.spec.ts",
+                                "line": 14,
+                                "column": 42,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "flakey test",
+            "line": 24,
+            "context": null,
+            "status": "flakey",
+            "results": [
+                {
+                    "browser": "chromium",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1036,
+                    "failure_screenshots": null,
+                    "errors": null
+                },
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 2868,
+                    "failure_screenshots": [
+                        "https://api.cykubed.com/artifacts/image4.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "Error: \u001b[31mTimed out 1000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nLocator: getByTestId('num')\nExpected string: \u001b[32m\"1\u001b[7m1\u001b[27m\"\u001b[39m\nReceived string: \u001b[31m\"1\u001b[7m0\u001b[27m\"\u001b[39m\nCall log:\n  \u001b[2m- expect.toContainText with timeout 1000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('num')\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\u001b[2m  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\u001b[22m\n\u001b[2m  -   unexpected value \"10\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 36 |\u001b[39m   \u001b[90m// this will fail sometimes\u001b[39m\u001b[0m\n\u001b[0m\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'num'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'11'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m    |\u001b[39m                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 38 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[0m \u001b[90m 39 |\u001b[39m\u001b[0m\n\n\u001b[2m    at /playwright/tests/another.spec.ts:37:41\u001b[22m",
+                            "title": null,
+                            "type": null,
+                            "test_line": 37,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/playwright/tests/another.spec.ts",
+                                "line": 37,
+                                "column": 41,
+                                "frame": null,
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 1,
+                    "duration": 1980,
+                    "failure_screenshots": [],
+                    "errors": null
+                }
+            ]
+        }
+    ],
+    "video": null,
+    "timeout": false
+}

@@ -18,6 +18,9 @@ class CypressSpecRunner(BaseSpecRunner):
                  testrun: NewTestRun, file: str, browser):
         super().__init__(server, testrun, file)
         self.browser = browser
+        srccypress = os.path.join(settings.BUILD_DIR, 'cypress_cache')
+        if not os.path.exists(srccypress):
+            raise RunFailedException("Missing cypress cache folder")
 
     def parse_results(self) -> SpecTests:
         failures = 0
@@ -27,7 +30,7 @@ class CypressSpecRunner(BaseSpecRunner):
             rawjson = json.loads(f.read())
 
             sshot_fnames = []
-            for root, dirs, files in os.walk(settings.get_screenshots_folder()):
+            for root, dirs, files in os.walk(self.screenshots_folder):
                 sshot_fnames += [os.path.join(root, f) for f in files]
 
             for test in rawjson['tests']:
@@ -92,10 +95,10 @@ class CypressSpecRunner(BaseSpecRunner):
 
                 specresult.tests.append(spectest)
 
-        # we should have a single video - but only add it if we have failures
+        # we should have a single  - but only add it if we have failures
         if failures:
             video_fnames = []
-            for root, dirs, files in os.walk(settings.get_videos_folder()):
+            for root, dirs, files in os.walk(self.videos_folder):
                 video_fnames += [os.path.join(root, f) for f in files]
 
             if video_fnames:
@@ -111,8 +114,8 @@ class CypressSpecRunner(BaseSpecRunner):
                 '-s', self.file,
                 '--reporter', json_reporter,
                 '-o', f'output={self.results_file}',
-                '-c', f'screenshotsFolder={settings.get_screenshots_folder()},screenshotOnRunFailure=true,'
-                      f'baseUrl={self.base_url},video=false,videosFolder={settings.get_videos_folder()}']
+                '-c', f'screenshotsFolder={self.screenshots_folder},screenshotOnRunFailure=true,'
+                      f'baseUrl={self.base_url},video=false,videosFolder={self.videos_folder}']
 
     def get_env(self):
         env = os.environ.copy()
