@@ -85,7 +85,7 @@ class PlaywrightSpecRunner(BaseSpecRunner):
                 '--forbid-only',
                 '--output', self.screenshots_folder]
         if self.testrun.project.runner_retries:
-            args += ['--retries', self.testrun.project.runner_retries]
+            args += ['--retries', f'{self.testrun.project.runner_retries}']
         args.append(self.file)
         return args
 

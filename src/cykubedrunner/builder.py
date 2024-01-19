@@ -7,15 +7,19 @@ import yaml
 from wcmatch import glob
 
 from cykubedrunner.app import app
-from cykubedrunner.common.enums import TestRunStatus
+from cykubedrunner.common.enums import TestRunStatus, TestFramework
 from cykubedrunner.common.exceptions import BuildFailedException
 from cykubedrunner.common.schemas import NewTestRun, \
     AgentBuildCompleted
 from cykubedrunner.settings import settings
 from cykubedrunner.utils import runcmd, logger, root_file_exists, get_node_version
 
-INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
-EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
+CYPRESS_INCLUDE_SPEC_REGEX = re.compile(r'specPattern:\s*[\"\'](.*)[\"\']')
+CYPRESS_EXCLUDE_SPEC_REGEX = re.compile(r'excludeSpecPattern:\s*[\"\'](.*)[\"\']')
+
+PLAYWRIGHT_TESTDIR_REGEX = re.compile(r'testDir:\s*[\"\'](.*)[\"\']')
+PLAYWRIGHT_INCLUDE_SPEC_REGEX = re.compile(r'testMatch:\s*[\"\'](.*)[\"\']')
+PLAYWRIGHT_EXCLUDE_SPEC_REGEX = re.compile(r'testIgnore:\s*[\"\'](.*)[\"\']')
 
 
 def clone_repos(testrun: NewTestRun):
@@ -40,7 +44,7 @@ def enable_yarn2_global_cache(yarnrc):
         yaml.dump(data, f)
 
 
-def create_node_environment():
+def create_node_environment(testframework: TestFramework):
     """
     Create node environment from either Yarn or npm
     """
@@ -92,7 +96,7 @@ def create_node_environment():
     logger.info(f"Created node environment in {t:.1f}s")
 
     # pre-verify it so it's properly read-only
-    if not using_cache:
+    if not using_cache and testframework == TestFramework.cypress:
         runcmd('cypress verify', cwd=settings.src_dir, cmd=True, node=True)
 
 
@@ -102,7 +106,38 @@ def make_array(x):
     return x
 
 
-def get_specs(wdir, spec_filter=None):
+def get_playwright_specs(wdir, spec_filter=None):
+    """
+    Parse the list of specs from the config files. At the moment this relies on regex rather than reading
+    the config file natively. I acknowledge that this is an imperfect solution and could break if the config
+    file has actual code in it: a better solution is probably a tiny Node library to do the same job.
+    """
+    config = os.path.join(wdir, 'playwright.config.js')
+    if not os.path.exists(config):
+        config = os.path.join(wdir, 'playwright.config.ts')
+        if not os.path.exists(config):
+            raise BuildFailedException("Cannot find Playwright config file")
+
+    with open(config, 'r') as f:
+        cfgtext = f.read()
+        testdir = re.findall(PLAYWRIGHT_TESTDIR_REGEX, cfgtext)
+        if testdir:
+            testdir = os.path.normpath(testdir[0])
+        else:
+            testdir = wdir
+        rootdir = os.path.abspath(os.path.join(wdir, testdir))
+
+        if not spec_filter:
+            include_globs = re.findall(PLAYWRIGHT_INCLUDE_SPEC_REGEX, cfgtext)
+            exclude_globs = re.findall(PLAYWRIGHT_EXCLUDE_SPEC_REGEX, cfgtext)
+            if not include_globs:
+                include_globs = ["**/*.@(spec|test).?(c|m)[jt]s?(x)"]
+
+    return [os.path.join(testdir, x) for x in glob.glob(include_globs, root_dir=rootdir, flags=glob.BRACE,
+                     exclude=exclude_globs)]
+
+
+def get_cypress_specs(wdir, spec_filter=None):
     cyjson = os.path.join(wdir, 'cypress.json')
     folder = wdir
     prefix = None
@@ -127,8 +162,8 @@ def get_specs(wdir, spec_filter=None):
                     raise BuildFailedException("Cannot find Cypress config file")
             with open(config, 'r') as f:
                 cfgtext = f.read()
-                include_globs = re.findall(INCLUDE_SPEC_REGEX, cfgtext)
-                exclude_globs = re.findall(EXCLUDE_SPEC_REGEX, cfgtext)
+                include_globs = re.findall(CYPRESS_INCLUDE_SPEC_REGEX, cfgtext)
+                exclude_globs = re.findall(CYPRESS_EXCLUDE_SPEC_REGEX, cfgtext)
                 if not include_globs:
                     # try default
                     include_globs = ["cypress/{e2e,component}/**/*.cy.{js,jsx,ts,tsx}",
@@ -165,7 +200,7 @@ def build():
     logger.info(f'Using node {get_node_version()}')
 
     # create node environment
-    create_node_environment()
+    create_node_environment(testrun.project.test_framework)
 
     # build the app if required
     if testrun.project.build_cmd:
@@ -173,7 +208,12 @@ def build():
 
     # inform the main server so it can tell the agent to
     # start the runner job
-    specs = get_specs(settings.src_dir, testrun.project.spec_filter)
+    if testrun.project.test_framework == TestFramework.cypress:
+        specs = get_cypress_specs(settings.src_dir, testrun.project.spec_filter)
+    else:
+        specs = get_playwright_specs(settings.src_dir, testrun.project.spec_filter)
+
+    logger.debug(f'Parse specs: {specs}')
     app.post('build-completed', content=AgentBuildCompleted(specs=specs).json())
 
 

@@ -3,11 +3,18 @@ import shutil
 
 from httpx import Response
 
+from cykubedrunner.builder import get_playwright_specs
 from cykubedrunner.common.enums import TestFramework
 from cykubedrunner.common.schemas import NewTestRun, AgentSpecCompleted
 from cykubedrunner.playwright import PlaywrightSpecRunner
 from cykubedrunner.runner import run
 from cykubedrunner.settings import settings
+
+
+def test_get_specs(playwright_fixturedir):
+    specs = set(get_playwright_specs(os.path.join(playwright_fixturedir, 'project')))
+    assert specs == {'tests/another.spec.ts',
+                     'tests/example.spec.ts'}
 
 
 def test_playwright_parse_with_failures(testrun, playwright_fixturedir,
