@@ -17,12 +17,12 @@ docker build -f dockerfiles/full/Dockerfile --build-arg tag=$TAG --build-arg bas
 echo " loading image $image"
 minikube image load $image
 
-#echo "Build app Playwright image for Node $nodever"
-#image=$REGION-docker.pkg.dev/cykubed/public/runner/playwright-node-$nodever:$TAG
-#docker build -f dockerfiles/full/Dockerfile --build-arg tag=$TAG --build-arg base=playwright-base-node-$nodever:$BASETAG \
-#             -t $image .
-#echo " loading image $image"
-#minikube image load $image
+echo "Build app Playwright image for Node $nodever"
+image=$REGION-docker.pkg.dev/cykubed/public/runner/playwright-node-$nodever:$TAG
+docker build -f dockerfiles/full/Dockerfile --build-arg tag=$TAG --build-arg base=playwright-base-node-$nodever:$BASETAG \
+             -t $image .
+echo " loading image $image"
+minikube image load $image
 
 done
 
