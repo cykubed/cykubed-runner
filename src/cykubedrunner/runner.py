@@ -53,7 +53,9 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
             if testrun.project.test_framework == TestFramework.cypress:
                 # Cypress needs to be run explicitly for each required browser
                 browsers = testrun.project.browsers or ['electron']
+                logger.debug(f'Browsers = {browsers}')
                 for browser in browsers:
+                    logger.debug(f'Running Cypress tests for file {spec} on browser {browser}')
                     browser_spectests = CypressSpecRunner(server, testrun, spec,
                                                           browser=browser).run()
                     if not spectests:
@@ -62,6 +64,7 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
                         spectests.merge(browser_spectests)
             else:
                 # Playwright handles browser support natively
+                logger.debug(f'Running Playwright tests for file {spec}')
                 spectests = PlaywrightSpecRunner(server, testrun, spec).run()
 
             if spectests:
@@ -79,19 +82,18 @@ def run_tests(server: ServerThread, testrun: NewTestRun):
             raise ex
 
 
-def run(testrun_id: int):
-    logger.info(f'Starting runner for testrun {testrun_id}')
-
-    if settings.K8 and not settings.TEST:
-        signal.signal(signal.SIGTERM, default_sigterm_runner)
-        signal.signal(signal.SIGINT, default_sigterm_runner)
-
-    logger.init(testrun_id, source="runner")
-
+def run():
     testrun = app.get_testrun()
     if not testrun:
         logger.info(f"Missing test run: quitting")
         return
+
+    logger.init(testrun.id, source="runner")
+    logger.info(f'Starting runner for testrun {testrun.id}')
+
+    if settings.K8 and not settings.TEST:
+        signal.signal(signal.SIGTERM, default_sigterm_runner)
+        signal.signal(signal.SIGINT, default_sigterm_runner)
 
     srcnode = os.path.join(settings.src_dir, 'node_modules')
     if not os.path.exists(srcnode):

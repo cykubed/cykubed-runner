@@ -71,7 +71,7 @@ def test_playwright_run(respx_mock,
     mocker.patch('cykubedrunner.baserunner.BaseSpecRunner.create_process',
                  side_effect=create_process_side_effects, autospec=True)
 
-    run(20)
+    run()
 
     assert fetch_testrun_mock.call_count == 1
 

@@ -141,7 +141,7 @@ def get_specs(wdir, spec_filter=None):
     return specs
 
 
-def build(trid: int):
+def build():
     """
     Build the distribution
     """
@@ -177,7 +177,7 @@ def build(trid: int):
     app.post('build-completed', content=AgentBuildCompleted(specs=specs).json())
 
 
-def prepare_cache(trid: int):
+def prepare_cache():
     """
     Move the cachable stuff into root and delete the rest
     """

@@ -105,12 +105,12 @@ class CypressSpecRunner(BaseSpecRunner):
                 specresult.video = video_fnames[0]
         return specresult
 
-    def get_args(self, browser=None):
+    def get_args(self):
         json_reporter = os.path.abspath(os.path.join(os.path.dirname(__file__), 'json-reporter.js'))
 
         return ['cypress', 'run',
                 '-q',
-                '--browser', browser or 'electron',
+                '--browser', self.browser or 'electron',
                 '-s', self.file,
                 '--reporter', json_reporter,
                 '-o', f'output={self.results_file}',

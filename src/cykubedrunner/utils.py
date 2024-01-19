@@ -195,6 +195,8 @@ def upload_results(spec: str, specresult: SpecTests):
         file=spec,
         finished=utcnow())
 
+    logger.debug(f'Uploading results: {msg.json()}')
+
     if specresult.video:
         urls = upload_files([('files', open(specresult.video, 'rb'))])
         msg.video = urls[0]

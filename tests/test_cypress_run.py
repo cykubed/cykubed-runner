@@ -52,7 +52,7 @@ def test_cypress_run(respx_mock,
     mocker.patch('cykubedrunner.baserunner.BaseSpecRunner.create_process',
                  side_effect=create_process_side_effects, autospec=True)
 
-    run(20)
+    run()
 
     # we asked for 3 specs - we got 2 and a 204
     assert next_spec_mock.call_count == 3

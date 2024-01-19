@@ -18,7 +18,7 @@ def test_build_no_node_cache(mocker,
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(cypress_fixturedir, 'project'), settings.src_dir, dirs_exist_ok=True)
 
-    builder.build(testrun.id)
+    builder.build()
 
     assert fetch_testrun_mock.called
 
@@ -64,7 +64,7 @@ def test_build_with_node_cache(mocker,
     # fake an empty node_modules
     os.makedirs(os.path.join(settings.BUILD_DIR, 'node_modules'))
 
-    builder.build(testrun.id)
+    builder.build()
 
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',
@@ -83,7 +83,7 @@ def test_build_yarn1_no_cache(mocker, fetch_testrun_mock,
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn'), settings.src_dir, dirs_exist_ok=True)
 
-    builder.build(testrun.id)
+    builder.build()
 
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',
@@ -104,7 +104,7 @@ def test_build_yarn2_no_cache(mocker, fetch_testrun_mock,
     runcmd = mocker.patch('cykubedrunner.builder.runcmd')
     shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
 
-    builder.build(testrun.id)
+    builder.build()
 
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',
@@ -126,7 +126,7 @@ def test_build_yarn2_with_cache(mocker, fetch_testrun_mock,
     shutil.copytree(os.path.join(cypress_fixturedir, 'project-yarn2'), settings.src_dir, dirs_exist_ok=True)
     os.mkdir(settings.yarn2_global_cache)
 
-    builder.build(testrun.id)
+    builder.build()
 
     expected_commands = [
         'git clone --recursive git@github.org/dummy.git .',

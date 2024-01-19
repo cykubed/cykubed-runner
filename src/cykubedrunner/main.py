@@ -49,11 +49,11 @@ def main() -> int:
     try:
         configure_stackdriver_logging(f'cykubed-{cmd}')
         if cmd == 'build':
-            builder.build(trid)
+            builder.build()
         elif cmd == 'prepare_cache':
-            builder.prepare_cache(trid)
+            builder.prepare_cache()
         else:
-            run(trid)
+            run()
 
     except BuildFailedException as ex:
         logger.error(f'{cmd.capitalize()} failed: {ex}')
