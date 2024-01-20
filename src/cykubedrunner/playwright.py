@@ -1,4 +1,5 @@
 import json
+import os
 
 from cykubedrunner.baserunner import BaseSpecRunner
 from cykubedrunner.common.enums import TestResultStatus
@@ -75,7 +76,10 @@ class PlaywrightSpecRunner(BaseSpecRunner):
         return specresult
 
     def get_env(self):
-        return dict(PLAYWRIGHT_JSON_OUTPUT_NAME=self.results_file)
+        env = os.environ.copy()
+        return dict(PLAYWRIGHT_JSON_OUTPUT_NAME=self.results_file,
+                    PLAYWRIGHT_BROWSERS_PATH='0',
+                    PATH=f'node_modules/.bin:{env["PATH"]}')
 
     def get_args(self, **kwargs):
         args = ['npx', 'playwright', 'test',

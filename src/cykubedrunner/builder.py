@@ -44,7 +44,7 @@ def enable_yarn2_global_cache(yarnrc):
         yaml.dump(data, f)
 
 
-def create_node_environment(testframework: TestFramework):
+def create_node_environment(testrun: NewTestRun):
     """
     Create node environment from either Yarn or npm
     """
@@ -96,8 +96,14 @@ def create_node_environment(testframework: TestFramework):
     logger.info(f"Created node environment in {t:.1f}s")
 
     # pre-verify it so it's properly read-only
-    if not using_cache and testframework == TestFramework.cypress:
-        runcmd('cypress verify', cwd=settings.src_dir, cmd=True, node=True)
+    if testrun.project.test_framework == TestFramework.cypress:
+        if not using_cache:
+            runcmd('cypress verify', cwd=settings.src_dir, cmd=True, node=True)
+    else:
+        # check we have the browsers
+        runcmd('npx playwright install', cwd=settings.src_dir, cmd=True,
+               env=dict(PLAYWRIGHT_BROWSERS_PATH='0'))
+
 
 
 def make_array(x):
@@ -200,7 +206,7 @@ def build():
     logger.info(f'Using node {get_node_version()}')
 
     # create node environment
-    create_node_environment(testrun.project.test_framework)
+    create_node_environment(testrun)
 
     # build the app if required
     if testrun.project.build_cmd:

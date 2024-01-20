@@ -21,7 +21,7 @@ VERSION_FILE = os.path.join(os.path.dirname(__file__), 'versions.json')
 
 
 @click.command(help='Generate a new release of the runner')
-@click.option('--releasetype', type=click.Choice(['base', 'full']), help='Release type',
+@click.option('-r', '--releasetype', type=click.Choice(['base', 'full']), help='Release type',
               default='full')
 @click.option('-b', '--bump', type=click.Choice(['major', 'minor']),
               default='minor',
