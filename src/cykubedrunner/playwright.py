@@ -1,9 +1,12 @@
 import json
 import os
+import re
 
 from cykubedrunner.baserunner import BaseSpecRunner
 from cykubedrunner.common.enums import TestResultStatus
 from cykubedrunner.common.schemas import TestResult, TestResultError, CodeFrame, SpecTests, SpecTest
+
+ansi_escape_regex = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 class PlaywrightSpecRunner(BaseSpecRunner):
@@ -64,7 +67,7 @@ class PlaywrightSpecRunner(BaseSpecRunner):
                         if errors:
                             testresult.errors = []
                             for error in errors:
-                                trerr = TestResultError(message=error['message'])
+                                trerr = TestResultError(message=ansi_escape_regex.sub('', error['message']))
                                 loc = error.get('location')
                                 if loc:
                                     trerr.test_line = loc['line']

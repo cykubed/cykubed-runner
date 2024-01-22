@@ -2006,6 +2006,17 @@ files = [
 doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
+name = "term2md"
+version = "0.3.4"
+description = "convert ANSI terminal control characters to Markdown"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "term2md-0.3.4.tar.gz", hash = "sha256:da0d2732dd7d18ba9e2a53a7bcfcbeeb1626f74e75b4c70e7f19df85d96aa2bf"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -2238,4 +2249,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "3980bc2b052823b63802e90981b39c9f94be537eab13b523f2446ece9484a790"
+content-hash = "077ce75c77ac124085a980b6e504d65e941deff154268eff2ee21a1c84b6018c"

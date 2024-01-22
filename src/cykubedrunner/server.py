@@ -183,6 +183,7 @@ def start_server(project: Project) -> ServerThread:
     """
     Start the server
     """
+    logger.debug(f'Starting SPA server on port {project.server_port}')
     server = ServerThread(server_cmd=project.server_cmd, server_port=project.server_port)
     server.start()
     sleep(1)
