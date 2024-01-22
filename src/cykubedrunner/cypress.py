@@ -46,14 +46,14 @@ class CypressSpecRunner(BaseSpecRunner):
                                     duration=test['duration'],
                                     finished_at=datetime.datetime.now().isoformat())
 
-                if result.status == TestResultStatus.passed and result.retry:
-                    # flakey
-                    result.status = TestResultStatus.flakey
-
                 spectest = SpecTest(results=[result],
                                     title=title,
                                     context=context,
                                     status=result.status)
+
+                if result.status == TestResultStatus.passed and result.retry:
+                    # flakey
+                    spectest.status = TestResultStatus.flakey
 
                 # check for screenshots
                 prefix = f'{context} -- {title} (failed)'

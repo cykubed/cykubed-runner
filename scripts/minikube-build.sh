@@ -10,12 +10,12 @@ echo "Using base tag $BASETAG and tag $TAG"
 
 for nodever in 20 #16 18 20
 do
-echo "Build app Cypress image for Node $nodever"
-image=$REGION-docker.pkg.dev/cykubed/public/runner/cypress-node-$nodever:$TAG
-docker build -f dockerfiles/full/Dockerfile --build-arg tag=$TAG --build-arg base=cypress-base-node-$nodever:$BASETAG \
-             -t $image .
-echo " loading image $image"
-minikube image load $image
+#echo "Build app Cypress image for Node $nodever"
+#image=$REGION-docker.pkg.dev/cykubed/public/runner/cypress-node-$nodever:$TAG
+#docker build -f dockerfiles/full/Dockerfile --build-arg tag=$TAG --build-arg base=cypress-base-node-$nodever:$BASETAG \
+#             -t $image .
+#echo " loading image $image"
+#minikube image load $image
 
 echo "Build app Playwright image for Node $nodever"
 image=$REGION-docker.pkg.dev/cykubed/public/runner/playwright-node-$nodever:$TAG

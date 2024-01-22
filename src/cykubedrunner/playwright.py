@@ -66,16 +66,23 @@ class PlaywrightSpecRunner(BaseSpecRunner):
                         errors = pwresult.get('errors')
                         if errors:
                             testresult.errors = []
-                            for error in errors:
-                                trerr = TestResultError(message=ansi_escape_regex.sub('', error['message']))
-                                loc = error.get('location')
-                                if loc:
-                                    trerr.test_line = loc['line']
-                                    trerr.code_frame = CodeFrame(file=loc['file'],
-                                                                 line=loc['line'],
-                                                                 column=loc['column'])
+                            # collate the messages from the blocks without code frames (usually just the first one)
+                            msg = "\n".join([ansi_escape_regex.sub('', err['message'])
+                                              for err in errors if 'location' not in err])
+                            trerr = TestResultError(message=msg)
+                            code_frame_errors = [err for err in errors if 'location' in err]
+                            if code_frame_errors:
+                                # just take the first one
+                                err = code_frame_errors[0]
+                                loc = err['location']
+                                trerr.test_line = loc['line']
+                                trerr.code_frame = CodeFrame(file=loc['file'],
+                                                             line=loc['line'],
+                                                             column=loc['column'],
+                                                             frame=ansi_escape_regex.sub('', err['message']))
                                 testresult.errors.append(trerr)
-        # print(specresult.json(indent=4))
+
+#        print(specresult.json(indent=4))
         return specresult
 
     def get_env(self):

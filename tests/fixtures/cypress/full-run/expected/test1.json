@@ -90,7 +90,7 @@
             "title": "flakey test",
             "line": null,
             "context": "test1",
-            "status": "passed",
+            "status": "flakey",
             "results": [
                 {
                     "browser": "electron",
@@ -102,7 +102,7 @@
                 },
                 {
                     "browser": "firefox",
-                    "status": "flakey",
+                    "status": "passed",
                     "retry": 1,
                     "duration": 227,
                     "failure_screenshots": [

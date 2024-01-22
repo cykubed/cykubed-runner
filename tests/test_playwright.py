@@ -97,6 +97,7 @@ def test_playwright_run(respx_mock,
     spec_completed2 = AgentSpecCompleted.parse_raw(spec_completed_mock.calls[1].request.content.decode())
     assert spec_completed2.file == 'another.spec.ts'
     assert spec_completed2.finished
+    # print(spec_completed2.result.json(indent=4))
     assert spec_completed2.result.json(indent=4) == json_fixture_fetcher('playwright/another/expected-result.json')
 
     # 5 image uploads in a single upload POST

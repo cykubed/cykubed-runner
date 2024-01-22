@@ -23,5 +23,5 @@ def test_cypress_parse_fail_inside_helper(mocker, testrun: NewTestRun, cypress_f
     with open(os.path.join(cypress_fixturedir, 'fail-inside-helper/expected.json')) as f:
         expected = json.dumps(json.loads(f.read()), indent=4)
 
-    # print(results.json(indent=4))
+    # print(result.json(indent=4))
     assert expected == result.json(indent=4)

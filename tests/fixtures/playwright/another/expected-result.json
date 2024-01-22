@@ -43,22 +43,13 @@
                             "message": "Test timeout of 5000ms exceeded.",
                             "title": null,
                             "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
-                            "title": null,
-                            "type": null,
                             "test_line": 14,
                             "stack": null,
                             "code_frame": {
                                 "file": "/playwright/tests/another.spec.ts",
                                 "line": 14,
                                 "column": 42,
-                                "frame": null,
+                                "frame": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
                                 "language": null
                             },
                             "video": null
@@ -78,22 +69,13 @@
                             "message": "Test timeout of 5000ms exceeded.",
                             "title": null,
                             "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
-                            "title": null,
-                            "type": null,
                             "test_line": 14,
                             "stack": null,
                             "code_frame": {
                                 "file": "/playwright/tests/another.spec.ts",
                                 "line": 14,
                                 "column": 42,
-                                "frame": null,
+                                "frame": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
                                 "language": null
                             },
                             "video": null
@@ -113,22 +95,13 @@
                             "message": "Test timeout of 5000ms exceeded.",
                             "title": null,
                             "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
-                            "title": null,
-                            "type": null,
                             "test_line": 14,
                             "stack": null,
                             "code_frame": {
                                 "file": "/playwright/tests/another.spec.ts",
                                 "line": 14,
                                 "column": 42,
-                                "frame": null,
+                                "frame": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
                                 "language": null
                             },
                             "video": null
@@ -148,22 +121,13 @@
                             "message": "Test timeout of 5000ms exceeded.",
                             "title": null,
                             "type": null,
-                            "test_line": null,
-                            "stack": null,
-                            "code_frame": null,
-                            "video": null
-                        },
-                        {
-                            "message": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
-                            "title": null,
-                            "type": null,
                             "test_line": 14,
                             "stack": null,
                             "code_frame": {
                                 "file": "/playwright/tests/another.spec.ts",
                                 "line": 14,
                                 "column": 42,
-                                "frame": null,
+                                "frame": "Error: locator.click: Test timeout of 5000ms exceeded.\nCall log:\n  - waiting for getByTestId('back-buttonX')\n\n\n  12 |   await page.getByRole('button', {name: 'Show'}).click();\n  13 |\n> 14 |   await page.getByTestId('back-buttonX').click();\n     |                                          ^\n  15 |\n  16 | });\n  17 |\n\n    at /playwright/tests/another.spec.ts:14:42",
                                 "language": null
                             },
                             "video": null
@@ -196,7 +160,7 @@
                     ],
                     "errors": [
                         {
-                            "message": "Error: Timed out 1000ms waiting for expect(locator).toContainText(expected)\n\nLocator: getByTestId('num')\nExpected string: \"11\"\nReceived string: \"10\"\nCall log:\n  - expect.toContainText with timeout 1000ms\n  - waiting for getByTestId('num')\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n\n\n  35 |\n  36 |   // this will fail sometimes\n> 37 |   await expect(page.getByTestId('num')).toContainText('11');\n     |                                         ^\n  38 | });\n  39 |\n\n    at /playwright/tests/another.spec.ts:37:41",
+                            "message": "",
                             "title": null,
                             "type": null,
                             "test_line": 37,
@@ -205,7 +169,7 @@
                                 "file": "/playwright/tests/another.spec.ts",
                                 "line": 37,
                                 "column": 41,
-                                "frame": null,
+                                "frame": "Error: Timed out 1000ms waiting for expect(locator).toContainText(expected)\n\nLocator: getByTestId('num')\nExpected string: \"11\"\nReceived string: \"10\"\nCall log:\n  - expect.toContainText with timeout 1000ms\n  - waiting for getByTestId('num')\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-nuv-c46=\"\">10</h4>\n  -   unexpected value \"10\"\n\n\n  35 |\n  36 |   // this will fail sometimes\n> 37 |   await expect(page.getByTestId('num')).toContainText('11');\n     |                                         ^\n  38 | });\n  39 |\n\n    at /playwright/tests/another.spec.ts:37:41",
                                 "language": null
                             },
                             "video": null

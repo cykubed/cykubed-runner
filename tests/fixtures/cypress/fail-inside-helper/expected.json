@@ -88,7 +88,7 @@
             "results": [
                 {
                     "browser": "chrome",
-                    "status": "flakey",
+                    "status": "passed",
                     "retry": 1,
                     "duration": 236,
                     "failure_screenshots": null,
