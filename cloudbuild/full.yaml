@@ -21,6 +21,30 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-16:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-16:${_TAG}',
+          '--build-arg', 'base=playwright-base-node-16:${_BASE_TAG}',
+          '--build-arg', 'tag=${_TAG}',
+          '-f', 'dockerfiles/full/Dockerfile',
+          '.' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-16' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-18:latest',
+          '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-18:${_TAG}',
+          '--build-arg', 'base=playwright-base-node-18:${_BASE_TAG}',
+          '--build-arg', 'tag=${_TAG}',
+          '-f', 'dockerfiles/full/Dockerfile',
+          '.' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', '-a', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-18' ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build',
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20:latest',
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20:${_TAG}',
           '--build-arg', 'base=playwright-base-node-20:${_BASE_TAG}',
