@@ -29,6 +29,18 @@ def test_playwright_parse_with_failures(testrun, playwright_fixturedir,
     assert expected == results.json(indent=4)
 
 
+def test_playwright_parse_pass_with_flakes(testrun, playwright_fixturedir,
+                                        json_fixture_fetcher):
+    specrunner = PlaywrightSpecRunner(None, testrun, 'another.spec.ts')
+    jsonfile = os.path.join(playwright_fixturedir, 'pass-with-flake/out.json')
+    specrunner.results_file = jsonfile
+    results = specrunner.parse_results()
+
+    expected = json_fixture_fetcher('playwright/pass-with-flake/expected.json')
+    # print(results.json(indent=4))
+    assert expected == results.json(indent=4)
+
+
 def test_playwright_run(respx_mock,
                         mocker,
                         playwright_fixturedir,

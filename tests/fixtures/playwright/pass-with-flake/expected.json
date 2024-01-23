@@ -1,0 +1,64 @@
+{
+    "tests": [
+        {
+            "title": "passing test",
+            "line": 3,
+            "context": null,
+            "status": "passed",
+            "results": [
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 0,
+                    "duration": 1100,
+                    "failure_screenshots": null,
+                    "errors": null
+                }
+            ]
+        },
+        {
+            "title": "flakey test",
+            "line": 15,
+            "context": null,
+            "status": "flakey",
+            "results": [
+                {
+                    "browser": "firefox",
+                    "status": "failed",
+                    "retry": 0,
+                    "duration": 1405,
+                    "failure_screenshots": [
+                        "/home/nick/projects/dummyui-playwright/test-results/another-flakey-test-firefox/test-failed-1.png"
+                    ],
+                    "errors": [
+                        {
+                            "message": "",
+                            "title": null,
+                            "type": null,
+                            "test_line": 28,
+                            "stack": null,
+                            "code_frame": {
+                                "file": "/home/nick/projects/dummyui-playwright/tests/another.spec.ts",
+                                "line": 28,
+                                "column": 41,
+                                "frame": "Error: Timed out 1000ms waiting for expect(locator).toContainText(expected)\n\nLocator: getByTestId('num')\nExpected string: \"11\"\nReceived string: \"10\"\nCall log:\n  - expect.toContainText with timeout 1000ms\n  - waiting for getByTestId('num')\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-ng-c45539086=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-ng-c45539086=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-ng-c45539086=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-ng-c45539086=\"\">10</h4>\n  -   unexpected value \"10\"\n  -   locator resolved to <h4 data-testid=\"num\" _ngcontent-ng-c45539086=\"\">10</h4>\n  -   unexpected value \"10\"\n\n\n  26 |\n  27 |   // this will fail sometimes\n> 28 |   await expect(page.getByTestId('num')).toContainText('11');\n     |                                         ^\n  29 | });\n  30 |\n\n    at /home/nick/projects/dummyui-playwright/tests/another.spec.ts:28:41",
+                                "language": null
+                            },
+                            "video": null
+                        }
+                    ]
+                },
+                {
+                    "browser": "firefox",
+                    "status": "passed",
+                    "retry": 1,
+                    "duration": 1333,
+                    "failure_screenshots": [],
+                    "errors": null
+                }
+            ]
+        }
+    ],
+    "video": null,
+    "timeout": false
+}
