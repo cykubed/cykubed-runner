@@ -31,8 +31,8 @@ VERSION_FILE = os.path.join(os.path.dirname(__file__), 'versions.json')
 def generate(bump: str, releasetype: str, notes: str, local: bool):
 
     branch = cmd('git branch --show-current')
-    # if branch != 'master':
-    #     raise click.BadParameter('Not on master branch')
+    if branch != 'master':
+        raise click.BadParameter('Not on master branch')
 
     with open(VERSION_FILE) as f:
         versions = json.loads(f.read())
