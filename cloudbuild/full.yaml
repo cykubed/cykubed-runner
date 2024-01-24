@@ -25,6 +25,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-16:${_TAG}',
           '--build-arg', 'base=playwright-base-node-16:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
@@ -37,6 +38,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-18:${_TAG}',
           '--build-arg', 'base=playwright-base-node-18:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
@@ -49,6 +51,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-node-20:${_TAG}',
           '--build-arg', 'base=playwright-base-node-20:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
@@ -63,6 +66,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-16:${_TAG}',
           '--build-arg', 'base=cypress-base-node-16:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
@@ -76,6 +80,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-18:${_TAG}',
           '--build-arg', 'base=cypress-base-node-18:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
@@ -88,6 +93,7 @@ steps:
           '-t', '${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-node-20:${_TAG}',
           '--build-arg', 'base=cypress-base-node-20:${_BASE_TAG}',
           '--build-arg', 'tag=${_TAG}',
+          '--build-arg', 'region=${_REGION}',
           '-f', 'dockerfiles/full/Dockerfile',
           '.' ]
 
