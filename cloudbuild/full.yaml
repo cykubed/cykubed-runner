@@ -8,7 +8,7 @@ availableSecrets:
 substitutions:
   _BASE_TAG: 2.0.0
   _TAG: 4.0.0
-  _REGION: us
+  _REGION: europe
   _API_URL: https://api.cykubed.com
 options:
   automapSubstitutions: true

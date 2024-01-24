@@ -5,49 +5,50 @@ availableSecrets:
     env: 'SLACK_HOOK_URL'
 substitutions:
   _BASE_TAG: 2.0.0
+  _REGION: europe
 options:
   automapSubstitutions: true
 steps:
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/playwright/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/playwright-base-node-16:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-base-node-16:${_BASE_TAG}",
           "--build-arg=NODE=16",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/playwright/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/playwright-base-node-18:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-base-node-18:${_BASE_TAG}",
           "--build-arg=NODE=18",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/playwright/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/playwright-base-node-20:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/playwright-base-node-20:${_BASE_TAG}",
           "--build-arg=NODE=20",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/cypress/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-base:${_BASE_TAG}",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-16:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-base-node-16:${_BASE_TAG}",
           "--build-arg=node=16",
           "--build-arg=basetag=cypress-base:${_BASE_TAG}",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-18:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-base-node-18:${_BASE_TAG}",
           "--build-arg=node=18",
           "--build-arg=basetag=cypress-base:${_BASE_TAG}",
           "--cache=true"]
 
 - name: gcr.io/kaniko-project/executor:latest
   args: [ "--dockerfile=dockerfiles/base/node/Dockerfile",
-          "--destination=us-docker.pkg.dev/cykubed/public/runner/cypress-base-node-20:${_BASE_TAG}",
+          "--destination=${_REGION}-docker.pkg.dev/cykubed/public/runner/cypress-base-node-20:${_BASE_TAG}",
           "--build-arg=node=20",
           "--build-arg=basetag=cypress-base:${_BASE_TAG}",
           "--cache=true"]
