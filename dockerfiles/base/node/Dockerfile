@@ -1,4 +1,4 @@
-ARG region=us
+ARG region=europe
 ARG basetag="1.0.0"
 FROM $region-docker.pkg.dev/cykubed/public/runner/$basetag
 ARG node=16

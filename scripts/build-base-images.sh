@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REGION=us
+REGION=europe
 BASETAG=$(jq -r '.base' dockerfiles/versions.json)
 
 echo "Using base tag $BASETAG"
