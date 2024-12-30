@@ -27,7 +27,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesou
 RUN apt-get update && apt-get install nodejs -y
 RUN npm install --global yarn
 
-RUN pip install poetry==1.3.1
+RUN pip install poetry
 
 # === BAKE BROWSERS INTO IMAGE ===
 

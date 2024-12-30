@@ -1,6 +1,5 @@
-ARG region=us
-ARG basetag="1.0.0"
-FROM $region-docker.pkg.dev/cykubed/public/runner/$basetag
+ARG base="ghcr.io/cykubed/cykubed-runner-base:1.0.0"
+FROM $base
 ARG node=16
 
 RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null

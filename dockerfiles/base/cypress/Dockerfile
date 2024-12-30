@@ -1,5 +1,5 @@
 FROM python:3.10-slim-bullseye
-ARG firefox_version=117.0
+ARG firefox_version=133.0
 
 RUN apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -76,4 +76,4 @@ RUN wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.moz
   rm /tmp/firefox.tar.bz2 && \
   ln -fs /opt/firefox/firefox /usr/bin/firefox
 
-RUN pip install poetry==1.3.1
+RUN pip install poetry
