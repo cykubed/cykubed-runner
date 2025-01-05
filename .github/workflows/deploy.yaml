@@ -59,47 +59,47 @@ jobs:
 #            }
 #        env:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-  deploy:
-    runs-on: 'ubuntu-latest'
+#  deploy:
+#    runs-on: 'ubuntu-latest'
 #    needs: test
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    strategy:
-      fail-fast: true
-      matrix:
-        node: [20] #, 18]
-        dockerfile: ["cypress", "playwright"]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          file: "dockerfiles/${{matrix.dockerfile}}.Dockerfile"
-          tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}-node-${{matrix.node}}:${{ github.ref_name }}"
-          build-args: |
-            NODE=${{matrix.node}}
+#    permissions:
+#      contents: read
+#      packages: write
+#      attestations: write
+#      id-token: write
+#    strategy:
+#      fail-fast: true
+#      matrix:
+#        node: [20, 18]
+#        dockerfile: ["cypress", "playwright"]
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#        with:
+#          submodules: true
+#      - name: Log in to the Container registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ${{ env.REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Build and push Docker image
+#        id: push
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          push: true
+#          file: "dockerfiles/${{matrix.dockerfile}}.Dockerfile"
+#          tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}-node-${{matrix.node}}:${{ github.ref_name }}"
+#          build-args: |
+#            NODE=${{matrix.node}}
   notify:
-    needs: "deploy"
+#    needs: "deploy"
     runs-on: "ubuntu-latest"
     steps:
       - name: Update version
         run: |
-          curl -X POST "https://api.cykubed.com/admin/image/runner/current-version/${{github.ref_name}}" -H "Authorization: Bearer ${{secrets.API_TOKEN}}"
+          curl -X POST "https://api.cykubed.com/admin/image/runner/current-version/${{github.ref_name}}" -H "Authorization: Bearer ${{secrets.CYKUBED_API_TOKEN}}"
       - name: Notify Slack
         run: |
           echo "{\"text\":\"Cykubed runner images published created with tag ${{github.ref_name}}\"}" > payload.json
