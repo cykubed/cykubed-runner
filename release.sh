@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-NOTES="${1:-Updated dependencies}"
-BUMP="${2:-minor}"
+BUMP="${1:-minor}"
+NOTES="${2:-Updated}"
 
 VERSION=$(poetry version $BUMP -s)
 
