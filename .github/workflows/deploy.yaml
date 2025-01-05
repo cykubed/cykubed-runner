@@ -71,7 +71,7 @@ jobs:
       fail-fast: true
       matrix:
         node: [20]
-        dockerfile: ["cypress.Dockerfile", "playwright.Dockerfile"]
+        dockerfile: ["cypress", "playwright"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
         with:
           context: .
           push: true
-          file: "dockerfiles/${{matrix.dockerfile}}"
-          tags: "ghcr.io/${{env.IMAGE_NAME}}:${{ github.ref_name }}"
+          file: "dockerfiles/${{matrix.dockerfile}}.Dockerfile"
+          tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}:${{ github.ref_name }}"
           build-args: |
             NODE=${{matrix.node}}
