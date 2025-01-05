@@ -11,90 +11,90 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-#  test:
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        python-version: ["3.10"]
-#        poetry-version: ["1.3.1"]
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+        poetry-version: ["1.3.1"]
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          submodules: true
-#          token: ${{ secrets.CI_TOKEN }}
-#
-#      - uses: actions/setup-python@v4
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#      - name: Run image
-#        uses: Gr1N/setup-poetry@v8
-#        with:
-#          poetry-version: ${{ matrix.poetry-version }}
-#      - name: Install deps
-#        run: |
-#          poetry install --with=dev
-#      - name: Test with pytest
-#        env:
-#          PYTHONPATH: "src:."
-#        run: |
-#          poetry run pytest --github-report
-#      - name: Notify slack fail
-#        if: failure()
-#        id: slack
-#        uses: slackapi/slack-github-action@v1.23.0
-#        with:
-#          channel-id: 'builds'
-#          payload: |
-#            {
-#                "blocks": [
-#                    {
-#                        "type": "section",
-#                        "text": {
-#                            "type": "mrkdwn",
-#                            "text": ":boom: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|*Cykube-runner test failed*>"
-#                        }
-#                    }
-#                ]
-#            }
-#        env:
-#          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
-#  deploy:
-#    runs-on: 'ubuntu-latest'
-#    needs: test
-#    permissions:
-#      contents: read
-#      packages: write
-#      attestations: write
-#      id-token: write
-#    strategy:
-#      fail-fast: true
-#      matrix:
-#        node: [20, 18]
-#        dockerfile: ["cypress", "playwright"]
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#        with:
-#          submodules: true
-#      - name: Log in to the Container registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Build and push Docker image
-#        id: push
-#        uses: docker/build-push-action@v6
-#        with:
-#          context: .
-#          push: true
-#          file: "dockerfiles/${{matrix.dockerfile}}.Dockerfile"
-#          tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}-node-${{matrix.node}}:${{ github.ref_name }}"
-#          build-args: |
-#            NODE=${{matrix.node}}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          token: ${{ secrets.CI_TOKEN }}
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: Gr1N/setup-poetry@v8
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Install deps
+        run: |
+          poetry install --with=dev
+      - name: Test with pytest
+        env:
+          PYTHONPATH: "src:."
+        run: |
+          poetry run pytest --github-report
+      - name: Notify slack fail
+        if: failure()
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: 'builds'
+          payload: |
+            {
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": ":boom: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|*Cykube-runner test failed*>"
+                        }
+                    }
+                ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+  deploy:
+    runs-on: 'ubuntu-latest'
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      fail-fast: true
+      matrix:
+        node: [20, 18]
+        dockerfile: ["cypress", "playwright"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          file: "dockerfiles/${{matrix.dockerfile}}.Dockerfile"
+          tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}-node-${{matrix.node}}:${{ github.ref_name }}"
+          build-args: |
+            NODE=${{matrix.node}}
   notify:
-#    needs: "deploy"
+    needs: "deploy"
     runs-on: "ubuntu-latest"
     steps:
       - name: Update version
