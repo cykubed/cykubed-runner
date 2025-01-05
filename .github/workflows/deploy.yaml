@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        node: [20, 18]
+        node: [20] #, 18]
         dockerfile: ["cypress", "playwright"]
     steps:
       - name: Checkout repository
@@ -93,8 +93,17 @@ jobs:
           tags: "ghcr.io/${{env.IMAGE_NAME}}-${{matrix.dockerfile}}-node-${{matrix.node}}:${{ github.ref_name }}"
           build-args: |
             NODE=${{matrix.node}}
-#  notify:
-#    needs: "deploy"
-#    runs-on: "ubuntu-latest"
-#    steps:
-#      -
+  notify:
+    needs: "deploy"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Update version
+        run: |
+          curl -X POST "https://api.cykubed.com/admin/image/runner/current-version/${{github.ref_name}}" -H "Authorization: Bearer ${{secrets.API_TOKEN}}"
+      - name: Notify Slack
+        run: |
+          echo "{\"text\":\"Cykubed runner images published created with tag ${{github.ref_name}}\"}" > payload.json
+          curl -X POST -H 'Content-type: application/json' --data "@payload.json" ${{secrets.SLACK_HOOK_URL}}
+
+
+
