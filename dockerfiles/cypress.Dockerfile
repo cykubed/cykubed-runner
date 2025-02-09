@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bullseye
 ARG firefox_version=133.0
-ARG node=20
+ARG node=22
 
 RUN apt-get update && \
   apt-get install --no-install-recommends -y \
@@ -74,11 +74,14 @@ RUN wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.moz
   ln -fs /opt/firefox/firefox /usr/bin/firefox
 
 # install node
-RUN curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg > /dev/null
-RUN curl -sLf -o /dev/null "https://deb.nodesource.com/node_${node}.x/dists/bullseye/Release"
-RUN echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${node}.x bullseye main" | tee /etc/apt/sources.list.d/nodesource.list
-RUN apt-get update && apt-get install nodejs -y
-RUN npm install --global yarn
+ENV NVM_DIR="/usr/local/nvm"
+SHELL ["/bin/bash", "--login", "-c"]
+
+RUN mkdir -p $NVM_DIR
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $node && nvm use --delete-prefix $node"
+ENV NODE_PATH=$NVM_DIR/versions/node/$node/bin
+ENV PATH=$NODE_PATH:$PATH
 
 # install the runner
 RUN pip install poetry
