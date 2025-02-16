@@ -73,15 +73,7 @@ RUN wget --no-verbose -O /tmp/firefox.tar.bz2 https://download-installer.cdn.moz
   rm /tmp/firefox.tar.bz2 && \
   ln -fs /opt/firefox/firefox /usr/bin/firefox
 
-# install node
-ENV NVM_DIR="/usr/local/nvm"
 SHELL ["/bin/bash", "--login", "-c"]
-
-RUN mkdir -p $NVM_DIR
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $node && nvm use --delete-prefix $node"
-ENV NODE_PATH=$NVM_DIR/versions/node/$node/bin
-ENV PATH=$NODE_PATH:$PATH
 
 # install the runner
 RUN pip install poetry
@@ -89,7 +81,14 @@ RUN pip install poetry
 RUN useradd -m cykubed --uid 10000 && chown cykubed:cykubed /usr/app /node /build
 
 USER cykubed
+
+# install node
+ENV NVM_DIR="/usr/app/nvm"
+RUN mkdir -p $NVM_DIR
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+RUN /bin/bash -c "source $NVM_DIR/nvm.sh && nvm install $node --default --save"
 RUN python -m venv .venv
+
 ENV VIRTUAL_ENV=/usr/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYTHONPATH=/usr/app:.
